@@ -1,0 +1,7 @@
+
+# Secrets — never commit
+.env
+
+# Stray secrets (never commit)
+secrets.toml
+**/secrets.toml

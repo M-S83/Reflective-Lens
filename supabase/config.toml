@@ -1,0 +1,75 @@
+# Minimal Supabase project config for local development.
+# Run: `supabase start`, then `supabase db reset` to apply migrations + seed.
+
+project_id = "nordic-coaching"
+
+[db]
+port = 54322
+
+[api]
+port = 54321
+schemas = ["public", "storage"]
+
+[storage]
+enabled = true
+
+[auth]
+enable_signup = true
+
+# Sign in with email and/or mobile number.
+[auth.email]
+enable_signup = true
+
+[auth.sms]
+enable_signup = true
+# In production, configure an SMS provider (e.g. Twilio) here:
+#   [auth.sms.twilio]
+#   account_sid = "env(TWILIO_ACCOUNT_SID)"
+#   ...
+
+# Edge Functions. AI/STT functions verify the caller's JWT.
+[functions.transcribe-audio]
+verify_jwt = true
+
+[functions.process-team-sheet]
+verify_jwt = true
+
+[functions.clean-observation]
+verify_jwt = true
+
+[functions.generate-reflection-questions]
+verify_jwt = true
+
+[functions.enrich-reflection]
+verify_jwt = true
+
+[functions.review-intent]
+verify_jwt = true
+
+[functions.generate-report]
+verify_jwt = true
+
+[functions.generate-period-report]
+verify_jwt = true
+
+[functions.generate-player-summary]
+verify_jwt = true
+
+[functions.update-insights]
+verify_jwt = true
+
+[functions.update-voice-profile]
+verify_jwt = true
+
+# Continuous learning. run-learning is the scheduled sweep (pg_cron) — no JWT;
+# it authenticates with the LEARNING_CRON_SECRET shared secret.
+[functions.run-learning]
+verify_jwt = false
+
+# Billing. create-checkout is called by a signed-in user; billing-webhook is
+# called by Stripe (no Supabase JWT) and authenticates via its signature.
+[functions.create-checkout]
+verify_jwt = true
+
+[functions.billing-webhook]
+verify_jwt = false
