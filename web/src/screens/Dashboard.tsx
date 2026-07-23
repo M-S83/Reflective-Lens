@@ -61,7 +61,7 @@ export default function Dashboard() {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <Tile label="MRR" value={gbp0(revenue)} sub={`${mrr?.active_subscriptions ?? 0} active subs`} />
-          <Tile label="Margin (30d)" value={margin === null ? "—" : Math.round(margin) + "%"}
+          <Tile label="Margin (30d)" value={margin === null ? "n/a" : Math.round(margin) + "%"}
             sub={`rev ${gbp0(revenue)} · cost ${gbp0(costGbp)}`} warn={margin !== null && margin < 55} />
           <Tile label="Active users (30d)" value={String(ov?.active_30d ?? 0)} sub={`${ov?.active_7d ?? 0} in last 7d`} />
           <Tile label="Paying / trialing" value={String(ov?.paying_or_trialing ?? 0)} sub={`${ov?.total_users ?? 0} total users`} />
@@ -157,7 +157,7 @@ function BudgetPanel() {
               <tr key={r.user_id} style={{ borderTop: "1px solid #eee" }}>
                 <td style={{ padding: "5px 0" }} className="mono">{r.user_id.slice(0, 8)}…</td>
                 <td className="mono">{gbp(r.cost_this_month_usd * USD_TO_GBP)}</td>
-                <td className="mono">{r.budget_usd >= 1e8 ? "—" : gbp(r.budget_usd * USD_TO_GBP)}</td>
+                <td className="mono">{r.budget_usd >= 1e8 ? "none" : gbp(r.budget_usd * USD_TO_GBP)}</td>
                 <td style={{ textAlign: "right" }}>
                   {r.over_budget
                     ? <span style={{ color: "#c0492b", fontWeight: 600 }}>guarded</span>

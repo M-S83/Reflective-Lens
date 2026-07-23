@@ -285,10 +285,10 @@ create view public.analytics_mrr as
 -- =============================================================================
 insert into public.plans (id, name, description, price_pence, currency, interval, ai_budget_usd, sort_order, features) values
   ('free',           'Free',             '14-day trial, then read-only',                  0,    'gbp', 'free',   1.00,  0, '{"trial_days":14}'),
-  ('coach_monthly',  'Coach — Monthly',  'One coach, unlimited teams',                    799,  'gbp', 'month',  3.00,  1, '{"role":"coach","teams":"unlimited"}'),
-  ('coach_season',   'Coach — Season',   'One coach, full season up front (save ~30%)',   5999, 'gbp', 'season', 3.00,  2, '{"role":"coach","teams":"unlimited"}'),
-  ('player_monthly', 'Player — Monthly', 'One player, all their teams',                   299,  'gbp', 'month',  0.75,  3, '{"role":"player"}'),
-  ('player_season',  'Player — Season',  'One player, full season up front',              1999, 'gbp', 'season', 0.75,  4, '{"role":"player"}'),
+  ('coach_monthly',  'Coach Monthly',    'One coach, unlimited teams',                    799,  'gbp', 'month',  3.00,  1, '{"role":"coach","teams":"unlimited"}'),
+  ('coach_season',   'Coach Season',     'One coach, full season up front (save ~30%)',   5999, 'gbp', 'season', 3.00,  2, '{"role":"coach","teams":"unlimited"}'),
+  ('player_monthly', 'Player Monthly',   'One player, all their teams',                   299,  'gbp', 'month',  0.75,  3, '{"role":"player"}'),
+  ('player_season',  'Player Season',    'One player, full season up front',              1999, 'gbp', 'season', 0.75,  4, '{"role":"player"}'),
   ('club',           'Club',             'Multiple coaches under one club',               2499, 'gbp', 'month',  12.00, 5, '{"role":"coach","seats":"multi"}')
 on conflict (id) do nothing;
 

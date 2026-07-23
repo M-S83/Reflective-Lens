@@ -18,12 +18,12 @@ update public.plans
 
 -- Annual = monthly x 12 x 0.75 (25% off).
 update public.plans
-  set name = 'Coach — Annual', description = 'One coach, paid yearly (save 25%)',
+  set name = 'Coach Annual', description = 'One coach, paid yearly (save 25%)',
       price_pence = 3591, interval = 'year'
   where id = 'coach_season';
 
 update public.plans
-  set name = 'Player — Annual', description = 'One player, paid yearly (save 25%)',
+  set name = 'Player Annual', description = 'One player, paid yearly (save 25%)',
       price_pence = 2691, interval = 'year'
   where id = 'player_season';
 
