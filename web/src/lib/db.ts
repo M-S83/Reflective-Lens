@@ -113,12 +113,31 @@ export async function deleteObservation(id: string): Promise<void> {
   if (error) throw error;
 }
 
-// Permanently delete the signed-in user's account and all their data, then sign
-// out. Irreversible — the caller must confirm first.
-export async function deleteAccount(): Promise<void> {
-  const { error } = await supabase.functions.invoke("delete-account");
+// Account deletion has a 30-day recovery window. Requesting it schedules the
+// deletion (returns the date it becomes permanent); the account stays live and
+// usable until then, and cancel keeps it. A cron sweep does the hard delete once
+// the date has passed. The caller must confirm before requesting.
+export async function requestAccountDeletion(): Promise<string> {
+  const { data, error } = await supabase.functions.invoke("delete-account");
   if (error) throw error;
-  await supabase.auth.signOut();
+  return (data as { scheduled_for: string }).scheduled_for;
+}
+
+export async function cancelAccountDeletion(): Promise<void> {
+  const { error } = await supabase.rpc("cancel_account_deletion");
+  if (error) throw error;
+}
+
+// The caller's own scheduled-deletion date, or null if the account is not
+// scheduled for deletion. Reads the caller's own profile row (RLS: read self).
+export async function getDeletionSchedule(): Promise<string | null> {
+  const { data: auth } = await supabase.auth.getUser();
+  const uid = auth.user?.id;
+  if (!uid) return null;
+  const { data, error } = await supabase
+    .from("profiles").select("deletion_scheduled_at").eq("id", uid).maybeSingle();
+  if (error) throw error;
+  return (data as { deletion_scheduled_at: string | null } | null)?.deletion_scheduled_at ?? null;
 }
 
 // ---- Events -----------------------------------------------------------------

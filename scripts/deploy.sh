@@ -27,6 +27,7 @@ supabase secrets set \
   ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:?set ANTHROPIC_API_KEY in .env}" \
   OPENAI_API_KEY="${OPENAI_API_KEY:?set OPENAI_API_KEY in .env}" \
   LEARNING_CRON_SECRET="${LEARNING_CRON_SECRET:?set LEARNING_CRON_SECRET in .env}" \
+  PURGE_CRON_SECRET="${PURGE_CRON_SECRET:?set PURGE_CRON_SECRET in .env}" \
   APP_URL="${APP_URL:-}"
 
 if [ -n "${STRIPE_SECRET_KEY:-}" ]; then
@@ -40,13 +41,14 @@ echo "==> Deploying edge functions (JWT-protected)"
 for fn in transcribe-audio process-team-sheet clean-observation \
           generate-reflection-questions enrich-reflection review-intent \
           generate-report generate-period-report generate-player-summary \
-          update-insights update-voice-profile create-checkout; do
+          update-insights update-voice-profile create-checkout delete-account; do
   supabase functions deploy "$fn"
 done
 
 echo "==> Deploying edge functions (public — secret/signature-authenticated)"
-supabase functions deploy run-learning   --no-verify-jwt
-supabase functions deploy billing-webhook --no-verify-jwt
+supabase functions deploy run-learning       --no-verify-jwt
+supabase functions deploy purge-due-accounts --no-verify-jwt
+supabase functions deploy billing-webhook    --no-verify-jwt
 
 echo ""
 echo "==> Done. Next:"

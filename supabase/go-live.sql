@@ -33,3 +33,23 @@ select cron.schedule(
 --   select cron.schedule('reflective-lens-learning', '0 */3 * * *', $$ ... $$);
 -- To stop it:
 --   select cron.unschedule('reflective-lens-learning');
+
+-- 3) ACCOUNT DELETION PURGE (recommended if you offer account deletion)
+--    Hard deletes accounts whose 30-day recovery window has passed. Daily at
+--    03:00. Needs pg_cron + pg_net (same as above).
+select cron.schedule(
+  'reflective-lens-purge-accounts',
+  '0 3 * * *',
+  $$
+    select net.http_post(
+      url     := 'https://<PROJECT_REF>.supabase.co/functions/v1/purge-due-accounts',
+      headers := jsonb_build_object(
+        'content-type',  'application/json',
+        'x-cron-secret', '<PURGE_CRON_SECRET>'   -- same value as in .env
+      ),
+      body := '{}'::jsonb
+    );
+  $$
+);
+-- To stop it:
+--   select cron.unschedule('reflective-lens-purge-accounts');

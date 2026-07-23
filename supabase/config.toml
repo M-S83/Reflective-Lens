@@ -74,6 +74,12 @@ verify_jwt = true
 [functions.billing-webhook]
 verify_jwt = false
 
-# Account deletion — a signed-in user erasing their own account and all data.
+# Account deletion. delete-account schedules a signed-in user's own deletion
+# (30-day recovery window). purge-due-accounts is the scheduled sweep (pg_cron)
+# that hard deletes once the window passes — no JWT; it authenticates with the
+# PURGE_CRON_SECRET shared secret.
 [functions.delete-account]
 verify_jwt = true
+
+[functions.purge-due-accounts]
+verify_jwt = false
