@@ -4,6 +4,7 @@ import { playerGames, type PlayerGameRow } from "../lib/db";
 import { useAuth } from "../auth/AuthProvider";
 import { ErrorText, Loading, TopBar } from "../components/ui";
 import { ModeSwitch } from "../components/ModeSwitch";
+import { DeleteAccount } from "../components/DeleteAccount";
 
 function fmtDate(d: string | null) {
   if (!d) return "";
@@ -60,6 +61,7 @@ export default function PlayerHome() {
             </div>
           )}
         </div>
+        <DeleteAccount />
       </div>
     </div>
   );

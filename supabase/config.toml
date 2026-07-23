@@ -73,3 +73,7 @@ verify_jwt = true
 
 [functions.billing-webhook]
 verify_jwt = false
+
+# Account deletion — a signed-in user erasing their own account and all data.
+[functions.delete-account]
+verify_jwt = true

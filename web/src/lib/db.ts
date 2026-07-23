@@ -73,6 +73,54 @@ export async function addPlayer(
   if (error) throw error;
 }
 
+export async function updatePlayer(
+  playerId: string,
+  patch: { display_name?: string; shirt_number?: number | null; position?: string | null },
+): Promise<void> {
+  const { error } = await supabase.from("players").update(patch).eq("id", playerId);
+  if (error) throw error;
+}
+
+export async function removePlayer(playerId: string): Promise<void> {
+  const { error } = await supabase.from("players").delete().eq("id", playerId);
+  if (error) throw error;
+}
+
+export interface TeamInfo { id: string; name: string; age_group: string | null; format: TeamFormat; club_id: string; }
+export async function getTeam(teamId: string): Promise<TeamInfo> {
+  const { data, error } = await supabase
+    .from("teams").select("id, name, age_group, format, club_id").eq("id", teamId).single();
+  if (error) throw error;
+  return data as TeamInfo;
+}
+export async function renameTeam(teamId: string, name: string): Promise<void> {
+  const { error } = await supabase.from("teams").update({ name }).eq("id", teamId);
+  if (error) throw error;
+}
+
+// Deletes — an owner can remove their own data. Deleting an event cascades to its
+// notes, reflection, squad, result and reports. (Player games are events too.)
+export async function deleteEvent(id: string): Promise<void> {
+  const { error } = await supabase.from("events").delete().eq("id", id);
+  if (error) throw error;
+}
+export async function deleteReport(id: string): Promise<void> {
+  const { error } = await supabase.from("reports").delete().eq("id", id);
+  if (error) throw error;
+}
+export async function deleteObservation(id: string): Promise<void> {
+  const { error } = await supabase.from("observations").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// Permanently delete the signed-in user's account and all their data, then sign
+// out. Irreversible — the caller must confirm first.
+export async function deleteAccount(): Promise<void> {
+  const { error } = await supabase.functions.invoke("delete-account");
+  if (error) throw error;
+  await supabase.auth.signOut();
+}
+
 // ---- Events -----------------------------------------------------------------
 export async function recentEvents(): Promise<EventRow[]> {
   const { data, error } = await supabase
