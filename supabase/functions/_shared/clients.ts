@@ -152,6 +152,60 @@ export async function recordLearning(
 // Pass `feature` + `log` and the call's token cost is recorded to usage_events
 // automatically (best-effort). `model` should come from MODELS above — it falls
 // back to Opus only if a caller forgets, so cost is never silently understated.
+// Owner-adjustable model tiering. callClaude resolves the model for a feature
+// from the model_config table (cached ~60s per warm instance) and uses it in
+// place of the passed-in default, so tiers can be changed from the dashboard
+// without a redeploy. Falls back to the caller's default on any miss or error.
+let _modelCache: { at: number; map: Record<string, { model: string; over: string | null }> } | null = null;
+const MODEL_CACHE_MS = 60_000;
+const _budgetCache = new Map<string, { at: number; over: boolean }>();
+const BUDGET_CACHE_MS = 300_000; // 5 min — over-budget status changes slowly
+
+async function loadModelMap() {
+  const now = Date.now();
+  if (!_modelCache || now - _modelCache.at > MODEL_CACHE_MS) {
+    const { data } = await serviceClient()
+      .from("model_config").select("feature, model, over_budget_model");
+    const map: Record<string, { model: string; over: string | null }> = {};
+    for (const r of (data ?? []) as Array<{ feature: string; model: string; over_budget_model: string | null }>) {
+      map[r.feature] = { model: r.model, over: r.over_budget_model };
+    }
+    _modelCache = { at: now, map };
+  }
+  return _modelCache.map;
+}
+
+async function isOverBudget(userId: string): Promise<boolean> {
+  const now = Date.now();
+  const cached = _budgetCache.get(userId);
+  if (cached && now - cached.at < BUDGET_CACHE_MS) return cached.over;
+  try {
+    const { data } = await serviceClient().rpc("is_over_budget", { target: userId });
+    const over = !!data;
+    _budgetCache.set(userId, { at: now, over });
+    return over;
+  } catch {
+    return false;
+  }
+}
+
+// Resolve the model for a feature: the owner's configured tier, downgraded to the
+// feature's over_budget_model only when the acting user is over their plan budget
+// (and only where a fallback is configured — reports have none, so stay protected).
+async function resolveModel(feature: string | undefined, fallback: string, userId?: string): Promise<string> {
+  if (!feature) return fallback;
+  try {
+    const entry = (await loadModelMap())[feature];
+    const base = entry?.model ?? fallback;
+    if (entry?.over && entry.over !== base && userId && await isOverBudget(userId)) {
+      return entry.over;
+    }
+    return base;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function callClaude(opts: {
   system?: string;
   prompt: string;
@@ -165,7 +219,7 @@ export async function callClaude(opts: {
     teamId?: string | null;
   };
 }): Promise<string> {
-  const model = opts.model ?? "claude-opus-4-8";
+  const model = await resolveModel(opts.feature, opts.model ?? "claude-opus-4-8", opts.log?.userId);
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {

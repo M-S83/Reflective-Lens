@@ -123,14 +123,34 @@ Deno.serve(async (req) => {
         'note}), "patterns" (string[]), "suggested_next_focus" (string[]).' +
         voice,
       prompt: `Report type: ${report_type}\n\nData:\n${payload}`,
-      maxTokens: 2048,
+      maxTokens: 4096,
       model: MODELS.report,
       feature: "generate-report",
       log: { admin, userId: event.user_id, clubId: event.club_id, teamId: event.team_id },
     });
 
     const content_json = safeParse(raw);
-    const content_markdown = toMarkdown(title ?? event.title, content_json);
+    // Never store a blank report. If the model didn't return usable structured
+    // JSON (empty parse, prose, or a truncated reply), surface its own text so
+    // the report is always viewable, and log the raw reply for debugging.
+    const c = content_json as Record<string, unknown>;
+    const structured = !!(
+      (Array.isArray(c.sections) && c.sections.length) ||
+      c.headline ||
+      (Array.isArray(c.patterns) && c.patterns.length) ||
+      (Array.isArray(c.hoped_to_see) && c.hoped_to_see.length)
+    );
+    const content_markdown = structured
+      ? toMarkdown(title ?? event.title, content_json)
+      : `# ${title ?? event.title}\n\n${(raw ?? "").trim() ||
+          "_The report came back empty. Please try generating it again._"}`;
+    if (!structured) {
+      console.error("generate-report: unstructured model reply", {
+        event_id,
+        length: (raw ?? "").length,
+        head: (raw ?? "").slice(0, 300),
+      });
+    }
 
     const { data: report, error: insErr } = await admin.from("reports").insert({
       event_id,

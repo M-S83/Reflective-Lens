@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
             status: "active",
             stripe_customer_id: s.customer ?? null,
             stripe_subscription_id: s.subscription ?? null,
-          }, { onConflict: "user_id" });
+          }, { onConflict: "user_id,plan_id" });
         }
         break;
       }
