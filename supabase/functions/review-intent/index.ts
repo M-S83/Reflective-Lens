@@ -74,6 +74,14 @@ Deno.serve(async (req) => {
 
     const review: ReviewItem[] = safeParse(raw);
 
+    // There was at least one aim to review, so an empty result means the reply
+    // was unusable (a parse failure). Never wipe a prior review to empty: keep
+    // what was there and report the no-op.
+    if (review.length === 0) {
+      console.error("review-intent: empty/unparsed model reply", { reflection_id });
+      return jsonResponse({ ok: true, review: [], reason: "model returned nothing; kept previous" });
+    }
+
     await admin.from("reflections")
       .update({ hoped_to_see_review: review }).eq("id", reflection_id);
 

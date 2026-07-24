@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
           ? supa.from("match_details").select("*").in("event_id", matchIds)
           : Promise.resolve({ data: [] }),
         matchIds.length
-          ? supa.from("match_stats").select("*, players(display_name)").in("event_id", matchIds)
+          ? supa.from("match_stats").select("*, players(shirt_number)").in("event_id", matchIds)
           : Promise.resolve({ data: [] }),
         supa.from("reflections")
           .select("summary, enriched_summary, suggested_next_focus, hoped_to_see_review")
@@ -73,9 +73,12 @@ Deno.serve(async (req) => {
       record.gf += r.goals_for ?? 0;
       record.ga += r.goals_against ?? 0;
     }
+    // Players are referenced by shirt number, not name: youth names are not sent
+    // to the model. A coach reads "number 9" as easily as a name.
     const perPlayer: Record<string, { name: string; goals: number; assists: number; apps: number }> = {};
     for (const s of stats ?? []) {
-      const name = (s as any).players?.display_name ?? "Unknown";
+      const shirt = (s as any).players?.shirt_number;
+      const name = shirt != null ? `#${shirt}` : "Unknown";
       const p = (perPlayer[s.player_id] ??= { name, goals: 0, assists: 0, apps: 0 });
       p.goals += s.goals ?? 0; p.assists += s.assists ?? 0; p.apps += 1;
     }
@@ -94,7 +97,8 @@ Deno.serve(async (req) => {
     const topThemes = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 12);
 
     const payload = JSON.stringify({
-      team: { name: team.name, age_group: team.age_group, format: team.format },
+      // age_group is deliberately omitted: it signals the players are minors.
+      team: { name: team.name, format: team.format },
       period: { start: period_start, end: period_end },
       counts: {
         events: events?.length ?? 0,
@@ -146,7 +150,25 @@ Deno.serve(async (req) => {
       ? "Weekly"
       : "Monthly";
     const heading = title ?? `${team.name}: ${periodLabel} Report`;
-    const content_markdown = toMarkdown(heading, record, content_json);
+
+    // Never store a blank report. If the model didn't return usable structured
+    // JSON, surface its own text so the report is always viewable, and log the
+    // failure (length only, no body: it would contain player content).
+    const c = content_json as Record<string, unknown>;
+    const structured = !!(
+      (Array.isArray(c.sections) && c.sections.length) ||
+      c.headline || c.results_summary ||
+      (Array.isArray(c.recurring_themes) && c.recurring_themes.length)
+    );
+    const content_markdown = structured
+      ? toMarkdown(heading, record, content_json)
+      : `# ${heading}\n\n${(raw ?? "").trim() ||
+          "_The report came back empty. Please try generating it again._"}`;
+    if (!structured) {
+      console.error("generate-period-report: unstructured model reply", {
+        team_id, period_start, period_end, length: (raw ?? "").length,
+      });
+    }
 
     const { data: report, error: insErr } = await admin.from("reports").insert({
       event_id: null,

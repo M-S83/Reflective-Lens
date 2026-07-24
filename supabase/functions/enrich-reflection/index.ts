@@ -75,6 +75,13 @@ Deno.serve(async (req) => {
 
     const enriched_summary = raw.trim();
 
+    // A bad or empty model reply must never blank an existing enriched summary.
+    // Keep whatever was there and report the no-op instead of overwriting.
+    if (!enriched_summary) {
+      console.error("enrich-reflection: empty model reply", { reflection_id });
+      return jsonResponse({ ok: true, enriched: false, reason: "model returned nothing; kept previous" });
+    }
+
     const { error: upErr } = await admin
       .from("reflections")
       .update({ enriched_summary })
