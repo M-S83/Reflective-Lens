@@ -18,6 +18,7 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callClaude, MODELS, serviceClient, userClient } from "../_shared/clients.ts";
 import { voiceInstruction } from "../_shared/voice.ts";
+import { isUnder18, safeNameMap } from "../_shared/names.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -54,7 +55,8 @@ Deno.serve(async (req) => {
           ? supa.from("match_details").select("*").in("event_id", matchIds)
           : Promise.resolve({ data: [] }),
         matchIds.length
-          ? supa.from("match_stats").select("*, players(display_name)").in("event_id", matchIds)
+          ? supa.from("match_stats")
+            .select("*, players(id, first_name, last_name, display_name)").in("event_id", matchIds)
           : Promise.resolve({ data: [] }),
         supa.from("reflections")
           .select("summary, enriched_summary, suggested_next_focus, hoped_to_see_review")
@@ -73,9 +75,19 @@ Deno.serve(async (req) => {
       record.gf += r.goals_for ?? 0;
       record.ga += r.goals_against ?? 0;
     }
+    // Under-18 privacy: label players by first name only (last initial to
+    // disambiguate), keyed off the team age group.
+    const under18 = isUnder18(team.age_group);
+    const statPlayers = new Map<string, any>();
+    for (const s of stats ?? []) {
+      if (s.player_id && !statPlayers.has(s.player_id)) {
+        statPlayers.set(s.player_id, { id: s.player_id, ...((s as any).players ?? {}) });
+      }
+    }
+    const nameMap = safeNameMap([...statPlayers.values()], under18);
     const perPlayer: Record<string, { name: string; goals: number; assists: number; apps: number }> = {};
     for (const s of stats ?? []) {
-      const name = (s as any).players?.display_name ?? "Unknown";
+      const name = nameMap[s.player_id] ?? "A player";
       const p = (perPlayer[s.player_id] ??= { name, goals: 0, assists: 0, apps: 0 });
       p.goals += s.goals ?? 0; p.assists += s.assists ?? 0; p.apps += 1;
     }

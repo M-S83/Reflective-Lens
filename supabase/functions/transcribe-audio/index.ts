@@ -12,6 +12,7 @@
 // =============================================================================
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { logUsage, serviceClient, userClient, WHISPER_USD_PER_MINUTE } from "../_shared/clients.ts";
+import { stripSurnames } from "../_shared/names.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -47,9 +48,25 @@ Deno.serve(async (req) => {
     // Swap in your STT provider of choice (OpenAI Whisper, Deepgram, etc.).
     const { text: transcript, durationSeconds } = await transcribe(file);
 
+    // Light surname strip on VOICE NOTES (observations): a spoken surname would
+    // otherwise slip through to the note. Uses the event's squad surnames.
+    let noteText = transcript;
+    if (target === "observation") {
+      const { data: obs } = await admin
+        .from("observations").select("event_id").eq("id", target_id).maybeSingle();
+      if (obs?.event_id) {
+        const { data: att } = await admin
+          .from("event_attendance")
+          .select("players(first_name, last_name, display_name)")
+          .eq("event_id", obs.event_id);
+        const players = (att ?? []).map((a: any) => a.players).filter(Boolean);
+        if (players.length) noteText = stripSurnames(transcript, players);
+      }
+    }
+
     // Write the transcript back to the correct column.
     const update =
-      target === "observation" ? { raw_note: transcript }
+      target === "observation" ? { raw_note: noteText }
       : target === "reflection" ? { raw_transcript: transcript }
       : { answer_text: transcript };
 

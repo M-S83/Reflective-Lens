@@ -11,6 +11,7 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callClaude, MODELS, serviceClient, userClient } from "../_shared/clients.ts";
 import { voiceInstruction } from "../_shared/voice.ts";
+import { isUnder18, safeName, safeNameMap } from "../_shared/names.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -59,6 +60,18 @@ Deno.serve(async (req) => {
     const { data: playerGame } = await supa
       .from("player_game_log").select("*").eq("event_id", event_id).maybeSingle();
 
+    // Under-18 name privacy: players are referred to by first name only (last
+    // initial to disambiguate), keyed off the team age group. No names beyond
+    // this reach the model via the roster or stats.
+    const { data: team } = event.team_id
+      ? await supa.from("teams").select("age_group").eq("id", event.team_id).maybeSingle()
+      : { data: null };
+    const under18 = isUnder18((team as { age_group?: string } | null)?.age_group);
+    const squadPlayers = (squad ?? []).map((a: any) => a.players).filter(Boolean);
+    const nameMap = safeNameMap(squadPlayers, under18);
+    const statName = (s: any) =>
+      nameMap[s.player_id] ?? safeName({ display_name: s.players?.display_name }, under18);
+
     const payload = JSON.stringify({
       event: {
         type: event.event_type, title: event.title, date: event.event_date,
@@ -84,13 +97,16 @@ Deno.serve(async (req) => {
       reflective_qa,
       // Player Mode game context (position(s), role, match details) — null otherwise.
       player_game: playerGame ?? null,
-      // Included for match reports (null/empty for training).
+      // Included for match reports (null/empty for training). Player labelled by
+      // first name only (under-18 privacy).
       match_result: matchDetails ?? null,
-      match_stats: matchStats ?? [],
-      // Squad from event_attendance (status + selection + the player record).
+      match_stats: (matchStats ?? []).map((s: any) => ({
+        player: statName(s), goals: s.goals, assists: s.assists,
+        yellow_cards: s.yellow_cards, red_cards: s.red_cards, clean_sheet: s.clean_sheet,
+      })),
+      // Squad from event_attendance (status + selection). First name only.
       roster: (squad ?? []).map((a: any) => ({
-        name: a.players?.display_name ??
-          [a.players?.first_name, a.players?.last_name].filter(Boolean).join(" "),
+        name: a.players?.id ? nameMap[a.players.id] : safeName(a.players ?? {}, under18),
         shirt: a.players?.shirt_number ?? null,
         position: a.players?.position ?? null,
         status: a.status, selection: a.selection,
