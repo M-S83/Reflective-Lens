@@ -57,15 +57,15 @@ Deno.serve(async (req) => {
 
     const parsed = safeParse(raw);
 
-    // Try to attribute by shirt number via the event's team sheet.
+    // Attribute by shirt number using the CANONICAL squad: event_attendance
+    // joined to players. (team_sheet_players is no longer relied on for this.)
     let player_id = obs.player_id;
-    if (!player_id && obs.shirt_number != null) {
+    if (!player_id && obs.shirt_number != null && obs.event_id) {
       const { data: match } = await admin
-        .from("team_sheet_players")
-        .select("player_id, team_sheets!inner(event_id)")
-        .eq("team_sheets.event_id", obs.event_id)
-        .eq("shirt_number", obs.shirt_number)
-        .not("player_id", "is", null)
+        .from("event_attendance")
+        .select("player_id, players!inner(shirt_number)")
+        .eq("event_id", obs.event_id)
+        .eq("players.shirt_number", obs.shirt_number)
         .limit(1).maybeSingle();
       if (match?.player_id) player_id = match.player_id;
     }

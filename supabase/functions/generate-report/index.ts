@@ -27,15 +27,16 @@ Deno.serve(async (req) => {
       .from("events").select("*").eq("id", event_id).single();
     if (error || !event) return jsonResponse({ error: "Not found or not permitted" }, 403);
 
-    const [{ data: observations }, { data: reflections }, { data: sheetPlayers },
+    const [{ data: observations }, { data: reflections }, { data: squad },
            { data: matchDetails }, { data: matchStats }] =
       await Promise.all([
         supa.from("observations").select("*").eq("event_id", event_id)
           .order("timestamp_seconds", { ascending: true }),
         supa.from("reflections").select("*").eq("event_id", event_id),
-        supa.from("team_sheet_players")
-          .select("*, team_sheets!inner(event_id)")
-          .eq("team_sheets.event_id", event_id),
+        // Canonical squad: event_attendance joined to players (not team_sheets).
+        supa.from("event_attendance")
+          .select("status, selection, players(id, first_name, last_name, display_name, shirt_number, position)")
+          .eq("event_id", event_id),
         supa.from("match_details").select("*").eq("event_id", event_id).maybeSingle(),
         supa.from("match_stats").select("*, players(display_name)").eq("event_id", event_id),
       ]);
@@ -86,7 +87,14 @@ Deno.serve(async (req) => {
       // Included for match reports (null/empty for training).
       match_result: matchDetails ?? null,
       match_stats: matchStats ?? [],
-      roster: sheetPlayers ?? [],
+      // Squad from event_attendance (status + selection + the player record).
+      roster: (squad ?? []).map((a: any) => ({
+        name: a.players?.display_name ??
+          [a.players?.first_name, a.players?.last_name].filter(Boolean).join(" "),
+        shirt: a.players?.shirt_number ?? null,
+        position: a.players?.position ?? null,
+        status: a.status, selection: a.selection,
+      })),
     });
 
     const isPlayer = report_type === "player_report" ||
