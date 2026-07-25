@@ -45,11 +45,11 @@ Deno.serve(async (req) => {
 
     const { data: observations } = await supa
       .from("observations")
-      .select("capture_phase, cleaned_note, raw_note, tags")
+      .select("phase_of_play, cleaned_note, raw_note, tags")
       .eq("event_id", ref.event_id);
 
     const notes = (observations ?? []).map((o) => ({
-      phase: o.capture_phase,
+      phase: o.phase_of_play,
       note: o.cleaned_note ?? o.raw_note,
       tags: o.tags,
     }));

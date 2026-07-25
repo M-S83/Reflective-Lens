@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
           .select("summary, enriched_summary, suggested_next_focus, hoped_to_see_review")
           .in("event_id", eventIds),
         supa.from("observations")
-          .select("event_id, cleaned_note, raw_note, tags, sentiment, capture_phase")
+          .select("event_id, cleaned_note, raw_note, tags, sentiment")
           .in("event_id", eventIds),
       ]);
 
