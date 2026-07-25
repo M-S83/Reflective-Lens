@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
           .select("*, team_sheets!inner(event_id)")
           .eq("team_sheets.event_id", event_id),
         supa.from("match_details").select("*").eq("event_id", event_id).maybeSingle(),
-        supa.from("match_stats").select("*, players(display_name, shirt_number)").eq("event_id", event_id),
+        supa.from("match_stats").select("*, players(display_name)").eq("event_id", event_id),
       ]);
 
     // The reflective open questions + the person's own answers — the focus for
@@ -57,25 +57,6 @@ Deno.serve(async (req) => {
     // Player Mode: the player's own game context (position/role/result).
     const { data: playerGame } = await supa
       .from("player_game_log").select("*").eq("event_id", event_id).maybeSingle();
-
-    const isPlayer = report_type === "player_report" ||
-      reflections?.[0]?.reflection_type === "player";
-
-    // Coach reports refer to players by shirt number, never by name, so youth
-    // player names are not sent to the model. The player's own report (their own
-    // data) is left exactly as before.
-    const roster = isPlayer
-      ? (sheetPlayers ?? [])
-      : (sheetPlayers ?? []).map((p: any) => ({
-        shirt: p.shirt_number, position: p.position, starter: p.is_starter,
-      }));
-    const match_stats = isPlayer
-      ? (matchStats ?? [])
-      : (matchStats ?? []).map((s: any) => ({
-        shirt: s.players?.shirt_number ?? null,
-        goals: s.goals, assists: s.assists, yellow_cards: s.yellow_cards,
-        red_cards: s.red_cards, clean_sheet: s.clean_sheet,
-      }));
 
     const payload = JSON.stringify({
       event: {
@@ -104,9 +85,12 @@ Deno.serve(async (req) => {
       player_game: playerGame ?? null,
       // Included for match reports (null/empty for training).
       match_result: matchDetails ?? null,
-      match_stats,
-      roster,
+      match_stats: matchStats ?? [],
+      roster: sheetPlayers ?? [],
     });
+
+    const isPlayer = report_type === "player_report" ||
+      reflections?.[0]?.reflection_type === "player";
 
     const admin = serviceClient();
     const voice = await voiceInstruction(admin, event.user_id);
