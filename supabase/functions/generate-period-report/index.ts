@@ -21,6 +21,7 @@ import { voiceInstruction } from "../_shared/voice.ts";
 import { isUnder18, safeNameMap } from "../_shared/names.ts";
 import { firstJsonObject } from "../_shared/json.ts";
 import { type MdBlock, renderReport } from "../_shared/markdown.ts";
+import { MIRROR_NOT_VERDICT } from "../_shared/principles.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -139,8 +140,8 @@ Deno.serve(async (req) => {
         "both — training work showing up on matchday; (b) themes worked in " +
         "training but not yet seen in matches — not transferring; (c) themes " +
         "emerging only in matches. Put these in \"training_to_match\". " +
-        "Principle: MIRROR, NOT VERDICT — surface the patterns and connections; " +
-        "do not grade the coach or players. Return ONLY JSON with keys: " +
+        MIRROR_NOT_VERDICT +
+        " Surface the patterns and connections across the notes. Return ONLY JSON with keys: " +
         '"headline" (string), "results_summary" (string), "sections" (array of ' +
         '{heading, points: string[]}), "player_highlights" (string[]), ' +
         '"recurring_themes" (string[]), "training_to_match" (string[]), ' +

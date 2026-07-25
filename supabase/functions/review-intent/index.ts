@@ -15,6 +15,7 @@ import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callClaude, MODELS, serviceClient, userClient } from "../_shared/clients.ts";
 import { voiceInstruction } from "../_shared/voice.ts";
 import { firstJsonArray } from "../_shared/json.ts";
+import { MIRROR_NOT_VERDICT } from "../_shared/principles.ts";
 
 interface ReviewItem {
   item: string;
@@ -59,9 +60,10 @@ Deno.serve(async (req) => {
     const raw = await callClaude({
       system:
         "You compare what a football coach hoped to see in a session against the " +
-        "notes they actually captured. Principle: MIRROR, NOT VERDICT — report " +
-        "ONLY whether the notes touched on each aim, never whether the team did " +
-        "it well. For each hoped-for item return: item (verbatim), status " +
+        "notes they actually captured. " +
+        MIRROR_NOT_VERDICT +
+        " Report ONLY whether the notes touched on each aim, never whether the " +
+        "team did it well. For each hoped-for item return: item (verbatim), status " +
         '("showed_up" if a note clearly relates, "partly" if only loosely, ' +
         '"not_observed" if no note touches it), and evidence (quote/paraphrase ' +
         "the relevant note, or empty if none). Return ONLY a JSON array." +

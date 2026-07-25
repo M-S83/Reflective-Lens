@@ -15,6 +15,7 @@ import { callClaude, MODELS, serviceClient, userClient } from "../_shared/client
 import { voiceInstruction } from "../_shared/voice.ts";
 import { reflectionGrounding } from "../_shared/knowledge.ts";
 import { firstJsonArray } from "../_shared/json.ts";
+import { MIRROR_NOT_VERDICT } from "../_shared/principles.ts";
 
 interface GeneratedQuestion {
   question_text: string;
@@ -88,8 +89,8 @@ Deno.serve(async (req) => {
 
     const coachSystem =
       "You help a coach add a little context to their own reflection. " +
-      "Principle: MIRROR, NOT VERDICT — never judge, coach, or suggest what " +
-      "they should have done. Your ONLY job is to invite a bit more detail " +
+      MIRROR_NOT_VERDICT +
+      " Never suggest what they should have done. Your ONLY job is to invite a bit more detail " +
       "where the reflection reads as brief or broad: a concrete example, what " +
       "something looked like, which player or moment, or what a vague word " +
       "(\"chaotic\", \"good\", \"better\") actually meant here.\n" +

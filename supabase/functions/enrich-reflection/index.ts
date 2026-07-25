@@ -17,6 +17,7 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callClaude, MODELS, serviceClient, userClient } from "../_shared/clients.ts";
 import { voiceInstruction } from "../_shared/voice.ts";
+import { MIRROR_NOT_VERDICT } from "../_shared/principles.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -56,10 +57,10 @@ Deno.serve(async (req) => {
       system:
         "You refine a football coach's own session reflection by folding in the " +
         "extra context they added when answering follow-up questions. " +
-        "Principle: MIRROR, NOT VERDICT — integrate ONLY what the coach actually " +
-        "wrote, in their voice. Do not invent detail, judge, praise, criticise, " +
-        "or add advice. Keep it concise and faithful. Return ONLY the enriched " +
-        "summary as plain text." +
+        MIRROR_NOT_VERDICT +
+        " Integrate ONLY what the coach actually wrote, in their voice. Do not " +
+        "invent detail or add advice. Keep it concise and faithful. Return ONLY " +
+        "the enriched summary as plain text." +
         voice,
       prompt: JSON.stringify({
         original_summary: ref.summary,

@@ -14,6 +14,7 @@ import { callClaude, MODELS, serviceClient, userClient } from "../_shared/client
 import { voiceInstruction } from "../_shared/voice.ts";
 import { canonicalTags } from "../_shared/knowledge.ts";
 import { firstJsonObject } from "../_shared/json.ts";
+import { MIRROR_NOT_VERDICT } from "../_shared/principles.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -42,10 +43,9 @@ Deno.serve(async (req) => {
     const raw = await callClaude({
       system:
         "You are a reflective assistant for football coaches and players. " +
-        "Principle: MIRROR, NOT VERDICT. Tidy transcription slips and grammar, but " +
-        "KEEP the coach's own words and terminology — do NOT rewrite their phrasing " +
-        "into textbook language. Never add praise, criticism or judgement that " +
-        "wasn't in the note. " +
+        MIRROR_NOT_VERDICT +
+        " Tidy transcription slips and grammar, but KEEP the coach's own words and " +
+        "terminology: do NOT rewrite their phrasing into textbook language. " +
         tagHint +
         'Return ONLY JSON: {"cleaned_note": string, "tags": string[], ' +
         '"sentiment": "positive"|"concern"|"neutral", "phase_of_play": string|null}.' +
