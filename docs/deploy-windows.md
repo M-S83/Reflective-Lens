@@ -77,6 +77,10 @@ retrying the install.
 
 ## Step 3: Connect to your Supabase project
 
+**Do not skip this one.** Without it the publish stops immediately, with either
+"Cannot find project ref" or "Unauthorized". Logging in comes first, and linking
+only works once you have.
+
 ```powershell
 supabase login
 ```
@@ -100,6 +104,10 @@ supabase link --project-ref abcdefghijklmnop
 It may ask for your database password. That is the one you set when you first
 created the project. If you have lost it, you can reset it in the dashboard
 under **Settings**, then **Database**, then **Reset database password**.
+
+The reference ID is twenty lowercase letters and nothing else. If you get
+"Invalid project ref format", you have probably grabbed an API key or the
+project name by mistake. Take it from the dashboard address bar.
 
 ## Step 4: Your secrets file
 

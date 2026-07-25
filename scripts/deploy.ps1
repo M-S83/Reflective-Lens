@@ -67,7 +67,25 @@ if ($missing.Count -gt 0) {
 }
 
 Write-Host "==> Pushing database migrations (0001-0015)" -ForegroundColor Cyan
-Run @('db','push')
+& supabase db push
+if ($LASTEXITCODE -ne 0) {
+  Write-Host ""
+  Write-Host "ERROR: 'supabase db push' failed. Nothing after this point ran," -ForegroundColor Red
+  Write-Host "       so your project is unchanged." -ForegroundColor Red
+  Write-Host ""
+  Write-Host "  'Cannot find project ref'  ->  you have not linked this folder yet:"
+  Write-Host "        supabase login"
+  Write-Host "        supabase link --project-ref <your-project-ref>"
+  Write-Host ""
+  Write-Host "  'Unauthorized'             ->  the CLI does not know who you are."
+  Write-Host "        Run 'supabase login' first, then link again."
+  Write-Host ""
+  Write-Host "  Your project ref is the code in your dashboard URL:"
+  Write-Host "        https://supabase.com/dashboard/project/<this-bit>"
+  Write-Host ""
+  Write-Host "  See docs/deploy-windows.md, step 3."
+  exit 1
+}
 
 Write-Host "==> Setting function secrets" -ForegroundColor Cyan
 Run @(
