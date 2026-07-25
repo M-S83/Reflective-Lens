@@ -23,6 +23,32 @@ import { firstJsonObject } from "../_shared/json.ts";
 import { type MdBlock, renderReport } from "../_shared/markdown.ts";
 import { MIRROR_NOT_VERDICT } from "../_shared/principles.ts";
 
+interface NoteEntry { note: string | null; tags: string[] | null; sentiment: string | null }
+interface ThemeBucket {
+  theme: string; count: number; positive: number; concern: number; neutral: number; examples: string[];
+}
+
+// Group notes by theme (tag). Every distinct theme is kept (nothing truncated);
+// each carries a count, a sentiment split, and up to a few example notes. A note
+// with several tags contributes to each theme. Untagged notes bucket together.
+const MAX_EXAMPLES = 3;
+function bucketByTheme(notes: NoteEntry[]): ThemeBucket[] {
+  const map = new Map<string, ThemeBucket>();
+  for (const n of notes) {
+    const tags = (n.tags && n.tags.length) ? n.tags : ["(untagged)"];
+    for (const t of tags) {
+      let b = map.get(t);
+      if (!b) { b = { theme: t, count: 0, positive: 0, concern: 0, neutral: 0, examples: [] }; map.set(t, b); }
+      b.count++;
+      if (n.sentiment === "positive") b.positive++;
+      else if (n.sentiment === "concern") b.concern++;
+      else b.neutral++;
+      if (b.examples.length < MAX_EXAMPLES && n.note) b.examples.push(n.note);
+    }
+  }
+  return [...map.values()].sort((a, b) => b.count - a.count);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -95,18 +121,23 @@ Deno.serve(async (req) => {
       p.goals += s.goals ?? 0; p.assists += s.assists ?? 0; p.apps += 1;
     }
 
-    // Split the actual notes by context so training and matches can be compared.
+    // Split the actual notes by context, then GROUP BY THEME so a long season
+    // stays within the context budget without dropping any theme. Each theme
+    // bucket carries a count, a sentiment split and a few example notes.
     const typeById = new Map((events ?? []).map((e) => [e.id, e.event_type]));
-    const trainingNotes: unknown[] = [];
-    const matchNotes: unknown[] = [];
+    const trainingRaw: NoteEntry[] = [];
+    const matchRaw: NoteEntry[] = [];
     const tagCounts: Record<string, number> = {};
     for (const o of observations ?? []) {
       for (const t of o.tags ?? []) tagCounts[t] = (tagCounts[t] ?? 0) + 1;
-      const entry = { note: o.cleaned_note ?? o.raw_note, tags: o.tags, phase: o.capture_phase, sentiment: o.sentiment };
-      if (typeById.get(o.event_id) === "match") matchNotes.push(entry);
-      else if (typeById.get(o.event_id) === "training_session") trainingNotes.push(entry);
+      const entry: NoteEntry = { note: o.cleaned_note ?? o.raw_note, tags: o.tags, sentiment: o.sentiment };
+      if (typeById.get(o.event_id) === "match") matchRaw.push(entry);
+      else if (typeById.get(o.event_id) === "training_session") trainingRaw.push(entry);
     }
     const topThemes = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 12);
+    // Bucketed by theme (F25): every theme is represented, not every note sent.
+    const trainingNotes = bucketByTheme(trainingRaw);
+    const matchNotes = bucketByTheme(matchRaw);
 
     const payload = JSON.stringify({
       team: { name: team.name, age_group: team.age_group, format: team.format },
@@ -119,7 +150,7 @@ Deno.serve(async (req) => {
       record,
       players: Object.values(perPlayer),
       top_note_themes: topThemes,
-      // Every note from the period, kept split by context for comparison.
+      // The period's notes grouped by theme, split by context for comparison.
       training_notes: trainingNotes,
       match_notes: matchNotes,
       reflection_next_focus: (reflections ?? []).flatMap((r) => r.suggested_next_focus ?? []),
@@ -133,8 +164,11 @@ Deno.serve(async (req) => {
       system:
         "You write a football team's period report (weekly, monthly or " +
         "end-of-season; a weekly report combines that week's training and match). " +
-        "You are given EVERY note from the period, split into training_notes and " +
-        "match_notes. Read across all of them and combine them — do not just list " +
+        "You are given the period's notes GROUPED BY THEME within each context: " +
+        "training_notes and match_notes are arrays of {theme, count, positive, " +
+        "concern, neutral, examples}. Every theme that came up is included, with " +
+        "how often it appeared, its sentiment split, and a few example notes. " +
+        "Read across all of them and combine them: do not just list " +
         "events. Be intelligent about context: compare what's noted in TRAINING " +
         "against what's noted in MATCHES and identify (a) themes that appear in " +
         "both — training work showing up on matchday; (b) themes worked in " +
