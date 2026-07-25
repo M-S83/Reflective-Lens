@@ -29,6 +29,15 @@ export function serviceClient(): SupabaseClient {
 // -----------------------------------------------------------------------------
 // Model tiering — the single biggest lever on cost-to-run.
 //
+// AUTHORITY: the `model_config` table (migration 0010) is the source of truth at
+// runtime. callClaude -> resolveModel reads it (cached ~60s) and overrides the
+// per-call default below. This MODELS map is only the FALLBACK: it supplies the
+// default a function passes in, used when model_config has no row for that
+// feature or the lookup errors. The two MUST stay in sync (each MODELS entry
+// equals the 0010 seed for the same feature) — enforced by the F18 check
+// (_tests/f18-model-config.mjs). If you retune tiers, do it in model_config
+// (no redeploy); update this map only to keep the fallback honest.
+//
 // Most AI work here is light (cleaning a note, drafting a few questions, learning
 // a voice) and does not need a frontier model. We reserve the mid-tier (Sonnet)
 // for the writing that the user actually reads as a finished report, and use the
