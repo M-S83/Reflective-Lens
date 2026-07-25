@@ -66,6 +66,17 @@ Deno.serve(async (req) => {
 
     const parsed = safeParse(raw);
 
+    // A bad or empty reply must not overwrite a good profile with nulls. Only
+    // write when we actually learned a style; otherwise keep the existing profile
+    // and record a no-op so the sweep doesn't keep retrying this user forever.
+    if (!parsed.style_summary) {
+      await recordLearning(admin, {
+        user_id: userId, kind: "voice", inputs_seen: samples.length,
+        items_changed: 0, summary: "Model returned no usable voice profile; kept previous.",
+      });
+      return jsonResponse({ ok: true, profile: null, reason: "no usable profile in reply; kept previous" });
+    }
+
     const { data: profile, error } = await admin
       .from("coach_voice_profiles")
       .upsert({

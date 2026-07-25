@@ -89,6 +89,11 @@ Deno.serve(async (req) => {
     const gaps = review.filter((r) => r.status === "not_observed");
     let questions: unknown[] = [];
     if (gaps.length) {
+      // Idempotent: don't re-add a gap question that already exists for this
+      // reflection (review-intent gets retried; duplicates read as not listening).
+      const { data: existing } = await admin
+        .from("followup_questions").select("question_text").eq("reflection_id", reflection_id);
+      const seen = new Set((existing ?? []).map((q) => q.question_text as string));
       const rows = gaps.map((g) => ({
         reflection_id,
         question_text:
@@ -96,9 +101,11 @@ Deno.serve(async (req) => {
           "Did it not come up, or did you not get a chance to look?",
         question_type: "text",
         options: [],
-      }));
-      const { data } = await admin.from("followup_questions").insert(rows).select();
-      questions = data ?? [];
+      })).filter((r) => !seen.has(r.question_text));
+      if (rows.length) {
+        const { data } = await admin.from("followup_questions").insert(rows).select();
+        questions = data ?? [];
+      }
     }
 
     return jsonResponse({ ok: true, review, gap_questions: questions });

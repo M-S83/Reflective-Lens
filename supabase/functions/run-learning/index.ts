@@ -56,18 +56,20 @@ Deno.serve(async (req) => {
       }
     };
 
+    // Insights are DISABLED for this dispatch (see migration 0013): the sweep no
+    // longer fans out to update-insights. The generator and the insights table
+    // are preserved; re-enable by restoring this call and the observation trigger.
     // Sequential fan-out — gentle on provider rate limits at grassroots scale.
-    let voiceRuns = 0, insightRuns = 0;
-    for (const u of (due ?? []) as { user_id: string; need_voice: boolean; need_insights: boolean }[]) {
+    let voiceRuns = 0;
+    for (const u of (due ?? []) as { user_id: string; need_voice: boolean }[]) {
       if (u.need_voice && await call("update-voice-profile", u.user_id)) voiceRuns++;
-      if (u.need_insights && await call("update-insights", u.user_id)) insightRuns++;
     }
 
     return jsonResponse({
       ok: true,
       due: due?.length ?? 0,
       voice_runs: voiceRuns,
-      insight_runs: insightRuns,
+      insight_runs: 0, // insights disabled this dispatch
     });
   } catch (e) {
     return jsonResponse({ error: String(e) }, 500);

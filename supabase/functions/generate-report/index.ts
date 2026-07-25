@@ -92,6 +92,23 @@ Deno.serve(async (req) => {
     const isPlayer = report_type === "player_report" ||
       reflections?.[0]?.reflection_type === "player";
 
+    // Change-detection (coach reports only): if a report already exists for this
+    // event + type and the source (aims, notes, reflection, answers) has not
+    // changed, return it rather than spending a model call and duplicating a row.
+    // Player per-game reports are out of scope this pass and keep old behaviour.
+    const fingerprint = await sha256(payload);
+    let prior: { id: string; source_fingerprint: string | null } | null = null;
+    if (!isPlayer) {
+      const { data } = await supa
+        .from("reports").select("id, source_fingerprint")
+        .eq("event_id", event_id).eq("report_type", report_type)
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      prior = (data as typeof prior) ?? null;
+      if (prior && prior.source_fingerprint === fingerprint) {
+        return jsonResponse({ ok: true, report: prior, unchanged: true });
+      }
+    }
+
     const admin = serviceClient();
     const voice = await voiceInstruction(admin, event.user_id);
 
@@ -153,21 +170,42 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: report, error: insErr } = await admin.from("reports").insert({
+    const row = {
       event_id,
       created_by: event.user_id,
       report_type,
       title: title ?? `${event.title}: Report`,
       content_json,
       content_markdown,
-    }).select().single();
-    if (insErr) return jsonResponse({ error: insErr.message }, 500);
+      source_fingerprint: isPlayer ? null : fingerprint,
+    };
+
+    // Coach report whose source changed: regenerate in place, no duplicate row.
+    // No prior (or player report): insert as before.
+    let report: unknown;
+    if (prior) {
+      const { data, error: upErr } = await admin.from("reports")
+        .update(row).eq("id", prior.id).select().single();
+      if (upErr) return jsonResponse({ error: upErr.message }, 500);
+      report = data;
+    } else {
+      const { data, error: insErr } = await admin.from("reports")
+        .insert(row).select().single();
+      if (insErr) return jsonResponse({ error: insErr.message }, 500);
+      report = data;
+    }
 
     return jsonResponse({ ok: true, report });
   } catch (e) {
     return jsonResponse({ error: String(e) }, 500);
   }
 });
+
+// Stable content hash of the report's source, used for change-detection.
+async function sha256(s: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 function safeParse(raw: string): Record<string, unknown> {
   try {

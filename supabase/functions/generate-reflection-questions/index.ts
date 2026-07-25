@@ -33,6 +33,15 @@ Deno.serve(async (req) => {
       .from("reflections").select("*").eq("id", reflection_id).single();
     if (error || !ref) return jsonResponse({ error: "Not found or not permitted" }, 403);
 
+    // Idempotent: if questions were already generated for this reflection, return
+    // them rather than inserting a duplicate set. These calls get retried, and a
+    // reflection tool that asks the same thing twice reads as not listening.
+    const { data: existingQ } = await supa
+      .from("followup_questions").select("*").eq("reflection_id", reflection_id);
+    if (existingQ && existingQ.length > 0) {
+      return jsonResponse({ ok: true, questions: existingQ, deduped: true });
+    }
+
     // Give the model the whole reflection so it can judge where detail is thin.
     const context = JSON.stringify({
       raw_transcript: ref.raw_transcript,
@@ -115,28 +124,10 @@ Deno.serve(async (req) => {
       options: q.options ?? [],
     }));
 
-    // Let long-term trends influence the reflection: surface reflective prompts
-    // from recurring insights on this event's team (up to 2), so a pattern the
-    // notes have been telling gets asked about here too.
-    const { data: ev } = await supa
-      .from("events").select("team_id").eq("id", ref.event_id).single();
-    if (ev?.team_id) {
-      const { data: trends } = await supa
-        .from("insights")
-        .select("reflective_prompt")
-        .eq("team_id", ev.team_id)
-        .not("reflective_prompt", "is", null)
-        .order("updated_at", { ascending: false })
-        .limit(2);
-      for (const t of trends ?? []) {
-        rows.push({
-          reflection_id,
-          question_text: t.reflective_prompt as string,
-          question_type: "text",
-          options: [],
-        });
-      }
-    }
+    // NOTE: insights are disabled for this dispatch (migration 0013). The old
+    // wire that appended up to two cross-session "recurring theme" prompts here
+    // has been removed: a per-session reflection draws only on THIS session.
+    // Cross-time linked questions return as the post-dispatch insights rebuild.
 
     const { data: inserted, error: insErr } = rows.length
       ? await admin.from("followup_questions").insert(rows).select()
