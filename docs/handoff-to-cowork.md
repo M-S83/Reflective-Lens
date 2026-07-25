@@ -1,23 +1,22 @@
-# Handoff — port this session's work into the product repo
+# Coach subsystem: inventory of the work, and what is left to deploy
 
 ## 0. What this is and where it lives
 
-All the work below is committed and pushed to:
+**The port is done.** This work was originally committed to `M-S83/Nordic` by
+mistake. All of it has since been cherry-picked into `M-S83/Reflective-Lens`,
+which is the product repo and the only one that matters from here. The commit
+hashes in section 1 are the original Nordic hashes, kept as provenance; the
+equivalent commits live on the Reflective Lens working branch with the same
+messages, in the same order.
 
-- **Repo:** `M-S83/Nordic`
-- **Branch:** `claude/football-coaching-backend-ami7cf`
-- **Tip commit:** `2ec7e8a`
+The previously deployed backend (per the 23 Jul runbook) was at **7 migrations /
+14 edge functions**. This work takes the codebase to **15 migrations / 16 edge
+functions**, plus 5 new shared modules, frontend changes, new docs, and a
+verification test suite.
 
-The deployed backend (per the 23 Jul runbook) is at **7 migrations / 14 edge
-functions**, deployed from **`M-S83/Reflective-Lens` (main)**. This session takes
-the codebase to **15 migrations / 16 edge functions**, plus 5 new shared modules,
-frontend changes, new docs, and a verification test suite.
-
-**Task for Cowork:** bring the product repo (`Reflective-Lens/main`, or whichever
-repo you deploy from) up to the state described here, then re-deploy the backend
-so the live Supabase project runs this code. If `Reflective-Lens` is a clean copy
-of `Nordic`, the simplest route is to merge/cherry-pick this branch; if they have
-diverged, apply file-by-file using the inventory in sections 2–6.
+**What is still outstanding:** re-deploy the backend so the live Supabase project
+runs this code. See section 7 for the deploy steps and section 9 for the parts
+that are deliberately unfinished.
 
 Scope of this session = **coach subsystem**. The player subsystem
 (`generate-player-summary`, the `player_report` branch of `generate-report`) was

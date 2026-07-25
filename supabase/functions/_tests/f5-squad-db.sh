@@ -8,7 +8,7 @@
 #   - generate-report roster: the squad for an event via event_attendance JOIN players.
 set -euo pipefail
 WORK="/var/tmp/rlpg_f5"; SOCK="$WORK/sock"
-BOOT="/tmp/claude-0/-home-user-Nordic/1c2ddf34-7cda-57c6-9002-fbc56433e208/scratchpad/bootstrap.sql"
+BOOT="${BOOT:-$(dirname "$0")/bootstrap.sql}"
 rm -rf "$WORK"; mkdir -p "$WORK/sock"
 cp "$BOOT" "$WORK/bootstrap.sql"
 cat >> "$WORK/bootstrap.sql" <<'SQL'

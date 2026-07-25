@@ -6,7 +6,7 @@
 # the removed report_access sharing path (0015) no longer grants access.
 set -euo pipefail
 WORK="/var/tmp/rlpg_rls"; SOCK="$WORK/sock"
-BOOT="/tmp/claude-0/-home-user-Nordic/1c2ddf34-7cda-57c6-9002-fbc56433e208/scratchpad/bootstrap.sql"
+BOOT="${BOOT:-$(dirname "$0")/bootstrap.sql}"
 rm -rf "$WORK"; mkdir -p "$WORK/sock"
 cp "$BOOT" "$WORK/bootstrap.sql"
 cat >> "$WORK/bootstrap.sql" <<'SQL'
