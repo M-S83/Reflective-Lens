@@ -21,6 +21,7 @@
 // =============================================================================
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { serviceClient } from "../_shared/clients.ts";
+import { timingSafeEqual } from "../_shared/crypto.ts";
 import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
 Deno.serve(async (req) => {
@@ -29,7 +30,7 @@ Deno.serve(async (req) => {
   try {
     const secret = Deno.env.get("PURGE_CRON_SECRET");
     const provided = req.headers.get("x-cron-secret");
-    if (!secret || provided !== secret) {
+    if (!secret || !provided || !timingSafeEqual(provided, secret)) {
       return jsonResponse({ error: "Forbidden" }, 403);
     }
 

@@ -1,5 +1,6 @@
 // Shared client helpers for Edge Functions (Deno runtime).
 import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
+import { timingSafeEqual } from "./crypto.ts";
 
 // A client scoped to the *calling user* — RLS applies. Use for reads/writes
 // that should respect the caller's permissions.
@@ -108,13 +109,6 @@ export interface Actor {
   viaCron: boolean;
 }
 
-function constantTimeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
-}
-
 export async function resolveActor(req: Request): Promise<Actor | null> {
   const admin = serviceClient();
   const secret = Deno.env.get("LEARNING_CRON_SECRET");
@@ -122,7 +116,7 @@ export async function resolveActor(req: Request): Promise<Actor | null> {
   const target = req.headers.get("x-target-user");
 
   // Cron/sweep path: trusted server call for a specific user.
-  if (secret && provided && target && constantTimeEqual(provided, secret)) {
+  if (secret && provided && target && timingSafeEqual(provided, secret)) {
     return { userId: target, read: admin, admin, viaCron: true };
   }
 

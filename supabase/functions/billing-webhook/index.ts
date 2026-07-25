@@ -17,6 +17,7 @@
 // authenticate the request by verifying Stripe's signature instead.
 // =============================================================================
 import { serviceClient } from "../_shared/clients.ts";
+import { timingSafeEqual } from "../_shared/crypto.ts";
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
@@ -111,14 +112,6 @@ async function verifyStripeSignature(payload: string, header: string, secret: st
   const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${t}.${payload}`));
   const expected = [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, "0")).join("");
   return timingSafeEqual(expected, v1);
-}
-
-// Constant-time comparison to avoid leaking the signature via timing.
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
 }
 
 function unixToIso(seconds: number | null | undefined): string | null {

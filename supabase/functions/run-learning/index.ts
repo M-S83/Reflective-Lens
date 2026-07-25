@@ -16,6 +16,7 @@
 // =============================================================================
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { serviceClient } from "../_shared/clients.ts";
+import { timingSafeEqual } from "../_shared/crypto.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -23,7 +24,7 @@ Deno.serve(async (req) => {
   try {
     const secret = Deno.env.get("LEARNING_CRON_SECRET");
     const provided = req.headers.get("x-cron-secret");
-    if (!secret || provided !== secret) {
+    if (!secret || !provided || !timingSafeEqual(provided, secret)) {
       return jsonResponse({ error: "Forbidden" }, 403);
     }
 
