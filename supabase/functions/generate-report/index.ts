@@ -13,6 +13,7 @@ import { callClaude, MODELS, serviceClient, userClient } from "../_shared/client
 import { voiceInstruction } from "../_shared/voice.ts";
 import { isUnder18, safeName, safeNameMap } from "../_shared/names.ts";
 import { firstJsonObject } from "../_shared/json.ts";
+import { type MdBlock, renderReport } from "../_shared/markdown.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -296,50 +297,46 @@ async function sha256(s: string): Promise<string> {
 // Coach single-session report (F4). Aims kept in full, including "stated, not
 // recorded", and every section drawn only from what the coach actually said.
 function coachMarkdown(title: string, c: any): string {
-  const lines: string[] = [`# ${title}`];
-  if (c.headline) lines.push(`\n_${c.headline}_`);
+  const blocks: MdBlock[] = [];
   if (c.aims_review?.length) {
     const mark = (st: string) => st === "recorded" ? "✓" : st === "partly" ? "~" : "○";
-    lines.push(`\n## What you hoped to see`);
-    for (const a of c.aims_review) {
-      const flag = a.status === "stated_not_recorded" ? " (stated, not recorded)" : "";
-      lines.push(`- ${mark(a.status)} **${a.aim}**${flag}${a.note ? `: ${a.note}` : ""}`);
-    }
+    blocks.push({
+      t: "checklist",
+      heading: "What you hoped to see",
+      items: c.aims_review.map((a: any) => ({
+        mark: mark(a.status),
+        label: a.aim,
+        suffix: a.status === "stated_not_recorded" ? " (stated, not recorded)" : "",
+        note: a.note,
+      })),
+    });
   }
-  const block = (h: string, arr?: string[]) => {
-    if (arr?.length) { lines.push(`\n## ${h}`); for (const p of arr) lines.push(`- ${p}`); }
+  const bl = (h: string, arr?: string[]) => {
+    if (arr?.length) blocks.push({ t: "bullets", heading: h, items: arr });
   };
-  block("What went well", c.what_went_well);
-  block("What did not work", c.what_did_not_work);
-  block("In this session", c.session_patterns);
-  block("Action points", c.action_points);
-  block("Noted for next", c.noted_for_next);
-  block("Evidence of learning", c.learning_evidence);
-  return lines.join("\n");
+  bl("What went well", c.what_went_well);
+  bl("What did not work", c.what_did_not_work);
+  bl("In this session", c.session_patterns);
+  bl("Action points", c.action_points);
+  bl("Noted for next", c.noted_for_next);
+  bl("Evidence of learning", c.learning_evidence);
+  return renderReport(title, c.headline, blocks);
 }
 
+// Player per-game report (unchanged output; composed from shared blocks).
 function toMarkdown(title: string, c: any): string {
-  const lines: string[] = [`# ${title}`];
-  if (c.headline) lines.push(`\n_${c.headline}_`);
-  for (const s of c.sections ?? []) {
-    lines.push(`\n## ${s.heading}`);
-    for (const p of s.points ?? []) lines.push(`- ${p}`);
-  }
+  const blocks: MdBlock[] = [{ t: "sections", sections: c.sections ?? [] }];
   if (c.hoped_to_see?.length) {
-    const mark = (st: string) =>
-      st === "showed_up" ? "✓" : st === "partly" ? "~" : "✗";
-    lines.push(`\n## What you hoped to see`);
-    for (const h of c.hoped_to_see) {
-      lines.push(`- ${mark(h.status)} **${h.item}**${h.note ? `: ${h.note}` : ""}`);
-    }
+    const mark = (st: string) => st === "showed_up" ? "✓" : st === "partly" ? "~" : "✗";
+    blocks.push({
+      t: "checklist",
+      heading: "What you hoped to see",
+      items: c.hoped_to_see.map((h: any) => ({ mark: mark(h.status), label: h.item, note: h.note })),
+    });
   }
-  if (c.patterns?.length) {
-    lines.push(`\n## Patterns`);
-    for (const p of c.patterns) lines.push(`- ${p}`);
-  }
+  if (c.patterns?.length) blocks.push({ t: "bullets", heading: "Patterns", items: c.patterns });
   if (c.suggested_next_focus?.length) {
-    lines.push(`\n## Noted for next`);
-    for (const p of c.suggested_next_focus) lines.push(`- ${p}`);
+    blocks.push({ t: "bullets", heading: "Noted for next", items: c.suggested_next_focus });
   }
-  return lines.join("\n");
+  return renderReport(title, c.headline, blocks);
 }

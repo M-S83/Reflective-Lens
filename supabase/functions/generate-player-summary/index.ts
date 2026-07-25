@@ -18,6 +18,7 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callClaude, MODELS, serviceClient, userClient } from "../_shared/clients.ts";
 import { voiceInstruction } from "../_shared/voice.ts";
+import { type MdBlock, renderReport } from "../_shared/markdown.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -142,18 +143,14 @@ function safeParse(raw: string): Record<string, unknown> {
 }
 
 function toMarkdown(title: string, c: any): string {
-  const lines: string[] = [`# ${title}`];
-  if (c.headline) lines.push(`\n_${c.headline}_`);
-  if (c.story) lines.push(`\n${c.story}`);
-  const block = (h: string, arr?: string[]) => {
-    if (arr?.length) {
-      lines.push(`\n## ${h}`);
-      for (const p of arr) lines.push(`- ${p}`);
-    }
+  const blocks: MdBlock[] = [];
+  if (c.story) blocks.push({ t: "para", text: c.story });
+  const bl = (h: string, arr?: string[]) => {
+    if (arr?.length) blocks.push({ t: "bullets", heading: h, items: arr });
   };
-  block("What keeps showing in your game", c.keeps_showing);
-  block("What you keep working on", c.keeps_working_on);
-  block("What's shifted", c.whats_shifted);
-  block("Focus ahead", c.focus_ahead);
-  return lines.join("\n");
+  bl("What keeps showing in your game", c.keeps_showing);
+  bl("What you keep working on", c.keeps_working_on);
+  bl("What's shifted", c.whats_shifted);
+  bl("Focus ahead", c.focus_ahead);
+  return renderReport(title, c.headline, blocks);
 }

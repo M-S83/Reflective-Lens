@@ -20,6 +20,7 @@ import { callClaude, MODELS, serviceClient, userClient } from "../_shared/client
 import { voiceInstruction } from "../_shared/voice.ts";
 import { isUnder18, safeNameMap } from "../_shared/names.ts";
 import { firstJsonObject } from "../_shared/json.ts";
+import { type MdBlock, renderReport } from "../_shared/markdown.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -199,32 +200,19 @@ Deno.serve(async (req) => {
 });
 
 function toMarkdown(title: string, record: any, c: any): string {
-  const lines: string[] = [`# ${title}`];
-  if (c.headline) lines.push(`\n_${c.headline}_`);
-  lines.push(
-    `\n**Record:** ${record.wins}W ${record.draws}D ${record.losses}L ` +
-    `· ${record.gf}-${record.ga} goals`,
-  );
-  if (c.results_summary) lines.push(`\n${c.results_summary}`);
-  for (const s of c.sections ?? []) {
-    lines.push(`\n## ${s.heading}`);
-    for (const p of s.points ?? []) lines.push(`- ${p}`);
-  }
-  if (c.player_highlights?.length) {
-    lines.push(`\n## Player highlights`);
-    for (const p of c.player_highlights) lines.push(`- ${p}`);
-  }
-  if (c.recurring_themes?.length) {
-    lines.push(`\n## Recurring themes`);
-    for (const p of c.recurring_themes) lines.push(`- ${p}`);
-  }
-  if (c.training_to_match?.length) {
-    lines.push(`\n## Training ↔ match`);
-    for (const p of c.training_to_match) lines.push(`- ${p}`);
-  }
-  if (c.focus_ahead?.length) {
-    lines.push(`\n## Focus ahead`);
-    for (const p of c.focus_ahead) lines.push(`- ${p}`);
-  }
-  return lines.join("\n");
+  const blocks: MdBlock[] = [{
+    t: "para",
+    text: `**Record:** ${record.wins}W ${record.draws}D ${record.losses}L ` +
+      `· ${record.gf}-${record.ga} goals`,
+  }];
+  if (c.results_summary) blocks.push({ t: "para", text: c.results_summary });
+  blocks.push({ t: "sections", sections: c.sections ?? [] });
+  const bl = (h: string, arr?: string[]) => {
+    if (arr?.length) blocks.push({ t: "bullets", heading: h, items: arr });
+  };
+  bl("Player highlights", c.player_highlights);
+  bl("Recurring themes", c.recurring_themes);
+  bl("Training ↔ match", c.training_to_match);
+  bl("Focus ahead", c.focus_ahead);
+  return renderReport(title, c.headline, blocks);
 }
