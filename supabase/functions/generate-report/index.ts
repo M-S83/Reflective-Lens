@@ -12,6 +12,7 @@ import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callClaude, MODELS, serviceClient, userClient } from "../_shared/clients.ts";
 import { voiceInstruction } from "../_shared/voice.ts";
 import { isUnder18, safeName, safeNameMap } from "../_shared/names.ts";
+import { firstJsonObject } from "../_shared/json.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -208,7 +209,7 @@ Deno.serve(async (req) => {
       log: { admin, userId: event.user_id, clubId: event.club_id, teamId: event.team_id },
     });
 
-    const content_json = safeParse(raw);
+    const content_json = firstJsonObject(raw);
     const c = content_json as Record<string, unknown>;
     const heading = title ?? `${event.title}: Report`;
 
@@ -290,15 +291,6 @@ Deno.serve(async (req) => {
 async function sha256(s: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function safeParse(raw: string): Record<string, unknown> {
-  try {
-    const m = raw.match(/\{[\s\S]*\}/);
-    return m ? JSON.parse(m[0]) : {};
-  } catch {
-    return {};
-  }
 }
 
 // Coach single-session report (F4). Aims kept in full, including "stated, not

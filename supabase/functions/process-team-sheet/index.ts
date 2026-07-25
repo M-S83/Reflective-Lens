@@ -7,6 +7,7 @@
 // =============================================================================
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callClaude, MODELS, serviceClient, userClient } from "../_shared/clients.ts";
+import { firstJsonArray } from "../_shared/json.ts";
 
 interface ExtractedPlayer {
   shirt_number: number | null;
@@ -55,7 +56,7 @@ Deno.serve(async (req) => {
       log: { admin, userId: sheet.uploaded_by },
     });
 
-    const players = safeParse(raw);
+    const players = firstJsonArray<ExtractedPlayer>(raw);
 
     if (players.length) {
       const rows = players.map((p) => ({ team_sheet_id, ...p }));
@@ -79,15 +80,6 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: String(e) }, 500);
   }
 });
-
-function safeParse(raw: string): ExtractedPlayer[] {
-  try {
-    const match = raw.match(/\[[\s\S]*\]/);
-    return match ? JSON.parse(match[0]) : [];
-  } catch {
-    return [];
-  }
-}
 
 // Placeholder OCR. Replace with a vision model or OCR service.
 async function ocr(_file: Blob): Promise<string> {

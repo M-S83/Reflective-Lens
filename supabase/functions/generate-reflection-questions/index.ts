@@ -14,6 +14,7 @@ import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callClaude, MODELS, serviceClient, userClient } from "../_shared/clients.ts";
 import { voiceInstruction } from "../_shared/voice.ts";
 import { reflectionGrounding } from "../_shared/knowledge.ts";
+import { firstJsonArray } from "../_shared/json.ts";
 
 interface GeneratedQuestion {
   question_text: string;
@@ -115,7 +116,7 @@ Deno.serve(async (req) => {
       log: { admin, userId: ref.user_id },
     });
 
-    const questions = safeParse(raw).slice(0, max_questions);
+    const questions = firstJsonArray<GeneratedQuestion>(raw).slice(0, max_questions);
 
     const rows = questions.map((q) => ({
       reflection_id,
@@ -139,15 +140,6 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: String(e) }, 500);
   }
 });
-
-function safeParse(raw: string): GeneratedQuestion[] {
-  try {
-    const m = raw.match(/\[[\s\S]*\]/);
-    return m ? JSON.parse(m[0]) : [];
-  } catch {
-    return [];
-  }
-}
 
 // Turn the user's own answer-vs-skip history into a steer for the model. With
 // enough samples, name the kinds they keep skipping (so we ask fewer) and the

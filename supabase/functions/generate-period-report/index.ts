@@ -19,6 +19,7 @@ import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callClaude, MODELS, serviceClient, userClient } from "../_shared/clients.ts";
 import { voiceInstruction } from "../_shared/voice.ts";
 import { isUnder18, safeNameMap } from "../_shared/names.ts";
+import { firstJsonObject } from "../_shared/json.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -151,7 +152,7 @@ Deno.serve(async (req) => {
       log: { admin, userId: team.created_by, clubId: team.club_id, teamId: team.id },
     });
 
-    const content_json = safeParse(raw);
+    const content_json = firstJsonObject(raw);
     const periodLabel = report_type === "season_report"
       ? "Season"
       : report_type === "weekly_report"
@@ -196,15 +197,6 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: String(e) }, 500);
   }
 });
-
-function safeParse(raw: string): Record<string, unknown> {
-  try {
-    const m = raw.match(/\{[\s\S]*\}/);
-    return m ? JSON.parse(m[0]) : {};
-  } catch {
-    return {};
-  }
-}
 
 function toMarkdown(title: string, record: any, c: any): string {
   const lines: string[] = [`# ${title}`];

@@ -14,6 +14,7 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callClaude, MODELS, serviceClient, userClient } from "../_shared/clients.ts";
 import { voiceInstruction } from "../_shared/voice.ts";
+import { firstJsonArray } from "../_shared/json.ts";
 
 interface ReviewItem {
   item: string;
@@ -72,7 +73,7 @@ Deno.serve(async (req) => {
       log: { admin, userId: ref.user_id },
     });
 
-    const review: ReviewItem[] = safeParse(raw);
+    const review: ReviewItem[] = firstJsonArray<ReviewItem>(raw);
 
     // There was at least one aim to review, so an empty result means the reply
     // was unusable (a parse failure). Never wipe a prior review to empty: keep
@@ -113,12 +114,3 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: String(e) }, 500);
   }
 });
-
-function safeParse(raw: string): ReviewItem[] {
-  try {
-    const m = raw.match(/\[[\s\S]*\]/);
-    return m ? JSON.parse(m[0]) : [];
-  } catch {
-    return [];
-  }
-}

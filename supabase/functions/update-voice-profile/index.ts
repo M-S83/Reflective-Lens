@@ -13,6 +13,7 @@
 // =============================================================================
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callClaude, MODELS, recordLearning, resolveActor } from "../_shared/clients.ts";
+import { firstJsonObject } from "../_shared/json.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -64,7 +65,11 @@ Deno.serve(async (req) => {
       log: { admin, userId },
     });
 
-    const parsed = safeParse(raw);
+    const parsed = firstJsonObject<{
+      style_summary?: string;
+      glossary?: string[];
+      language_level?: string;
+    }>(raw);
 
     // A bad or empty reply must not overwrite a good profile with nulls. Only
     // write when we actually learned a style; otherwise keep the existing profile
@@ -105,16 +110,3 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: String(e) }, 500);
   }
 });
-
-function safeParse(raw: string): {
-  style_summary?: string;
-  glossary?: string[];
-  language_level?: string;
-} {
-  try {
-    const m = raw.match(/\{[\s\S]*\}/);
-    return m ? JSON.parse(m[0]) : {};
-  } catch {
-    return {};
-  }
-}

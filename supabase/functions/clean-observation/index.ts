@@ -13,6 +13,7 @@ import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callClaude, MODELS, serviceClient, userClient } from "../_shared/clients.ts";
 import { voiceInstruction } from "../_shared/voice.ts";
 import { canonicalTags } from "../_shared/knowledge.ts";
+import { firstJsonObject } from "../_shared/json.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -55,7 +56,12 @@ Deno.serve(async (req) => {
       log: { admin, userId: obs.user_id, teamId: obs.team_id },
     });
 
-    const parsed = safeParse(raw);
+    const parsed = firstJsonObject<{
+      cleaned_note?: string;
+      tags?: string[];
+      sentiment?: "positive" | "concern" | "neutral";
+      phase_of_play?: string | null;
+    }>(raw);
 
     // Attribute by shirt number using the CANONICAL squad: event_attendance
     // joined to players. (team_sheet_players is no longer relied on for this.)
@@ -84,17 +90,3 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: String(e) }, 500);
   }
 });
-
-function safeParse(raw: string): {
-  cleaned_note?: string;
-  tags?: string[];
-  sentiment?: "positive" | "concern" | "neutral";
-  phase_of_play?: string | null;
-} {
-  try {
-    const m = raw.match(/\{[\s\S]*\}/);
-    return m ? JSON.parse(m[0]) : {};
-  } catch {
-    return {};
-  }
-}
