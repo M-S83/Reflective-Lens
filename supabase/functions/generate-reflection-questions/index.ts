@@ -44,16 +44,22 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: true, questions: existingQ, deduped: true });
     }
 
-    // Give the model the whole reflection so it can judge where detail is thin.
-    const context = JSON.stringify({
-      raw_transcript: ref.raw_transcript,
-      summary: ref.summary,
+    // Give the model the reflection so it can judge where detail is thin.
+    // F26: for text reflections raw_transcript and summary are the identical
+    // string, so the coach context sends the reflection text once. The player
+    // context is left unchanged (byte-identical payload).
+    const structured = {
       what_went_well: ref.what_went_well,
       what_did_not_work: ref.what_did_not_work,
       learning_evidence: ref.learning_evidence,
       action_points: ref.action_points,
       suggested_next_focus: ref.suggested_next_focus,
-    });
+    };
+    const context = JSON.stringify(
+      ref.reflection_type === "player"
+        ? { raw_transcript: ref.raw_transcript, summary: ref.summary, ...structured }
+        : { reflection: ref.summary ?? ref.raw_transcript ?? "", ...structured },
+    );
 
     const admin = serviceClient();
     const voice = await voiceInstruction(admin, ref.user_id);
