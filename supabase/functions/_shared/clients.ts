@@ -260,5 +260,26 @@ export async function callClaude(opts: {
     });
   }
 
-  return data.content?.[0]?.text ?? "";
+  // Anthropic returns an ARRAY of content blocks. Read every text block, not
+  // just the first: a reply that leads with a non-text block (a thinking block,
+  // say) has real prose sitting behind it, and taking [0].text alone throws it
+  // away and returns "". That surfaces to the user as a blank report from a
+  // call that actually succeeded, which is indistinguishable from the model
+  // having nothing to say.
+  const blocks: Array<{ type?: string; text?: string }> = Array.isArray(data.content) ? data.content : [];
+  const text = blocks.filter((b) => b?.type === "text").map((b) => b.text ?? "").join("").trim();
+
+  if (!text) {
+    // Genuinely empty is worth seeing in the logs, and separates "the model said
+    // nothing" from "we dropped what it said". Block types and stop_reason only,
+    // never the reply body: it carries note text and player names (youth PII).
+    console.error("callClaude: no text in reply", {
+      feature: opts.feature ?? null,
+      model,
+      stop_reason: data.stop_reason ?? null,
+      block_types: blocks.map((b) => b?.type ?? "unknown"),
+    });
+  }
+
+  return text;
 }
