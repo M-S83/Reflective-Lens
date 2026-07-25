@@ -40,9 +40,16 @@ git pull origin main
 > <https://git-scm.com/download/win>, click through the installer with the
 > default options, then close and reopen PowerShell and try again.
 
+> **If your folder came from a downloaded ZIP** rather than `git clone`, `git
+> pull` will fail with "not a git repository". A ZIP is a frozen snapshot, so it
+> cannot fetch new code. Check with `git status`. If that is your situation,
+> clone fresh using the first block above, then copy your existing `.env` across
+> into the new folder.
+
 To confirm you have the new version, run `ls supabase\migrations`. You should
 see files numbered up to `0015_reports_owner_only.sql`. If the highest number
-you see is `0007`, the `git pull` did not work. Stop here.
+you see is `0007`, you are still on the old code and the publish would achieve
+nothing. Stop here and sort that first.
 
 ## Step 2: Install the Supabase CLI
 
@@ -94,9 +101,36 @@ It may ask for your database password. That is the one you set when you first
 created the project. If you have lost it, you can reset it in the dashboard
 under **Settings**, then **Database**, then **Reset database password**.
 
-## Step 4: Create your secrets file
+## Step 4: Your secrets file
 
-The app needs your API keys. Make the file:
+### If you already have a `.env`
+
+Keep it. You do not need to make a new one. It only has to be sitting in the
+repo folder, right next to `.env.example`, and the publish script will pick it
+up on its own.
+
+Two things to know:
+
+- **Spaces after the `=` are fine.** `KEY= sk-ant-...` and `KEY=sk-ant-...` both
+  work, because `deploy.ps1` trims them.
+- **All four required keys must be present.** Older `.env` files are often
+  missing `PURGE_CRON_SECRET`, which was added later for the account deletion
+  sweep. Open yours and check.
+
+```powershell
+notepad .env
+```
+
+If `PURGE_CRON_SECRET` is not in there, generate one and add it as a new line:
+
+```powershell
+-join ((1..24) | ForEach-Object { '{0:x2}' -f (Get-Random -Max 256) })
+```
+
+Then skip to step 5. If any of the four are missing, `deploy.ps1` will tell you
+which ones before it changes anything.
+
+### If you are starting from scratch
 
 ```powershell
 copy .env.example .env
