@@ -74,6 +74,9 @@ Deno.serve(async (req) => {
     const statName = (s: any) =>
       nameMap[s.player_id] ?? safeName({ display_name: s.players?.display_name }, under18);
 
+    const isPlayer = report_type === "player_report" ||
+      reflections?.[0]?.reflection_type === "player";
+
     const payload = JSON.stringify({
       event: {
         type: event.event_type, title: event.title, date: event.event_date,
@@ -88,12 +91,18 @@ Deno.serve(async (req) => {
         note: o.cleaned_note ?? o.raw_note, tags: o.tags, sentiment: o.sentiment,
         phase: o.phase_of_play,
       })),
+      // F24: the coach report needs only the reflection TEXT (enriched summary,
+      // else summary, else the raw transcript for voice reflections). The whole
+      // row - a duplicate transcript, the AI-generated fields written back by a
+      // prior report, ids and timestamps - is not sent. The player report keeps
+      // the full row unchanged (byte-identical payload).
       reflection: reflections?.[0]
-        ? {
-          ...reflections[0],
-          // Use the context-enriched summary if the coach added any.
-          summary: reflections[0].enriched_summary ?? reflections[0].summary,
-        }
+        ? (isPlayer
+          ? { ...reflections[0], summary: reflections[0].enriched_summary ?? reflections[0].summary }
+          : {
+            summary: reflections[0].enriched_summary ?? reflections[0].summary ??
+              reflections[0].raw_transcript ?? null,
+          })
         : null,
       // The reflective questions and the person's own answers.
       reflective_qa,
@@ -114,9 +123,6 @@ Deno.serve(async (req) => {
         status: a.status, selection: a.selection,
       })),
     });
-
-    const isPlayer = report_type === "player_report" ||
-      reflections?.[0]?.reflection_type === "player";
 
     // Step 6 runs on a COMPLETE session only. A coach report needs a reflection
     // with content: never generate on partial input (aims and notes alone).
