@@ -92,11 +92,35 @@ Deno.serve(async (req) => {
     const isPlayer = report_type === "player_report" ||
       reflections?.[0]?.reflection_type === "player";
 
-    // Change-detection (coach reports only): if a report already exists for this
-    // event + type and the source (aims, notes, reflection, answers) has not
-    // changed, return it rather than spending a model call and duplicating a row.
-    // Player per-game reports are out of scope this pass and keep old behaviour.
-    const fingerprint = await sha256(payload);
+    // Step 6 runs on a COMPLETE session only. A coach report needs a reflection
+    // with content: never generate on partial input (aims and notes alone).
+    if (!isPlayer) {
+      const r = reflections?.[0];
+      const hasReflection = !!(r && (((r.summary ?? "") as string).trim() ||
+        ((r.raw_transcript ?? "") as string).trim()));
+      if (!hasReflection) {
+        return jsonResponse(
+          { error: "A reflection is needed before a report. Add your reflection first." },
+          422,
+        );
+      }
+    }
+
+    // Change-detection (coach reports only): fingerprint ONLY what the coach
+    // supplied (aims, notes, reflection, answers, result), not any AI-derived
+    // field, so folding the structured summary back into the reflection does not
+    // itself count as a change. Unchanged source returns the existing report;
+    // changed regenerates in place. Player per-game reports keep old behaviour.
+    const sourceForHash = JSON.stringify({
+      aims: event.hoping_to_see ?? [],
+      focus: event.focus_area ?? null,
+      purpose: event.purpose ?? null,
+      notes: (observations ?? []).map((o) => o.cleaned_note ?? o.raw_note),
+      reflection: reflections?.[0]?.raw_transcript ?? reflections?.[0]?.summary ?? null,
+      answers: reflective_qa,
+      result: matchDetails ?? null,
+    });
+    const fingerprint = await sha256(sourceForHash);
     let prior: { id: string; source_fingerprint: string | null } | null = null;
     if (!isPlayer) {
       const { data } = await supa
@@ -129,15 +153,29 @@ Deno.serve(async (req) => {
             "context from player_game (position(s), whether they started or " +
             "featured as a game changer, the result) but never invent stats. If " +
             "they came off the bench, call it a \"game changer\" (their word for " +
-            "it) — never \"sub\" or \"came on\". "
-          : "Include a \"hoped_to_see\" section that reflects each thing the coach " +
-            "hoped to see back against the notes (what showed up, and what wasn't " +
-            "observed — plainly). For next-focus items, reflect back what the " +
-            "coach noted for next time (and their answers to the reflective " +
-            "questions) — do not invent your own recommendations. ") +
-        'Return ONLY JSON with keys: "headline" (string), "sections" (array of ' +
-        '{heading, points: string[]}), "hoped_to_see" (array of {item, status, ' +
-        'note}), "patterns" (string[]), "suggested_next_focus" (string[]).' +
+            "it) — never \"sub\" or \"came on\". " +
+            'Return ONLY JSON with keys: "headline" (string), "sections" (array ' +
+            'of {heading, points: string[]}), "hoped_to_see" (array of {item, ' +
+            'status, note}), "patterns" (string[]), "suggested_next_focus" ' +
+            "(string[])."
+          : "This is a COACH'S single-session report. Draw ONLY on what the coach " +
+            "provided for THIS session: the aims, the notes captured, their " +
+            "reflection, and their answers to the reflective questions. If " +
+            "something was not raised, do NOT mention it. Any field with no " +
+            "support MUST be an empty array: never infer, never invent, never fill " +
+            "a gap. This is a SINGLE session: do not reference other sessions, " +
+            "form over time, or trends (those belong in the period reports). " +
+            "Review each aim the coach hoped to see against the notes and give it " +
+            "a status: \"recorded\" (a note clearly relates), \"partly\" (only " +
+            "loosely), or \"stated_not_recorded\" (no note touches it). Keep EVERY " +
+            "aim, including stated_not_recorded; never drop one. For noted_for_next, " +
+            "reflect back only what the coach noted for next time and their own " +
+            "answers: add no recommendations of your own. " +
+            'Return ONLY JSON with keys: "headline" (string), "aims_review" (array ' +
+            'of {aim, status, note}), "what_went_well" (string[]), ' +
+            '"what_did_not_work" (string[]), "action_points" (string[]), ' +
+            '"noted_for_next" (string[]), "learning_evidence" (string[]), ' +
+            '"session_patterns" (string[], patterns WITHIN this one session only).') +
         voice,
       prompt: `Report type: ${report_type}\n\nData:\n${payload}`,
       maxTokens: 4096,
@@ -147,20 +185,29 @@ Deno.serve(async (req) => {
     });
 
     const content_json = safeParse(raw);
-    // Never store a blank report. If the model didn't return usable structured
-    // JSON (empty parse, prose, or a truncated reply), surface its own text so
-    // the report is always viewable, and log the raw reply for debugging.
     const c = content_json as Record<string, unknown>;
-    const structured = !!(
-      (Array.isArray(c.sections) && c.sections.length) ||
-      c.headline ||
-      (Array.isArray(c.patterns) && c.patterns.length) ||
-      (Array.isArray(c.hoped_to_see) && c.hoped_to_see.length)
-    );
-    const content_markdown = structured
-      ? toMarkdown(title ?? event.title, content_json)
-      : `# ${title ?? event.title}\n\n${(raw ?? "").trim() ||
-          "_The report came back empty. Please try generating it again._"}`;
+    const heading = title ?? `${event.title}: Report`;
+
+    // Never store a blank report. Structured shape differs coach vs player.
+    const structured = isPlayer
+      ? !!(
+        (Array.isArray(c.sections) && c.sections.length) || c.headline ||
+        (Array.isArray(c.patterns) && c.patterns.length) ||
+        (Array.isArray(c.hoped_to_see) && c.hoped_to_see.length)
+      )
+      : !!(
+        c.headline ||
+        (Array.isArray(c.aims_review) && c.aims_review.length) ||
+        (Array.isArray(c.what_went_well) && c.what_went_well.length) ||
+        (Array.isArray(c.what_did_not_work) && c.what_did_not_work.length) ||
+        (Array.isArray(c.noted_for_next) && c.noted_for_next.length)
+      );
+    const content_markdown = !structured
+      ? `# ${heading}\n\n${(raw ?? "").trim() ||
+          "_The report came back empty. Please try generating it again._"}`
+      : isPlayer
+      ? toMarkdown(heading, content_json)
+      : coachMarkdown(heading, content_json);
     if (!structured) {
       // Never log the reply body: it contains player names and note text (youth
       // PII). Length + event id are enough to spot and investigate the failure.
@@ -170,11 +217,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    // F4: fold the structured summary back into the reflection so the period
+    // report (which aggregates these fields) has real data. Coach only, and only
+    // when the reply was usable (never overwrite good content with empty).
+    if (!isPlayer && structured && reflections?.[0]?.id) {
+      await admin.from("reflections").update({
+        what_went_well: Array.isArray(c.what_went_well) ? c.what_went_well : [],
+        what_did_not_work: Array.isArray(c.what_did_not_work) ? c.what_did_not_work : [],
+        action_points: Array.isArray(c.action_points) ? c.action_points : [],
+        suggested_next_focus: Array.isArray(c.noted_for_next) ? c.noted_for_next : [],
+        learning_evidence: Array.isArray(c.learning_evidence) ? c.learning_evidence : [],
+        hoped_to_see_review: Array.isArray(c.aims_review) ? c.aims_review : [],
+      }).eq("id", reflections[0].id);
+    }
+
     const row = {
       event_id,
       created_by: event.user_id,
       report_type,
-      title: title ?? `${event.title}: Report`,
+      title: heading,
       content_json,
       content_markdown,
       source_fingerprint: isPlayer ? null : fingerprint,
@@ -214,6 +275,31 @@ function safeParse(raw: string): Record<string, unknown> {
   } catch {
     return {};
   }
+}
+
+// Coach single-session report (F4). Aims kept in full, including "stated, not
+// recorded", and every section drawn only from what the coach actually said.
+function coachMarkdown(title: string, c: any): string {
+  const lines: string[] = [`# ${title}`];
+  if (c.headline) lines.push(`\n_${c.headline}_`);
+  if (c.aims_review?.length) {
+    const mark = (st: string) => st === "recorded" ? "✓" : st === "partly" ? "~" : "○";
+    lines.push(`\n## What you hoped to see`);
+    for (const a of c.aims_review) {
+      const flag = a.status === "stated_not_recorded" ? " (stated, not recorded)" : "";
+      lines.push(`- ${mark(a.status)} **${a.aim}**${flag}${a.note ? `: ${a.note}` : ""}`);
+    }
+  }
+  const block = (h: string, arr?: string[]) => {
+    if (arr?.length) { lines.push(`\n## ${h}`); for (const p of arr) lines.push(`- ${p}`); }
+  };
+  block("What went well", c.what_went_well);
+  block("What did not work", c.what_did_not_work);
+  block("In this session", c.session_patterns);
+  block("Action points", c.action_points);
+  block("Noted for next", c.noted_for_next);
+  block("Evidence of learning", c.learning_evidence);
+  return lines.join("\n");
 }
 
 function toMarkdown(title: string, c: any): string {
