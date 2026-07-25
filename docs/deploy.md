@@ -4,6 +4,10 @@ Stand up a live Supabase project (database + edge functions + secrets) so there'
 a working API to build the frontend against. ~15 minutes, mostly copy-paste.
 Everything here has been validated against PostgreSQL 16.
 
+> **On Windows, or want the non-technical version?** Follow
+> [`deploy-windows.md`](./deploy-windows.md) instead. Same ground, step by step,
+> using `scripts/deploy.ps1` in place of the bash script.
+
 ## 0. What you need
 
 - A [Supabase](https://supabase.com) account and a **new project** (note the
