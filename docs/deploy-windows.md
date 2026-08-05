@@ -242,5 +242,6 @@ repo. The most common ones:
 | `git` / `supabase` is not recognised | The tool is not installed, or PowerShell needs reopening after installing it. |
 | `Missing .env` | Step 4 did not happen, or the file got saved as `.env.txt`. In Notepad use Save As, and set "Save as type" to "All Files". |
 | `failed to connect` on `db push` | Wrong project reference or database password. Redo step 3. |
+| `connection timeout` or `SUPABASE_DB_PASSWORD` on `db push` | Linked and logged in fine, but it could not reach the database. Run `$env:SUPABASE_DB_PASSWORD = "your-database-password"` then publish again. Check the project is not paused. |
 | Migration errors mentioning a table that already exists | The database is part-way through an older publish. Bring the message back rather than guessing. |
 | Reports come back empty or error | Usually a missing or mistyped `ANTHROPIC_API_KEY`. Check step 4. |
