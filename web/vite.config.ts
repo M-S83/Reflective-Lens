@@ -13,7 +13,7 @@ export default defineConfig({
       manifest: {
         name: "Reflective Lens",
         short_name: "Reflective Lens",
-        description: "See your coaching clearly — reflect, don't judge.",
+        description: "See your coaching clearly. Reflect, don't judge.",
         theme_color: "#123a2a",
         background_color: "#f6f5ef",
         display: "standalone",
