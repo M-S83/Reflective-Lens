@@ -149,7 +149,9 @@ export async function recentEvents(): Promise<EventRow[]> {
 }
 
 export async function createEvent(input: {
-  team_id: string; club_id: string; event_type: EventType; title: string;
+  // Both nullable: a session does not have to belong to a team (a one-to-one,
+  // a goalkeeping block), and without a team there is no club either.
+  team_id: string | null; club_id: string | null; event_type: EventType; title: string;
   custom_type?: string;
   event_date: string; opposition: string; focus_area: string; purpose: string;
   hoping_to_see: string[];
@@ -158,7 +160,7 @@ export async function createEvent(input: {
   const { data, error } = await supabase
     .from("events")
     .insert({
-      user_id: me, team_id: input.team_id, club_id: input.club_id,
+      user_id: me, team_id: input.team_id || null, club_id: input.club_id || null,
       event_type: input.event_type, title: input.title,
       // Only meaningful for 'other'; null everywhere else keeps the column honest.
       custom_type: input.event_type === "other" ? (input.custom_type?.trim() || null) : null,

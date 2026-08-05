@@ -29,13 +29,21 @@ export default function EventDetail() {
   if (!ev) return <Loading />;
 
   const isMatch = ev.event_type === "match" || ev.event_type === "tournament";
+  // Squad and Result only exist when there is a squad to speak of. A
+  // one-to-one or a goalkeeping session has no team, and a tab that only ever
+  // says "no team attached" is worse than no tab.
   const tabs: { key: Section; label: string }[] = [
-    { key: "squad", label: isMatch ? "Squad" : "Attendance" },
-    ...(isMatch ? [{ key: "result" as Section, label: "Result" }] : []),
+    ...(ev.team_id ? [{ key: "squad" as Section, label: isMatch ? "Squad" : "Attendance" }] : []),
+    ...(isMatch && ev.team_id ? [{ key: "result" as Section, label: "Result" }] : []),
     { key: "notes", label: "Notes" },
     { key: "reflect", label: "Reflect" },
     { key: "report", label: "Report" },
   ];
+
+  // The default section is "squad", which no longer exists on a session with no
+  // team. Fall back to the first tab that does exist rather than rendering a
+  // section nothing can select, which would open the screen on a blank panel.
+  const active: Section = tabs.some((t) => t.key === section) ? section : tabs[0].key;
 
   return (
     <div className="app">
@@ -56,19 +64,19 @@ export default function EventDetail() {
 
         <div className="chipset">
           {tabs.map((t) => (
-            <button key={t.key} className={`chip ${section === t.key ? "on" : ""}`} onClick={() => setSection(t.key)}>
+            <button key={t.key} className={`chip ${active === t.key ? "on" : ""}`} onClick={() => setSection(t.key)}>
               {t.label}
             </button>
           ))}
         </div>
 
-        {section === "squad" && (ev.team_id
+        {active === "squad" && (ev.team_id
           ? <CoachSquad eventId={eventId} teamId={ev.team_id} isMatch={isMatch} />
           : <div className="card muted">This event has no team attached.</div>)}
-        {section === "result" && ev.team_id && <CoachResult eventId={eventId} teamId={ev.team_id} />}
-        {section === "notes" && <Notes eventId={eventId} teamId={ev.team_id} />}
-        {section === "reflect" && <Reflect eventId={eventId} />}
-        {section === "report" && <ReportSection ev={ev} />}
+        {active === "result" && ev.team_id && <CoachResult eventId={eventId} teamId={ev.team_id} />}
+        {active === "notes" && <Notes eventId={eventId} teamId={ev.team_id} />}
+        {active === "reflect" && <Reflect eventId={eventId} />}
+        {active === "report" && <ReportSection ev={ev} />}
       </div>
     </div>
   );

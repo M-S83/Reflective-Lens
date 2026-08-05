@@ -21,8 +21,9 @@ export default function NewEvent() {
   const [err, setErr] = useState("");
 
   useEffect(() => {
-    myTeams().then((t) => { setTeams(t); if (t[0]) setTeamId(t[0].id); })
-      .catch((e) => setErr((e as Error).message));
+    // Deliberately no preselection. Team is optional now, so defaulting to
+    // the first one would quietly attach a one-to-one to a squad.
+    myTeams().then(setTeams).catch((e) => setErr((e as Error).message));
   }, []);
 
   const addHope = () => {
@@ -35,7 +36,8 @@ export default function NewEvent() {
     try {
       const team = teams.find((t) => t.id === teamId);
       const ev = await createEvent({
-        team_id: teamId, club_id: team?.club_id ?? "", event_type: type, custom_type: customType,
+        team_id: teamId || null, club_id: team?.club_id ?? null,
+        event_type: type, custom_type: customType,
         title: title.trim() || defaultTitle(type, opposition), event_date: date,
         opposition, focus_area: focus, purpose, hoping_to_see: hopes,
       });
@@ -51,17 +53,13 @@ export default function NewEvent() {
       <TopBar title="New session" eyebrow="Set the intent"
         right={<button className="btn ghost sm" onClick={() => nav("/")}>Cancel</button>} />
       <div className="screen stack">
-        {teams.length === 0 ? (
-          <div className="card muted">First, add a team on the <a href="/teams">Teams</a> tab.</div>
-        ) : (
-          <>
+        <>
             <div className="card stack">
-              <div className="field"><label>Team</label>
-                <select value={teamId} onChange={(e) => setTeamId(e.target.value)}>
-                  {teams.map((t) => <option key={t.id} value={t.id}>{t.name}, {t.club?.name}</option>)}
-                </select></div>
-
-              <div className="field"><label>Type</label>
+              {/* Session type comes FIRST. It is the question that decides
+                  whether the rest of the form is even relevant: a one-to-one has
+                  no squad and no opposition, so asking "which team" before
+                  "what kind of session" is the wrong way round. */}
+              <div className="field"><label>What kind of session?</label>
                 <div className="chipset">
                   {EVENT_TYPES.map((t) => (
                     <button key={t.value} className={`chip ${type === t.value ? "on" : ""}`}
@@ -72,7 +70,7 @@ export default function NewEvent() {
 
               {type === "other" && (
                 <div className="field">
-                  <label htmlFor="custom-type">What kind of session</label>
+                  <label htmlFor="custom-type">Name it</label>
                   <input
                     id="custom-type"
                     value={customType}
@@ -86,6 +84,34 @@ export default function NewEvent() {
                   </div>
                 </div>
               )}
+
+              {/* Team is OPTIONAL. Plenty of coaching is not a squad: a
+                  goalkeeping coach, a one-to-one, a session for a player who is
+                  not on any of your teams. Requiring a team turned those away at
+                  the door. */}
+              <div className="field">
+                <label htmlFor="team">
+                  Team <span className="muted small">(only if this is with one of your teams)</span>
+                </label>
+                <select id="team" value={teamId} onChange={(e) => setTeamId(e.target.value)}>
+                  <option value="">No team, just me and the session</option>
+                  {teams.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}, {t.club?.name}</option>
+                  ))}
+                </select>
+                {teams.length === 0 ? (
+                  <div className="muted small">
+                    You have no teams yet. That is fine, you do not need one. If
+                    you do coach a squad, you can add it on the Teams tab and it
+                    will appear here.
+                  </div>
+                ) : (
+                  <div className="muted small">
+                    Choosing a team lets this session appear in that team's weekly
+                    and monthly reports.
+                  </div>
+                )}
+              </div>
 
               <div className="row" style={{ gap: 10 }}>
                 <div className="field" style={{ flex: 1 }}><label>Date</label>
@@ -129,11 +155,10 @@ export default function NewEvent() {
             </div>
 
             <ErrorText>{err}</ErrorText>
-            <button className="btn block" onClick={create} disabled={busy || !teamId}>
+            <button className="btn block" onClick={create} disabled={busy}>
               {busy ? <Spinner /> : "Start session"}
             </button>
-          </>
-        )}
+        </>
       </div>
     </div>
   );
