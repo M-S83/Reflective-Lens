@@ -5,7 +5,6 @@ import type { EventRow } from "../lib/types";
 import { useAuth } from "../auth/AuthProvider";
 import { ErrorText, Loading, TopBar, isIOS, useInstallPrompt } from "../components/ui";
 import { ModeSwitch } from "../components/ModeSwitch";
-import { DeleteAccount } from "../components/DeleteAccount";
 
 function fmtDate(d: string | null) {
   if (!d) return "";
@@ -80,7 +79,6 @@ export default function Home() {
             </div>
           )}
         </div>
-        <DeleteAccount />
       </div>
     </div>
   );

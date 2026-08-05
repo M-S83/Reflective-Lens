@@ -20,13 +20,14 @@ reflections never mix.
 
 ## Where things are
 
-- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`–`0015`.
+- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`–`0017`.
   Validated on PostgreSQL 16 (stubbed `auth`/`storage` schemas + a `test.uid` GUC).
 - `supabase/functions/` — Deno/TypeScript edge functions. Shared helpers in
   `_shared/` (`clients.ts` = model tiering + Claude/usage helpers, `voice.ts` =
   house-style + language + coach voice, `knowledge.ts` = FA prompt/tag grounding,
   `principles.ts` = the mirror-not-verdict rule every prompt shares, `names.ts` =
-  under-18 name privacy, `json.ts`, `markdown.ts`, `crypto.ts`).
+  under-18 name privacy, `email.ts` = transactional email via Resend, `json.ts`,
+  `markdown.ts`, `crypto.ts`).
 - `supabase/functions/_tests/` — the verification suite. `*.mjs` are plain Node
   checks (`node <file>`); `*-db.sh` stand up a throwaway PG16 from
   `_tests/bootstrap.sql` and assert against real migrations + RLS.
@@ -49,6 +50,11 @@ reflections never mix.
   be a voice note or typed.
 - **Ownership-only access.** Users see only what they created. No in-app sharing
   (share by PDF export). One person can own several clubs/teams.
+- **Admin lives in `user_roles`, never `profiles.role`** (migration `0016`). A
+  user can update their own profile row, so a privilege sitting on it was one
+  `update` away from being self-granted. `profiles.role` is now only the journey
+  (coach or player) and raises if set to `admin`. Grant admin by inserting into
+  `user_roles`; check it with `is_admin()` / `has_role()` as before.
 - **Output language** comes from `profiles.language` (default `en-GB`); more
   languages later = add labels in `_shared/voice.ts` + a picker. UI is English now.
 
@@ -61,6 +67,10 @@ reflections never mix.
   Opus. Each call logs token cost to `usage_events`. See `docs/cost-model.md`.
 - A per-user cost guard (migration `0011`) can force the cheap tier when a user is
   over budget.
+- The coach glossary (`coach_glossary`, `0017`) reaches every prompt through
+  `_shared/voice.ts`. It is capped (40 terms, 1200 chars) because it is prepended
+  to every AI call for that coach. It explains the coach's own words; it never
+  licenses the model to assess their usage.
 
 ## Build & verify
 

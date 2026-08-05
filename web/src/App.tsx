@@ -16,6 +16,8 @@ import LogGame from "./screens/LogGame";
 import PlayerReflection from "./screens/PlayerReflection";
 import PlayerSummaries from "./screens/PlayerSummaries";
 import Dashboard from "./screens/Dashboard";
+import Account from "./screens/Account";
+import { Privacy, Terms, Refunds } from "./screens/Legal";
 
 type Tab = { to: string; label: string; path: string };
 function TabBar({ tabs }: { tabs: Tab[] }) {
@@ -44,6 +46,7 @@ const PLAYER_TABS: Tab[] = [
   { to: "/player/summaries", label: "My story", path: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" },
 ];
 const OWNER_TAB: Tab = { to: "/admin", label: "Owner", path: "M3 3v18h18M8 17V9M13 17V5M18 17v-6" };
+const ACCOUNT_TAB: Tab = { to: "/account", label: "Account", path: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" };
 
 function RenewBanner({ label }: { label: string }) {
   return (
@@ -96,14 +99,21 @@ export default function App() {
           <Route path="/player/log" element={readOnly ? <RenewWall label="player" /> : <LogGame />} />
           <Route path="/player/game/:eventId" element={<PlayerReflection />} />
           <Route path="/player/summaries" element={<PlayerSummaries />} />
+        <Route path="/account" element={<Account />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/refunds" element={<Refunds />} />
+
           <Route path="*" element={<Navigate to="/player" replace />} />
         </Routes>
-        <TabBar tabs={PLAYER_TABS} />
+        <TabBar tabs={[...PLAYER_TABS, ACCOUNT_TAB]} />
       </>
     );
   }
 
-  const coachTabs = ent.isAdmin ? [...COACH_TABS, OWNER_TAB] : COACH_TABS;
+  const coachTabs = ent.isAdmin
+    ? [...COACH_TABS, ACCOUNT_TAB, OWNER_TAB]
+    : [...COACH_TABS, ACCOUNT_TAB];
 
   return (
     <>
@@ -114,6 +124,10 @@ export default function App() {
         <Route path="/teams/:teamId" element={<TeamDetail />} />
         <Route path="/new" element={readOnly ? <RenewWall label="coach" /> : <NewEvent />} />
         <Route path="/events/:eventId" element={<EventDetail />} />
+        <Route path="/account" element={<Account />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/refunds" element={<Refunds />} />
         <Route path="/admin" element={ent.isAdmin ? <Dashboard /> : <Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
