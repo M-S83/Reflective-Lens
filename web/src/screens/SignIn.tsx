@@ -18,7 +18,18 @@ export default function SignIn() {
     setErr(""); setBusy(true);
     try {
       const res = method === "email"
-        ? await supabase.auth.signInWithOtp({ email: value.trim(), options: { shouldCreateUser: true } })
+        ? await supabase.auth.signInWithOtp({
+          email: value.trim(),
+          options: {
+            shouldCreateUser: true,
+            // Send the magic link back to wherever the app is ACTUALLY running.
+            // Without this, Supabase builds the link from its single global Site
+            // URL, so whichever environment that points at wins and every other
+            // one sends people somewhere useless: a hosted tester gets a link to
+            // localhost, or a developer gets bounced to production mid-test.
+            emailRedirectTo: window.location.origin,
+          },
+        })
         : await supabase.auth.signInWithOtp({ phone: value.trim() });
       if (res.error) throw res.error;
       setSent(true);

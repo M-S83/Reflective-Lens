@@ -62,6 +62,34 @@ they keep running an old build after you deploy and have no way to force an
 update. The hashed files under `/assets/` are the opposite: their names change
 every build, so they are cached for a year.
 
+## Tell Supabase where the app lives
+
+**Do this before you try to sign in**, or the sign-in email will send testers to
+your laptop.
+
+Supabase builds every magic link from one global **Site URL**, which is still
+pointing at `localhost:5173` from development. In the Supabase dashboard, under
+**Authentication**, then **URL Configuration**:
+
+- Set **Site URL** to your Vercel address.
+- Under **Redirect URLs**, add both `https://your-app.vercel.app/**` and
+  `http://localhost:5173/**`, so hosted testers and your own dev server both
+  work. The app asks to be sent back to whichever address it is running on
+  (`emailRedirectTo`), but Supabase only honours addresses on this list.
+
+**The email needs to carry the code, not just a link.** The app offers a
+six-digit box, but Supabase's default template only sends a button, so a tester
+sees no code to type. Under **Authentication**, then **Email Templates**, then
+**Magic Link**, add the token alongside the existing link:
+
+```html
+<p>Your code: <strong>{{ .Token }}</strong></p>
+<p>Or tap this link: <a href="{{ .ConfirmationURL }}">Sign in</a></p>
+```
+
+Both routes then work, which matters because email clients sometimes mangle
+links, and a code always works.
+
 ## Afterwards
 
 **Point the app at itself.** In your `.env` at the repo root, set `APP_URL` to
