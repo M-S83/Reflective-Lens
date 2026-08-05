@@ -20,7 +20,7 @@ reflections never mix.
 
 ## Where things are
 
-- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`–`0017`.
+- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`–`0018`.
   Validated on PostgreSQL 16 (stubbed `auth`/`storage` schemas + a `test.uid` GUC).
 - `supabase/functions/` — Deno/TypeScript edge functions. Shared helpers in
   `_shared/` (`clients.ts` = model tiering + Claude/usage helpers, `voice.ts` =
@@ -48,6 +48,14 @@ reflections never mix.
   "sub" or "came on".
 - **Voice or text everywhere** — notes, reflections, and follow-up answers can all
   be a voice note or typed.
+- **Patterns never cross a session boundary.** A theme belongs to the team AND
+  the kind of session it was noted in: a goalkeeping session's findings are not
+  the team's training picture. Period reports are already filtered by `team_id`;
+  `0018` adds `events.custom_type` so a coach names an "other" session, and
+  `generate-period-report` groups by it. The training-to-match comparison is the
+  ONE cross-context link that is always legitimate. Anything else must be
+  supported by the coach's own notes. This is the rule the insights rebuild has
+  to honour (see `_tests/session-scope.mjs`).
 - **Ownership-only access.** Users see only what they created. No in-app sharing
   (share by PDF export). One person can own several clubs/teams.
 - **Admin lives in `user_roles`, never `profiles.role`** (migration `0016`). A

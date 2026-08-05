@@ -150,6 +150,7 @@ export async function recentEvents(): Promise<EventRow[]> {
 
 export async function createEvent(input: {
   team_id: string; club_id: string; event_type: EventType; title: string;
+  custom_type?: string;
   event_date: string; opposition: string; focus_area: string; purpose: string;
   hoping_to_see: string[];
 }): Promise<EventRow> {
@@ -159,6 +160,8 @@ export async function createEvent(input: {
     .insert({
       user_id: me, team_id: input.team_id, club_id: input.club_id,
       event_type: input.event_type, title: input.title,
+      // Only meaningful for 'other'; null everywhere else keeps the column honest.
+      custom_type: input.event_type === "other" ? (input.custom_type?.trim() || null) : null,
       event_date: input.event_date || null, opposition: input.opposition || null,
       focus_area: input.focus_area || null, purpose: input.purpose || null,
       hoping_to_see: input.hoping_to_see, status: "draft",

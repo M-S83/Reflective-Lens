@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { recentEvents } from "../lib/db";
 import type { EventRow } from "../lib/types";
+import { sessionLabel } from "../lib/types";
 import { useAuth } from "../auth/AuthProvider";
 import { ErrorText, Loading, TopBar, isIOS, useInstallPrompt } from "../components/ui";
 import { ModeSwitch } from "../components/ModeSwitch";
@@ -70,7 +71,7 @@ export default function Home() {
                     <span className={`pill ${ev.status === "completed" ? "good" : ""}`}>{ev.status}</span>
                   </div>
                   <div className="muted small row" style={{ gap: 8, marginTop: 4 }}>
-                    <span>{ev.event_type.replace("_", " ")}</span>
+                    <span>{sessionLabel(ev)}</span>
                     {ev.opposition && <span>· vs {ev.opposition}</span>}
                     {ev.event_date && <span>· {fmtDate(ev.event_date)}</span>}
                   </div>

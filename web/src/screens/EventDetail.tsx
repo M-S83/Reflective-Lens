@@ -5,7 +5,7 @@ import {
   getEvent, getReflection, observations, questions, reports, saveTextReflection, saveVoiceReflection,
 } from "../lib/db";
 import type { EventRow, FollowupQuestion, Observation, Reflection, Report } from "../lib/types";
-import { PHASES, type CapturePhase } from "../lib/types";
+import { PHASES, type CapturePhase, sessionLabel } from "../lib/types";
 import { ErrorText, Loading, Markdown, Spinner, TopBar } from "../components/ui";
 import { RecordButton } from "../components/RecordButton";
 import { CoachSquad } from "./CoachSquad";
@@ -39,7 +39,7 @@ export default function EventDetail() {
 
   return (
     <div className="app">
-      <TopBar title={ev.title} eyebrow={ev.event_type.replace("_", " ")}
+      <TopBar title={ev.title} eyebrow={sessionLabel(ev)}
         right={<button className="btn ghost sm" onClick={() => nav("/")}>Done</button>} />
       <div className="screen stack">
         {(ev.focus_area || ev.purpose || ev.hoping_to_see.length > 0) && (

@@ -28,6 +28,17 @@ interface ThemeBucket {
   theme: string; count: number; positive: number; concern: number; neutral: number; examples: string[];
 }
 
+// What to call a session in the report. 'other' takes the coach's own name for
+// it (0018); the rest get a plain label. Trimmed and capped in the database, so
+// this only has to handle the empty case.
+function sessionLabel(e: { event_type: string; custom_type?: string | null }): string {
+  if (e.event_type === "other") return e.custom_type?.trim() || "Other session";
+  if (e.event_type === "tournament") return "Tournament";
+  if (e.event_type === "match") return "Match";
+  if (e.event_type === "training_session") return "Training";
+  return e.event_type.replace(/_/g, " ");
+}
+
 // Group notes by theme (tag). Every distinct theme is kept (nothing truncated);
 // each carries a count, a sentiment split, and up to a few example notes. A note
 // with several tags contributes to each theme. Untagged notes bucket together.
@@ -66,7 +77,7 @@ Deno.serve(async (req) => {
 
     // Events for this team within the period.
     const { data: events } = await supa
-      .from("events").select("id, event_type, title, event_date, opposition")
+      .from("events").select("id, event_type, custom_type, title, event_date, opposition")
       .eq("team_id", team_id)
       .gte("event_date", period_start).lte("event_date", period_end)
       .order("event_date", { ascending: true });
@@ -125,14 +136,32 @@ Deno.serve(async (req) => {
     // stays within the context budget without dropping any theme. Each theme
     // bucket carries a count, a sentiment split and a few example notes.
     const typeById = new Map((events ?? []).map((e) => [e.id, e.event_type]));
+    // The session's label, which for 'other' is whatever the coach called it
+    // (0018). This is what keeps a goalkeeping session's themes identifiable
+    // instead of collapsing into an anonymous "other".
+    const labelById = new Map((events ?? []).map((e) => [e.id, sessionLabel(e)]));
+
     const trainingRaw: NoteEntry[] = [];
     const matchRaw: NoteEntry[] = [];
+    // Everything that is neither training nor a match, kept by its own label.
+    // Previously these notes were silently discarded: the loop pushed only on
+    // 'match' and 'training_session', so a tournament or a named session went
+    // into neither bucket and vanished from the report. A coach who logged a
+    // goalkeeping block saw no trace of it in their month.
+    const otherRaw = new Map<string, NoteEntry[]>();
     const tagCounts: Record<string, number> = {};
     for (const o of observations ?? []) {
       for (const t of o.tags ?? []) tagCounts[t] = (tagCounts[t] ?? 0) + 1;
       const entry: NoteEntry = { note: o.cleaned_note ?? o.raw_note, tags: o.tags, sentiment: o.sentiment };
-      if (typeById.get(o.event_id) === "match") matchRaw.push(entry);
-      else if (typeById.get(o.event_id) === "training_session") trainingRaw.push(entry);
+      const type = typeById.get(o.event_id);
+      if (type === "match") matchRaw.push(entry);
+      else if (type === "training_session") trainingRaw.push(entry);
+      else {
+        const label = labelById.get(o.event_id) ?? "Other session";
+        const list = otherRaw.get(label) ?? [];
+        list.push(entry);
+        otherRaw.set(label, list);
+      }
     }
     const topThemes = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 12);
     // Bucketed by theme (F25): every theme is represented, not every note sent.
@@ -153,6 +182,15 @@ Deno.serve(async (req) => {
       // The period's notes grouped by theme, split by context for comparison.
       training_notes: trainingNotes,
       match_notes: matchNotes,
+      // Sessions that are neither training nor a match, each under the coach's
+      // own name for it. Kept as a separate list rather than folded into
+      // training_notes, because a goalkeeping block and a Tuesday session are
+      // not the same context and their themes should not be read as one.
+      other_sessions: [...otherRaw.entries()].map(([label, notes]) => ({
+        label,
+        sessions: (events ?? []).filter((e) => sessionLabel(e) === label).length,
+        notes: bucketByTheme(notes),
+      })),
       reflection_next_focus: (reflections ?? []).flatMap((r) => r.suggested_next_focus ?? []),
       hoped_to_see_review: (reflections ?? []).flatMap((r) => r.hoped_to_see_review ?? []),
     });
@@ -174,6 +212,21 @@ Deno.serve(async (req) => {
         "both — training work showing up on matchday; (b) themes worked in " +
         "training but not yet seen in matches — not transferring; (c) themes " +
         "emerging only in matches. Put these in \"training_to_match\". " +
+        // Session-type scoping. Different kinds of session have different aims,
+        // so a theme belongs to the context it was noted in. The training/match
+        // comparison above is the one cross-context link that is always
+        // legitimate, because it is the point of the report. Anything else has
+        // to be earned by the coach's own notes rather than assumed by shape.
+        "SESSION TYPES: other_sessions holds sessions that are neither training " +
+        "nor matches, each under the name the coach gave it (for example a " +
+        "goalkeeping session or a one-to-one), with its own themes grouped the " +
+        "same way. Treat each as its OWN context. A theme from a named session " +
+        "is a theme of THAT session, not of the team's training, and must be " +
+        "attributed to it by name when you mention it. Do NOT merge its themes " +
+        "into the training or match picture, and do NOT claim a connection " +
+        "between two contexts unless the coach's own notes say so. Where a " +
+        "session type had few notes, say less about it rather than inferring " +
+        "more. " +
         MIRROR_NOT_VERDICT +
         " Surface the patterns and connections across the notes. Return ONLY JSON with keys: " +
         '"headline" (string), "results_summary" (string), "sections" (array of ' +

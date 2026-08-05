@@ -43,6 +43,7 @@ export const SELECT: { value: SquadSelection; label: string }[] = [
 
 export interface EventRow {
   id: string; team_id: string | null; club_id: string | null; event_type: EventType;
+  custom_type: string | null;
   title: string; event_date: string | null; opposition: string | null;
   focus_area: string | null; purpose: string | null; hoping_to_see: string[];
   status: "draft" | "live" | "completed"; created_at: string;
@@ -112,3 +113,14 @@ export const PHASES: { value: CapturePhase; label: string }[] = [
   { value: "post_event", label: "After" },
   { value: "ad_hoc", label: "Thought" },
 ];
+
+// What to call a session on screen. An "other" session takes the coach's own
+// name for it (migration 0018), so a goalkeeping block reads as theirs rather
+// than as "other". Mirrors sessionLabel() in generate-period-report: the label a
+// coach sees and the one the report groups by must be the same string.
+export const CUSTOM_TYPE_MAX = 60;
+export function sessionLabel(e: { event_type: EventType; custom_type?: string | null }): string {
+  if (e.event_type === "other") return e.custom_type?.trim() || "Other session";
+  const found = EVENT_TYPES.find((t) => t.value === e.event_type);
+  return found?.label ?? e.event_type.replace(/_/g, " ");
+}

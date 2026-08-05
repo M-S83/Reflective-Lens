@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createEvent, myTeams, type TeamWithClub } from "../lib/db";
-import { EVENT_TYPES, type EventType } from "../lib/types";
+import { EVENT_TYPES, CUSTOM_TYPE_MAX, type EventType } from "../lib/types";
 import { ErrorText, Spinner, TopBar } from "../components/ui";
 
 export default function NewEvent() {
   const nav = useNavigate();
   const [teams, setTeams] = useState<TeamWithClub[]>([]);
   const [teamId, setTeamId] = useState("");
+  const [customType, setCustomType] = useState("");
   const [type, setType] = useState<EventType>("training_session");
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -34,7 +35,7 @@ export default function NewEvent() {
     try {
       const team = teams.find((t) => t.id === teamId);
       const ev = await createEvent({
-        team_id: teamId, club_id: team?.club_id ?? "", event_type: type,
+        team_id: teamId, club_id: team?.club_id ?? "", event_type: type, custom_type: customType,
         title: title.trim() || defaultTitle(type, opposition), event_date: date,
         opposition, focus_area: focus, purpose, hoping_to_see: hopes,
       });
@@ -68,6 +69,23 @@ export default function NewEvent() {
                   ))}
                 </div>
               </div>
+
+              {type === "other" && (
+                <div className="field">
+                  <label htmlFor="custom-type">What kind of session</label>
+                  <input
+                    id="custom-type"
+                    value={customType}
+                    onChange={(e) => setCustomType(e.target.value)}
+                    placeholder="Goalkeeping session"
+                    maxLength={CUSTOM_TYPE_MAX}
+                  />
+                  <div className="muted small">
+                    Your name for it. Reports keep this kind of session separate
+                    from your training and matches, so its focus stays its own.
+                  </div>
+                </div>
+              )}
 
               <div className="row" style={{ gap: 10 }}>
                 <div className="field" style={{ flex: 1 }}><label>Date</label>
