@@ -83,3 +83,9 @@ verify_jwt = true
 
 [functions.purge-due-accounts]
 verify_jwt = false
+
+# Trial reminders. send-trial-reminders is a scheduled sweep (pg_cron) that
+# emails a coach when their free month is nearly up — no JWT; it authenticates
+# with the TRIAL_CRON_SECRET shared secret.
+[functions.send-trial-reminders]
+verify_jwt = false

@@ -47,8 +47,8 @@ git pull origin main
 > into the new folder.
 
 To confirm you have the new version, run `ls supabase\migrations`. You should
-see files numbered up to `0015_reports_owner_only.sql`. If the highest number
-you see is `0007`, you are still on the old code and the publish would achieve
+see files numbered up to `0017_glossary_analytics_trial.sql`. If the highest
+number you see is `0007` or `0015`, you are still on older code and the publish would achieve
 nothing. Stop here and sort that first.
 
 ## Step 2: Install the Supabase CLI
@@ -121,22 +121,24 @@ Two things to know:
 
 - **Spaces after the `=` are fine.** `KEY= sk-ant-...` and `KEY=sk-ant-...` both
   work, because `deploy.ps1` trims them.
-- **All four required keys must be present.** Older `.env` files are often
-  missing `PURGE_CRON_SECRET`, which was added later for the account deletion
-  sweep. Open yours and check.
+- **All five required keys must be present.** Older `.env` files are often
+  missing `PURGE_CRON_SECRET` (added for the account deletion sweep) and
+  `TRIAL_CRON_SECRET` (added for the trial reminder sweep). Open yours and
+  check.
 
 ```powershell
 notepad .env
 ```
 
-If `PURGE_CRON_SECRET` is not in there, generate one and add it as a new line:
+For each of `PURGE_CRON_SECRET` and `TRIAL_CRON_SECRET` that is not in there,
+generate a value and add it as a new line:
 
 ```powershell
 -join ((1..24) | ForEach-Object { '{0:x2}' -f (Get-Random -Max 256) })
 ```
 
-Then skip to step 5. If any of the four are missing, `deploy.ps1` will tell you
-which ones before it changes anything.
+Then skip to step 5. If any of the five are missing, `deploy.ps1` will tell you
+all of them at once, before it changes anything.
 
 ### If you are starting from scratch
 
@@ -145,7 +147,7 @@ copy .env.example .env
 notepad .env
 ```
 
-Notepad opens. You need to fill in four things. Delete the placeholder after
+Notepad opens. You need to fill in five things. Delete the placeholder after
 each `=` and put the real value there, keeping everything on one line.
 
 **`ANTHROPIC_API_KEY`** is what writes the reflections and reports. Get it from
@@ -155,10 +157,10 @@ starts with `sk-ant-`. Copy it immediately, as it is only shown once.
 **`OPENAI_API_KEY`** is what turns voice notes into text. Get it from
 <https://platform.openai.com/api-keys>. It starts with `sk-`.
 
-**`LEARNING_CRON_SECRET`** and **`PURGE_CRON_SECRET`** are just passwords the
-app uses to talk to itself. They are not accounts, so you can invent them. To
-generate two proper random ones, run this in PowerShell twice and paste one
-result into each:
+**`LEARNING_CRON_SECRET`**, **`PURGE_CRON_SECRET`** and **`TRIAL_CRON_SECRET`**
+are just passwords the app uses to talk to itself. They are not accounts, so you
+can invent them. To generate proper random ones, run this in PowerShell three
+times and paste one result into each:
 
 ```powershell
 -join ((1..24) | ForEach-Object { '{0:x2}' -f (Get-Random -Max 256) })
@@ -167,8 +169,10 @@ result into each:
 **`APP_URL`** should be your app's web address if you have one. If you do not
 have one yet, leave it as it is.
 
-You can ignore both `STRIPE_` lines. Those are only for taking payments, and
-nothing here needs them.
+You can ignore both `STRIPE_` lines (only for taking payments) and both
+`RESEND_`/`EMAIL_FROM` lines (only for trial reminder emails). Nothing you are
+about to test needs them, and the trial sweep runs and cleanly does nothing
+until they are filled in.
 
 Save the file in Notepad (Ctrl+S) and close it.
 
@@ -184,12 +188,12 @@ Save the file in Notepad (Ctrl+S) and close it.
 
 This is the actual publish. It takes a minute or two and prints what it is
 doing. You will see it push the database changes, set your secrets, then deploy
-sixteen functions one by one.
+seventeen functions one by one.
 
 When it finishes you should see:
 
 ```
-==> Done. 15 migrations and 16 functions are live.
+==> Done. 17 migrations and 17 functions are live.
 ```
 
 If it stops early with a red ERROR line, that is the script protecting you: it

@@ -19,7 +19,7 @@ command -v supabase >/dev/null || { echo "supabase CLI not found — install it 
 # shellcheck disable=SC1091
 set -a; . ./.env; set +a
 
-echo "==> Pushing database migrations (0001-0015)"
+echo "==> Pushing database migrations (0001-0017)"
 supabase db push
 
 echo "==> Setting function secrets"
@@ -28,7 +28,14 @@ supabase secrets set \
   OPENAI_API_KEY="${OPENAI_API_KEY:?set OPENAI_API_KEY in .env}" \
   LEARNING_CRON_SECRET="${LEARNING_CRON_SECRET:?set LEARNING_CRON_SECRET in .env}" \
   PURGE_CRON_SECRET="${PURGE_CRON_SECRET:?set PURGE_CRON_SECRET in .env}" \
+  TRIAL_CRON_SECRET="${TRIAL_CRON_SECRET:?set TRIAL_CRON_SECRET in .env}" \
   APP_URL="${APP_URL:-}"
+
+# Email is optional: without it send-trial-reminders skips cleanly.
+if [ -n "${RESEND_API_KEY:-}" ]; then
+  echo "==> Setting email secrets"
+  supabase secrets set RESEND_API_KEY="$RESEND_API_KEY" EMAIL_FROM="${EMAIL_FROM:-}"
+fi
 
 if [ -n "${STRIPE_SECRET_KEY:-}" ]; then
   echo "==> Setting Stripe secrets"
@@ -47,7 +54,8 @@ done
 
 echo "==> Deploying edge functions (public — secret/signature-authenticated)"
 supabase functions deploy run-learning       --no-verify-jwt
-supabase functions deploy purge-due-accounts --no-verify-jwt
+supabase functions deploy purge-due-accounts   --no-verify-jwt
+supabase functions deploy send-trial-reminders --no-verify-jwt
 supabase functions deploy billing-webhook    --no-verify-jwt
 
 echo ""

@@ -59,14 +59,14 @@ function Need($name) {
 
 # Fail on all missing keys at once, rather than one re-run per missing key.
 $missing = @(
-  @('ANTHROPIC_API_KEY','OPENAI_API_KEY','LEARNING_CRON_SECRET','PURGE_CRON_SECRET') |
+  @('ANTHROPIC_API_KEY','OPENAI_API_KEY','LEARNING_CRON_SECRET','PURGE_CRON_SECRET','TRIAL_CRON_SECRET') |
     Where-Object { -not $envVars.ContainsKey($_) -or [string]::IsNullOrWhiteSpace($envVars[$_]) }
 )
 if ($missing.Count -gt 0) {
   Fail "These are missing or empty in .env: $($missing -join ', '). See docs/deploy-windows.md, step 4."
 }
 
-Write-Host "==> Pushing database migrations (0001-0015)" -ForegroundColor Cyan
+Write-Host "==> Pushing database migrations (0001-0017)" -ForegroundColor Cyan
 & supabase db push
 if ($LASTEXITCODE -ne 0) {
   Write-Host ""
@@ -94,8 +94,17 @@ Run @(
   "OPENAI_API_KEY=$(Need 'OPENAI_API_KEY')",
   "LEARNING_CRON_SECRET=$(Need 'LEARNING_CRON_SECRET')",
   "PURGE_CRON_SECRET=$(Need 'PURGE_CRON_SECRET')",
+  "TRIAL_CRON_SECRET=$(Need 'TRIAL_CRON_SECRET')",
   "APP_URL=$($envVars['APP_URL'])"
 )
+
+# Email is optional: without it send-trial-reminders skips cleanly.
+if (-not [string]::IsNullOrWhiteSpace($envVars['RESEND_API_KEY'])) {
+  Write-Host "==> Setting email secrets" -ForegroundColor Cyan
+  Run @('secrets','set',
+    "RESEND_API_KEY=$($envVars['RESEND_API_KEY'])",
+    "EMAIL_FROM=$($envVars['EMAIL_FROM'])")
+}
 
 if (-not [string]::IsNullOrWhiteSpace($envVars['STRIPE_SECRET_KEY'])) {
   Write-Host "==> Setting Stripe secrets" -ForegroundColor Cyan
@@ -113,11 +122,11 @@ foreach ($fn in @(
 )) { Run @('functions','deploy',$fn) }
 
 Write-Host "==> Deploying edge functions (public, secret/signature-authenticated)" -ForegroundColor Cyan
-foreach ($fn in @('run-learning','purge-due-accounts','billing-webhook')) {
+foreach ($fn in @('run-learning','purge-due-accounts','send-trial-reminders','billing-webhook')) {
   Run @('functions','deploy',$fn,'--no-verify-jwt')
 }
 
 Write-Host ""
-Write-Host "==> Done. 15 migrations and 16 functions are live." -ForegroundColor Green
+Write-Host "==> Done. 17 migrations and 17 functions are live." -ForegroundColor Green
 Write-Host "    Next: sign up once in the app, then run supabase/go-live.sql to make"
 Write-Host "    yourself admin. Then walk through docs/staging-run.md to check the reports."
