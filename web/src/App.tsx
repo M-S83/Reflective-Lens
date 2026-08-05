@@ -18,6 +18,7 @@ import PlayerSummaries from "./screens/PlayerSummaries";
 import Dashboard from "./screens/Dashboard";
 import Account from "./screens/Account";
 import { Privacy, Terms, Refunds } from "./screens/Legal";
+import { FeedbackButton } from "./components/Feedback";
 
 type Tab = { to: string; label: string; path: string };
 function TabBar({ tabs }: { tabs: Tab[] }) {
@@ -106,7 +107,8 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/player" replace />} />
         </Routes>
-        <TabBar tabs={[...PLAYER_TABS, ACCOUNT_TAB]} />
+        <FeedbackButton />
+      <TabBar tabs={[...PLAYER_TABS, ACCOUNT_TAB]} />
       </>
     );
   }
@@ -131,6 +133,7 @@ export default function App() {
         <Route path="/admin" element={ent.isAdmin ? <Dashboard /> : <Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <FeedbackButton />
       <TabBar tabs={coachTabs} />
     </>
   );

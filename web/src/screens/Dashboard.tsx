@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { allFeedback, setFeedbackStatus, type FeedbackRow } from "../lib/feedback";
 import { TopBar, Loading, ErrorText } from "../components/ui";
 import {
   getOverview, getMrr, getFeatureUsage, getUserCosts, getCostDaily,
+  getFeatureAdoption, type FeatureAdoption,
   getModelConfig, setModel, MODEL_CHOICES, getBudgetFlags,
   USD_TO_GBP, type Overview, type Mrr, type FeatureUsage, type UserCost, type CostDay, type ModelRow, type BudgetFlag,
 } from "../lib/analytics";
@@ -66,6 +68,9 @@ export default function Dashboard() {
           <Tile label="Active users (30d)" value={String(ov?.active_30d ?? 0)} sub={`${ov?.active_7d ?? 0} in last 7d`} />
           <Tile label="Paying / trialing" value={String(ov?.paying_or_trialing ?? 0)} sub={`${ov?.total_users ?? 0} total users`} />
         </div>
+
+        <FeedbackPanel />
+        <AdoptionPanel />
 
         {/* Cost by feature */}
         <div className="card stack" style={{ gap: 8 }}>
@@ -210,6 +215,109 @@ function ModelPanel() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ---- Beta: feedback inbox --------------------------------------------------
+// The point of a beta is what testers tell you, so this is a working inbox
+// rather than a chart: read it, mark it, move on. Newest first, and unread
+// ("new") first within that, so the pile you have not looked at is at the top.
+function FeedbackPanel() {
+  const [rows, setRows] = useState<FeedbackRow[] | null>(null);
+  const [busy, setBusy] = useState("");
+  const [err, setErr] = useState("");
+
+  const load = () => allFeedback().then(setRows).catch((e) => setErr(e.message ?? "Could not load feedback."));
+  useEffect(() => { load(); }, []);
+
+  const mark = async (id: string, status: string) => {
+    setBusy(id);
+    try { await setFeedbackStatus(id, status); await load(); }
+    catch (e) { setErr((e as Error).message ?? "Could not update that."); }
+    finally { setBusy(""); }
+  };
+
+  const sorted = (rows ?? []).slice().sort((a, b) => {
+    if ((a.status === "new") !== (b.status === "new")) return a.status === "new" ? -1 : 1;
+    return b.created_at.localeCompare(a.created_at);
+  });
+  const newCount = (rows ?? []).filter((r) => r.status === "new").length;
+
+  return (
+    <div className="card stack" style={{ gap: 8 }}>
+      <div className="row">
+        <strong>Feedback</strong>
+        <div className="spacer" />
+        <span className={`pill ${newCount ? "" : "good"}`}>
+          {newCount ? `${newCount} new` : "all read"}
+        </span>
+      </div>
+      <ErrorText>{err}</ErrorText>
+      {rows === null ? (
+        <Loading />
+      ) : sorted.length === 0 ? (
+        <div className="muted small">Nothing yet. The form is on every screen and on Account.</div>
+      ) : (
+        <div className="list">
+          {sorted.map((f) => (
+            <div key={f.id} className="card stack" style={{ gap: 6 }}>
+              <div className="row" style={{ gap: 8 }}>
+                <span className="tag">{f.kind}</span>
+                <span className="muted small">{new Date(f.created_at).toLocaleDateString("en-GB")}</span>
+                <div className="spacer" />
+                {f.status !== "new" && <span className="pill good">{f.status}</span>}
+              </div>
+              <div>{f.message}</div>
+              {typeof f.context?.path === "string" && (
+                <div className="muted small mono">on {String(f.context.path)}</div>
+              )}
+              {f.status === "new" && (
+                <div className="row" style={{ gap: 6 }}>
+                  <button className="btn small" disabled={busy === f.id}
+                    onClick={() => mark(f.id, "seen")}>Mark read</button>
+                  <button className="btn small" disabled={busy === f.id}
+                    onClick={() => mark(f.id, "actioned")}>Actioned</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- Beta: what gets used --------------------------------------------------
+// Users, not uses, is the column to read first: one enthusiast can make a
+// feature look adopted when nobody else has touched it.
+function AdoptionPanel() {
+  const [rows, setRows] = useState<FeatureAdoption[] | null>(null);
+  useEffect(() => { getFeatureAdoption().then(setRows).catch(() => setRows([])); }, []);
+
+  return (
+    <div className="card stack" style={{ gap: 8 }}>
+      <strong>What testers actually use</strong>
+      <div className="muted small">
+        From in-app activity, so this counts screens opened as well as work that
+        cost money. The cost table above only sees the latter.
+      </div>
+      {rows === null ? (
+        <Loading />
+      ) : rows.length === 0 ? (
+        <div className="muted small">No activity recorded yet.</div>
+      ) : (
+        <div className="list">
+          {rows.map((r) => (
+            <div key={`${r.feature}-${r.action}`} className="row" style={{ gap: 8 }}>
+              <span>{r.feature.replace(/_/g, " ")}</span>
+              <div className="spacer" />
+              <span className="muted small">{r.users} {r.users === 1 ? "person" : "people"}</span>
+              <span className="pill">{r.uses}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

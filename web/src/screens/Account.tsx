@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { TopBar, ErrorText, Loading } from "../components/ui";
 import { DeleteAccount } from "../components/DeleteAccount";
+import { FeedbackForm } from "../components/Feedback";
 import { useEntitlements } from "../lib/entitlements";
 import { FEATURES, logFeature } from "../lib/features";
 import {
@@ -160,6 +161,16 @@ export default function Account() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* --- Beta feedback ------------------------------------------- */}
+        <div className="card stack">
+          <strong>Tell me something</strong>
+          <div className="muted small">
+            This is a beta, so what does not work is as useful to me as what
+            does. Anything at all: a bug, a bit that made no sense, an idea.
+          </div>
+          <FeedbackForm />
         </div>
 
         <DeleteAccount />

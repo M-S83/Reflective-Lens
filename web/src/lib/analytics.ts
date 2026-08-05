@@ -75,3 +75,28 @@ export async function setModel(feature: string, model: string): Promise<void> {
   const { error } = await supabase.from("model_config").update({ model }).eq("feature", feature);
   if (error) throw error;
 }
+
+// ---- Beta: what testers actually do (0019) ---------------------------------
+// Distinct from FeatureUsage above, which is derived from usage_events and can
+// only see things that cost money. These come from feature_events, written by
+// the client, so a screen that was opened and abandoned still shows up. In a
+// beta that is the more useful signal.
+
+export interface FeatureAdoption {
+  feature: string; action: string; uses: number; users: number; last_used: string;
+}
+export interface FeedbackSummary { kind: string; status: string; count: number; latest: string; }
+
+export async function getFeatureAdoption(): Promise<FeatureAdoption[]> {
+  const { data, error } = await supabase
+    .from("analytics_feature_adoption").select("feature,action,uses,users,last_used");
+  if (error) throw error;
+  return (data ?? []) as FeatureAdoption[];
+}
+
+export async function getFeedbackSummary(): Promise<FeedbackSummary[]> {
+  const { data, error } = await supabase
+    .from("analytics_feedback_summary").select("kind,status,count,latest");
+  if (error) throw error;
+  return (data ?? []) as FeedbackSummary[];
+}

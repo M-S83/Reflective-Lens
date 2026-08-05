@@ -167,3 +167,33 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--grass); out
 .spin { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: rot 0.7s linear infinite; }
 @keyframes rot { to { transform: rotate(360deg); } }
 .center-screen { min-height: 70vh; display: grid; place-items: center; }
+
+/* --- Beta feedback -------------------------------------------------------- */
+/* Always one tap away, but never over the tab bar and never over the sentence
+   being written about. The tab bar is fixed at bottom 0 with 8px padding plus
+   the safe area, so both of these clear it by the same calc. */
+.feedback-fab {
+  position: fixed;
+  right: 12px;
+  bottom: calc(64px + env(safe-area-inset-bottom));
+  z-index: 5;
+  width: auto;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  opacity: 0.94;
+}
+.feedback-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(56px + env(safe-area-inset-bottom));
+  z-index: 7;
+  padding: 10px 12px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--paper);
+  border-top: 1px solid var(--hair);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.14);
+}

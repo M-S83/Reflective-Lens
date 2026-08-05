@@ -21,6 +21,7 @@ export const FEATURES = {
   periodReportGenerated: "period_report_generated",
   pdfExported: "pdf_exported",
   accountOpened: "account_opened",
+  feedbackSent: "feedback_sent",
 } as const;
 
 export type Feature = (typeof FEATURES)[keyof typeof FEATURES];
