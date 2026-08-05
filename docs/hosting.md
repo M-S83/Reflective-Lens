@@ -77,18 +77,36 @@ pointing at `localhost:5173` from development. In the Supabase dashboard, under
   work. The app asks to be sent back to whichever address it is running on
   (`emailRedirectTo`), but Supabase only honours addresses on this list.
 
-**The email needs to carry the code, not just a link.** The app offers a
-six-digit box, but Supabase's default template only sends a button, so a tester
-sees no code to type. Under **Authentication**, then **Email Templates**, then
-**Magic Link**, add the token alongside the existing link:
+## Email: do this before you invite anyone
+
+Supabase's built-in email sender is for development. It is **rate limited to a
+handful of messages an hour**, and it is the same allowance for your whole
+project. A group of testers signing in on the same evening will hit that ceiling
+and simply not receive their emails, which looks exactly like the app being
+broken.
+
+It also locks the email templates: the dashboard says "set up custom SMTP to
+edit templates", so the sign-in email cannot be changed while you are on it.
+That is why testers get a link but no six-digit code, even though the app offers
+a box for one.
+
+Both are fixed by pointing Supabase at a real sending provider, and you need one
+anyway for the trial reminder emails (`_shared/email.ts` uses Resend), so this is
+one job rather than two:
+
+1. Create an account at <https://resend.com> and verify a sending domain.
+2. In Supabase, **Authentication**, then **Emails**, then **Set up SMTP**, and
+   enter Resend's SMTP host, port and API key.
+3. The templates unlock. Under **Magic link or OTP**, add the code alongside the
+   link so both routes work, since email clients sometimes mangle links:
 
 ```html
 <p>Your code: <strong>{{ .Token }}</strong></p>
 <p>Or tap this link: <a href="{{ .ConfirmationURL }}">Sign in</a></p>
 ```
 
-Both routes then work, which matters because email clients sometimes mangle
-links, and a code always works.
+Until you do this, sign-in still works through the link. It is the volume that
+will catch you out, not the mechanism.
 
 ## Afterwards
 

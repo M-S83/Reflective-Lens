@@ -93,14 +93,14 @@ export default function SignIn() {
                 />
               </div>
               <button className="btn block" onClick={send} disabled={busy || !value || !isConfigured}>
-                {busy ? <Spinner /> : "Send me a code"}
+                {busy ? <Spinner /> : "Email me a sign-in link"}
               </button>
             </>
           ) : (
             <>
               <p className="small">
                 {sent && method === "email"
-                  ? "We emailed you a magic link and a 6-digit code. Tap the link, or enter the code."
+                  ? "We have emailed you a sign-in link. Tap it and you are in. If your email also has a 6-digit code, you can type it here instead."
                   : "We texted you a 6-digit code."}
               </p>
               <div className="field">
