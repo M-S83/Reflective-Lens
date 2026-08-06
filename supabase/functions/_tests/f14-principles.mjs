@@ -22,6 +22,11 @@ const taskPhrase = {
   "review-intent/index.ts": "touched on each aim",
   "generate-period-report/index.ts": "training_to_match",
   "generate-reflection-questions/index.ts": "invite a bit more detail",
+  // Repointed after the fact. It was originally left inline as a "mixed" caller,
+  // and that deferral is exactly what let praise through: its own copy said only
+  // "do not grade or judge" and never mentioned praise, so a real report came
+  // back calling something "impressive" that the coach had simply described.
+  "generate-report/index.ts": "single-session report",
 };
 for (const [file, phrase] of Object.entries(taskPhrase)) {
   const src = read(file);
@@ -30,8 +35,8 @@ for (const [file, phrase] of Object.entries(taskPhrase)) {
   ok(`F14 ${file} keeps its task clause`, src.includes(phrase));
 }
 
-// Player / mixed callers left untouched: no principles import, still inline it.
-for (const f of ["generate-player-summary/index.ts", "generate-report/index.ts"]) {
+// Player-only caller still left inline. generate-report used to be here too.
+for (const f of ["generate-player-summary/index.ts"]) {
   const src = read(f);
   ok(`F14 ${f} NOT repointed (player/mixed, left)`, !src.includes('from "../_shared/principles.ts"'));
   ok(`F14 ${f} still has inline principle`, src.includes("MIRROR, NOT VERDICT"));

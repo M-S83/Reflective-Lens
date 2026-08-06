@@ -14,6 +14,7 @@ import { voiceInstruction } from "../_shared/voice.ts";
 import { isUnder18, safeName, safeNameMap } from "../_shared/names.ts";
 import { firstJsonObject } from "../_shared/json.ts";
 import { type MdBlock, renderReport } from "../_shared/markdown.ts";
+import { MIRROR_NOT_VERDICT } from "../_shared/principles.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -171,8 +172,16 @@ Deno.serve(async (req) => {
     const raw = await callClaude({
       system:
         "You produce football reflection reports. " +
-        "Principle: MIRROR, NOT VERDICT — organise what was said; do not grade or " +
-        "judge. RESTATE ONLY what the coach or player actually said: never add a " +
+        // Repointed to the shared principle. This function was deliberately left
+        // on its own inline copy during the F14 consolidation, as a "mixed"
+        // caller serving both coach and player. That deferral had a cost: the
+        // inline wording said only "do not grade or judge", never mentioning
+        // praise, and a real report came back describing something the coach had
+        // merely recounted as "which was impressive". The shared text now spells
+        // the praise rule out concretely, and this is the function that most
+        // needed it.
+        MIRROR_NOT_VERDICT + " " +
+        "RESTATE ONLY what the coach or player actually said: never add a " +
         "characterisation of the game or a person they did not make themselves " +
         "(e.g. don't call it 'a sharp game' unless they did — 'felt sharp' is " +
         "about them, not the match). " +
@@ -203,6 +212,22 @@ Deno.serve(async (req) => {
             "aim, including stated_not_recorded; never drop one. For noted_for_next, " +
             "reflect back only what the coach noted for next time and their own " +
             "answers: add no recommendations of your own. " +
+            // With a handful of notes the model fills every section by
+            // rewording the same two observations, which turns a thin session
+            // into something that looks like a form being completed. Real output
+            // carried one note verbatim in both what_went_well and
+            // learning_evidence, and another in three sections at once.
+            "EACH POINT APPEARS ONCE. Every section must earn its content: do NOT " +
+            "restate a point that already appears elsewhere, even reworded. A " +
+            "short session should produce a short report with several EMPTY " +
+            "arrays, and that is the correct outcome, not a failure. Empty is " +
+            "always better than repeated. " +
+            "learning_evidence is specifically for a moment where something was " +
+            "understood or taken on: it is not a second home for a difficulty, " +
+            "and a shortcoming never belongs there. session_patterns is only for " +
+            "something recurring ACROSS several notes in this session; with one " +
+            "or two notes it must be empty rather than a summary of what is " +
+            "already written above. " +
             'Return ONLY JSON with keys: "headline" (string), "aims_review" (array ' +
             'of {aim, status, note}), "what_went_well" (string[]), ' +
             '"what_did_not_work" (string[]), "action_points" (string[]), ' +
