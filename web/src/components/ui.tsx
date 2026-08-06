@@ -11,10 +11,12 @@ export function Brandmark({ size = 26 }: { size?: number }) {
   );
 }
 
-export function TopBar({ title, eyebrow, right }: { title: string; eyebrow?: string; right?: ReactNode }) {
+export function TopBar({ title, eyebrow, right, left }: {
+  title: string; eyebrow?: string; right?: ReactNode; left?: ReactNode;
+}) {
   return (
     <header className="topbar">
-      <Brandmark />
+      {left ?? <Brandmark />}
       <div>
         {eyebrow && <div className="eyebrow">{eyebrow}</div>}
         <h1 className="serif">{title}</h1>

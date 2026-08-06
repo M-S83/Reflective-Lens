@@ -47,8 +47,8 @@ git pull origin main
 > into the new folder.
 
 To confirm you have the new version, run `ls supabase\migrations`. You should
-see files numbered up to `0017_glossary_analytics_trial.sql`. If the highest
-number you see is `0007` or `0015`, you are still on older code and the publish would achieve
+see files numbered up to `0019_feedback_beta_analytics.sql`. If the highest
+number you see is `0007`, `0015` or `0017`, you are still on older code and the publish would achieve
 nothing. Stop here and sort that first.
 
 ## Step 2: Install the Supabase CLI
@@ -193,7 +193,7 @@ seventeen functions one by one.
 When it finishes you should see:
 
 ```
-==> Done. 17 migrations and 17 functions are live.
+==> Done. 19 migrations and 17 functions are live.
 ```
 
 If it stops early with a red ERROR line, that is the script protecting you: it

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { recentEvents } from "../lib/db";
 import type { EventRow } from "../lib/types";
 import { sessionLabel } from "../lib/types";
+import { Thoughts } from "../components/Thoughts";
 import { useAuth } from "../auth/AuthProvider";
 import { ErrorText, Loading, TopBar, isIOS, useInstallPrompt } from "../components/ui";
 import { ModeSwitch } from "../components/ModeSwitch";
@@ -53,6 +54,7 @@ export default function Home() {
           <div className="row" style={{ marginBottom: 8 }}>
             <h2 className="serif" style={{ fontSize: 16, color: "var(--pitch)" }}>Recent</h2>
           </div>
+          <Thoughts />
           <ErrorText>{err}</ErrorText>
           {events === null ? (
             <Loading />

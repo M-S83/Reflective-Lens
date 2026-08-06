@@ -107,11 +107,14 @@ export const EVENT_TYPES: { value: EventType; label: string }[] = [
   { value: "tournament", label: "Tournament" },
   { value: "other", label: "Other" },
 ];
+// The moments WITHIN a session. "ad_hoc" is deliberately not here: a thought
+// belongs to no session, so it is captured on the home screen instead (see
+// components/Thoughts.tsx). As a fourth chip it was the odd one out, and it
+// forced a coach to open some unrelated session in order to write one down.
 export const PHASES: { value: CapturePhase; label: string }[] = [
   { value: "pre_event", label: "Before" },
   { value: "live", label: "Live" },
   { value: "post_event", label: "After" },
-  { value: "ad_hoc", label: "Thought" },
 ];
 
 // What to call a session on screen. An "other" session takes the coach's own

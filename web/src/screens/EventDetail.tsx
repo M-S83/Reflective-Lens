@@ -11,13 +11,13 @@ import { RecordButton } from "../components/RecordButton";
 import { CoachSquad } from "./CoachSquad";
 import { CoachResult } from "./CoachResult";
 
-type Section = "squad" | "result" | "notes" | "reflect" | "report";
+type Section = "before" | "squad" | "result" | "notes" | "reflect" | "report";
 
 export default function EventDetail() {
   const { eventId } = useParams();
   const nav = useNavigate();
   const [ev, setEv] = useState<EventRow | null>(null);
-  const [section, setSection] = useState<Section>("squad");
+  const [section, setSection] = useState<Section>("before");
   const [err, setErr] = useState("");
 
   useEffect(() => {
@@ -29,26 +29,41 @@ export default function EventDetail() {
   if (!ev) return <Loading />;
 
   const isMatch = ev.event_type === "match" || ev.event_type === "tournament";
-  // Squad and Result only exist when there is a squad to speak of. A
-  // one-to-one or a goalkeeping session has no team, and a tab that only ever
-  // says "no team attached" is worse than no tab.
-  const tabs: { key: Section; label: string }[] = [
-    ...(ev.team_id ? [{ key: "squad" as Section, label: isMatch ? "Squad" : "Attendance" }] : []),
-    ...(isMatch && ev.team_id ? [{ key: "result" as Section, label: "Result" }] : []),
-    { key: "notes", label: "Notes" },
-    { key: "reflect", label: "Reflect" },
-    { key: "report", label: "Report" },
+
+  // The tabs run in the order the session actually happens, not the order the
+  // data model happens to be in. "Before" comes first because the thought you
+  // have on the way there arrives before you take a register, and putting
+  // Attendance first made the app open on admin.
+  //
+  // Squad and Result only exist when there is a squad to speak of: a one-to-one
+  // or a goalkeeping block has no team, and a tab that only ever says "no team
+  // attached" is worse than no tab.
+  const tabs: { key: Section; label: string; hint: string }[] = [
+    { key: "before", label: "Before", hint: "What are you going in hoping for?" },
+    ...(ev.team_id
+      ? [{ key: "squad" as Section, label: isMatch ? "Squad" : "Attendance", hint: "Who is here?" }]
+      : []),
+    { key: "notes", label: "During", hint: "Capture what you notice, as it happens." },
+    ...(isMatch && ev.team_id
+      ? [{ key: "result" as Section, label: "Result", hint: "How did it finish?" }]
+      : []),
+    { key: "reflect", label: "Reflect", hint: "In your own words, how was it?" },
+    { key: "report", label: "Report", hint: "Read it back." },
   ];
 
   // The default section is "squad", which no longer exists on a session with no
   // team. Fall back to the first tab that does exist rather than rendering a
   // section nothing can select, which would open the screen on a blank panel.
   const active: Section = tabs.some((t) => t.key === section) ? section : tabs[0].key;
+  const idx = tabs.findIndex((t) => t.key === active);
+  const prev = idx > 0 ? tabs[idx - 1] : null;
+  const next = idx >= 0 && idx < tabs.length - 1 ? tabs[idx + 1] : null;
 
   return (
     <div className="app">
       <TopBar title={ev.title} eyebrow={sessionLabel(ev)}
-        right={<button className="btn ghost sm" onClick={() => nav("/")}>Done</button>} />
+        right={<button className="btn ghost sm" onClick={() => nav("/")}>Done</button>}
+        left={<button className="btn ghost sm" onClick={() => nav("/")} aria-label="Back">Back</button>} />
       <div className="screen stack">
         {(ev.focus_area || ev.purpose || ev.hoping_to_see.length > 0) && (
           <div className="card">
@@ -70,22 +85,64 @@ export default function EventDetail() {
           ))}
         </div>
 
+        {active === "before" && (
+          <Notes
+            eventId={eventId}
+            teamId={ev.team_id}
+            only={["pre_event"]}
+            intro="Anything on your mind going in. What you are hoping to see, what you are unsure about, what you tried last time."
+          />
+        )}
         {active === "squad" && (ev.team_id
           ? <CoachSquad eventId={eventId} teamId={ev.team_id} isMatch={isMatch} />
           : <div className="card muted">This event has no team attached.</div>)}
         {active === "result" && ev.team_id && <CoachResult eventId={eventId} teamId={ev.team_id} />}
-        {active === "notes" && <Notes eventId={eventId} teamId={ev.team_id} />}
+        {active === "notes" && (
+          <Notes eventId={eventId} teamId={ev.team_id} only={["live", "post_event"]} />
+        )}
         {active === "reflect" && <Reflect eventId={eventId} />}
         {active === "report" && <ReportSection ev={ev} />}
+
+        {/* Where you are, and where you go next. Without this the tabs are just
+            six unlabelled choices, and a coach opening the app mid-session has
+            to work out the running order for themselves. */}
+        <div className="card stack" style={{ gap: 8 }}>
+          <div className="muted small">
+            Step {idx + 1} of {tabs.length}. {tabs[idx]?.hint}
+          </div>
+          <div className="row" style={{ gap: 8 }}>
+            {prev && (
+              <button className="btn subtle" onClick={() => setSection(prev.key)}>
+                Back to {prev.label.toLowerCase()}
+              </button>
+            )}
+            <div className="spacer" />
+            {next ? (
+              <button className="btn" onClick={() => setSection(next.key)}>
+                Next: {next.label.toLowerCase()}
+              </button>
+            ) : (
+              <button className="btn" onClick={() => nav("/")}>Done for now</button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 // ---- Notes ------------------------------------------------------------------
-function Notes({ eventId, teamId }: { eventId: string; teamId: string | null }) {
+function Notes({ eventId, teamId, only, intro }: {
+  eventId: string; teamId: string | null;
+  // Which capture phases this instance offers. The Before tab passes a single
+  // phase so there are no chips to choose from at all, which is the whole point
+  // of splitting it out: before a session there is only one kind of note.
+  only?: CapturePhase[];
+  intro?: string;
+}) {
   const [list, setList] = useState<Observation[] | null>(null);
-  const [phase, setPhase] = useState<CapturePhase>("live");
+  const allowed = PHASES.filter((p) => !only || only.includes(p.value));
+  const [phase, setPhase] = useState<CapturePhase>(allowed[0]?.value ?? "live");
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -112,8 +169,9 @@ function Notes({ eventId, teamId }: { eventId: string; teamId: string | null }) 
   return (
     <>
       <div className="card stack">
+        {intro && <div className="muted small">{intro}</div>}
         <div className="chipset">
-          {PHASES.map((p) => (
+          {allowed.length > 1 && allowed.map((p) => (
             <button key={p.value} className={`chip ${phase === p.value ? "on" : ""}`} onClick={() => setPhase(p.value)}>
               {p.label}
             </button>

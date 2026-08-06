@@ -245,7 +245,7 @@ export async function observations(eventId: string): Promise<Observation[]> {
 }
 
 export async function addTextNote(
-  eventId: string, teamId: string | null, phase: CapturePhase, text: string,
+  eventId: string | null, teamId: string | null, phase: CapturePhase, text: string,
 ): Promise<void> {
   const me = await uid();
   const { data, error } = await supabase
@@ -264,10 +264,13 @@ export async function addTextNote(
 
 // Upload a voice note, save the observation, transcribe, then clean.
 export async function addVoiceNote(
-  eventId: string, teamId: string | null, phase: CapturePhase, blob: Blob,
+  eventId: string | null, teamId: string | null, phase: CapturePhase, blob: Blob,
 ): Promise<void> {
   const me = await uid();
-  const path = `${me}/${eventId}/${crypto.randomUUID()}.webm`;
+  // A thought has no event, so it files under "thoughts". The first path
+  // segment stays the user id either way, which is what the storage policy
+  // and the account-deletion purge both key off.
+  const path = `${me}/${eventId ?? "thoughts"}/${crypto.randomUUID()}.webm`;
   const up = await supabase.storage.from("audio-recordings").upload(path, blob, {
     contentType: "audio/webm",
   });
@@ -477,4 +480,38 @@ export async function generatePlayerSummary(
   });
   if (error) throw error;
   return (data?.report as Report) ?? null;
+}
+
+// ---- Standalone thoughts ---------------------------------------------------
+// A reflective thought that belongs to no session. Something occurs to a coach
+// on the drive home, or three days later, and it should not have to be filed
+// against a training session it was not really about.
+//
+// Stored as an observation with event_id null and capture_phase 'ad_hoc'. The
+// schema has allowed exactly this since 0001 (the column comment reads "null for
+// ad-hoc notes") and nothing had ever used it.
+
+export async function addThought(text: string): Promise<void> {
+  return addTextNote(null, null, "ad_hoc", text);
+}
+
+export async function addVoiceThought(blob: Blob): Promise<void> {
+  return addVoiceNote(null, null, "ad_hoc", blob);
+}
+
+export async function myThoughts(limit = 20): Promise<Observation[]> {
+  const { data, error } = await supabase
+    .from("observations")
+    .select("*")
+    .is("event_id", null)
+    .eq("capture_phase", "ad_hoc")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []) as Observation[];
+}
+
+export async function deleteThought(id: string): Promise<void> {
+  const { error } = await supabase.from("observations").delete().eq("id", id);
+  if (error) throw error;
 }
