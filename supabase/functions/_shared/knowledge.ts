@@ -77,3 +77,44 @@ export async function reflectionGrounding(
     "\n"
   );
 }
+
+// Pick whole prompts from the bank to ASK, rather than to ground a model.
+//
+// The bank has always been used only as style guidance: the model read a sample
+// and wrote its own questions in that shape. But these are curated, in house
+// voice, written by people who know what a coach should be asked, and asking
+// them directly is both better and free. Nothing can drift into advice when
+// nothing is generating.
+//
+// One per group, so the set spans different kinds of thinking (where my eyes
+// went, how I spoke, what I noticed about a player) rather than three angles on
+// the same thing. The seed rotates the window, so a coach reflecting every week
+// works through the bank instead of meeting the same question each time.
+export async function reflectivePrompts(
+  admin: SupabaseClient,
+  seed: string,
+  count = 2,
+): Promise<string[]> {
+  const prompts = await loadPrompts(admin);
+  if (prompts.length === 0) return [];
+
+  const byGroup = new Map<string, string[]>();
+  for (const p of prompts) {
+    let arr = byGroup.get(p.group_name);
+    if (!arr) { arr = []; byGroup.set(p.group_name, arr); }
+    arr.push(p.prompt);
+  }
+
+  let offset = 0;
+  for (let i = 0; i < seed.length; i++) offset = (offset + seed.charCodeAt(i)) % 997;
+
+  // Rotate which GROUPS are used as well as which prompt within one, so two
+  // sessions in a row do not both open with self-awareness.
+  const groups = [...byGroup.keys()].sort();
+  const out: string[] = [];
+  for (let i = 0; i < count && i < groups.length; i++) {
+    const list = byGroup.get(groups[(offset + i) % groups.length])!;
+    out.push(list[(offset + i) % list.length]);
+  }
+  return out;
+}

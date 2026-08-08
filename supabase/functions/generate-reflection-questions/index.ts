@@ -13,7 +13,7 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { callClaude, MODELS, serviceClient, userClient } from "../_shared/clients.ts";
 import { voiceInstruction } from "../_shared/voice.ts";
-import { reflectionGrounding } from "../_shared/knowledge.ts";
+import { reflectionGrounding, reflectivePrompts } from "../_shared/knowledge.ts";
 import { firstJsonArray } from "../_shared/json.ts";
 import { MIRROR_NOT_VERDICT } from "../_shared/principles.ts";
 
@@ -43,7 +43,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { reflection_id, max_questions = 3 } = await req.json();
+    // Two generated, two curated, one fixed: five in total, from three sources.
+    const { reflection_id, max_questions = 2 } = await req.json();
     if (!reflection_id) return jsonResponse({ error: "Missing reflection_id" }, 400);
 
     const supa = userClient(req);
@@ -146,6 +147,22 @@ Deno.serve(async (req) => {
         question_type: q.question_type ?? "text",
         options: q.options ?? [],
       }));
+
+    // Curated reflective prompts, asked verbatim from the bank (0006). These are
+    // the questions that open new thinking rather than filling gaps in what was
+    // written: where your eyes went, whether you connected before you corrected,
+    // whether you left space for players to decide. They were only ever used to
+    // ground the model's style, never asked, which wasted the best questions in
+    // the app. Seeded on the reflection so a coach works through the bank week by
+    // week instead of meeting the same one every time.
+    for (const prompt of await reflectivePrompts(admin, reflection_id, 2)) {
+      rows.push({
+        reflection_id,
+        question_text: prompt,
+        question_type: "text",
+        options: [],
+      });
+    }
 
     // Always last, always asked, even when there are no detail questions at all.
     rows.push({
