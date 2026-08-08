@@ -109,14 +109,29 @@ export const EVENT_TYPES: { value: EventType; label: string }[] = [
   { value: "tournament", label: "Tournament" },
   { value: "other", label: "Other" },
 ];
-// The moments WITHIN a session. "ad_hoc" is deliberately not here: a thought
-// belongs to no session, so it is captured on the home screen instead (see
-// components/Thoughts.tsx). As a fourth chip it was the odd one out, and it
-// forced a coach to open some unrelated session in order to write one down.
+// A label for every phase, INCLUDING ones that can no longer be created, so a
+// note captured under an older version of the app still renders with its name
+// rather than a blank.
+export const PHASE_LABELS: Record<CapturePhase, string> = {
+  pre_event: "Before",
+  live: "During",
+  post_event: "After",
+  ad_hoc: "Thought",
+};
+
+// The phases a coach can still capture into.
+//
+// "post_event" is deliberately absent. A note written after the session and a
+// reflection written after the session are the same act, and offering both left
+// no way to know which box to use: in practice the same thought got written
+// twice and the report then had to reconcile two versions of it. Reflect is the
+// after.
+//
+// "ad_hoc" is absent for a different reason: a thought belongs to no session at
+// all, so it lives on the home screen (components/Thoughts.tsx).
 export const PHASES: { value: CapturePhase; label: string }[] = [
   { value: "pre_event", label: "Before" },
-  { value: "live", label: "Live" },
-  { value: "post_event", label: "After" },
+  { value: "live", label: "During" },
 ];
 
 // What to call a session on screen. An "other" session takes the coach's own

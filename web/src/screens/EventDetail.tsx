@@ -5,7 +5,7 @@ import {
   getEvent, getReflection, observations, questions, reports, saveTextReflection, saveVoiceReflection,
 } from "../lib/db";
 import type { EventRow, FollowupQuestion, Observation, Reflection, Report } from "../lib/types";
-import { PHASES, type CapturePhase, sessionLabel } from "../lib/types";
+import { PHASES, PHASE_LABELS, type CapturePhase, sessionLabel } from "../lib/types";
 import { ErrorText, Loading, Markdown, Spinner, TopBar } from "../components/ui";
 import { RecordButton } from "../components/RecordButton";
 import { CoachSquad } from "./CoachSquad";
@@ -90,7 +90,7 @@ export default function EventDetail() {
             eventId={eventId}
             teamId={ev.team_id}
             only={["pre_event"]}
-            intro="Anything on your mind going in. What you are hoping to see, what you are unsure about, what you tried last time."
+            intro="What you are walking into today. The numbers you have, who is missing, anything that means the session will not run as planned. Your aims for it are already set above."
           />
         )}
         {active === "squad" && (ev.team_id
@@ -98,7 +98,12 @@ export default function EventDetail() {
           : <div className="card muted">This event has no team attached.</div>)}
         {active === "result" && ev.team_id && <CoachResult eventId={eventId} teamId={ev.team_id} />}
         {active === "notes" && (
-          <Notes eventId={eventId} teamId={ev.team_id} only={["live", "post_event"]} />
+          <Notes
+            eventId={eventId}
+            teamId={ev.team_id}
+            only={["live"]}
+            intro="What you notice as it happens. Short is fine: you can tidy it up later, and what you think about it afterwards goes in Reflect."
+          />
         )}
         {active === "reflect" && <Reflect eventId={eventId} />}
         {active === "report" && <ReportSection ev={ev} />}
@@ -195,7 +200,7 @@ function Notes({ eventId, teamId, only, intro }: {
           {list.map((o) => (
             <div key={o.id} className={`card note ${o.sentiment}`}>
               <div className="muted small" style={{ marginBottom: 2 }}>
-                {PHASES.find((p) => p.value === o.capture_phase)?.label}
+                {PHASE_LABELS[o.capture_phase as CapturePhase] ?? o.capture_phase}
                 {o.input_type === "voice_note" ? " · voice" : ""}
               </div>
               <div>{o.cleaned_note ?? o.raw_note ?? <span className="muted">Transcribing…</span>}</div>
