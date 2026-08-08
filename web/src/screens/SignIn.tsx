@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase, isConfigured } from "../lib/supabase";
 import { Brandmark, ErrorText, Spinner } from "../components/ui";
+import { friendlyAuthError } from "../lib/authErrors";
 
 // Sign in with a password, so signing in costs no email.
 //
@@ -57,7 +58,7 @@ export default function SignIn() {
         setDone("If that address has an account, we have emailed you a link to set a new password.");
       }
     } catch (e) {
-      setErr(friendly((e as Error).message));
+      setErr(friendlyAuthError((e as Error).message));
     } finally {
       setBusy(false);
     }
@@ -173,20 +174,3 @@ export default function SignIn() {
   );
 }
 
-// Supabase's own wording is accurate and unhelpful. These are the three a coach
-// will actually hit.
-function friendly(message: string): string {
-  const m = message.toLowerCase();
-  if (m.includes("invalid login credentials")) {
-    // Also what an account from before passwords existed hits, and there is no
-    // way to tell the two apart from here, so the message has to serve both.
-    return "That email and password do not match an account. If you joined before we had passwords, use the forgotten password link below to set one.";
-  }
-  if (m.includes("email not confirmed")) {
-    return "Almost there. Tap the confirmation link in your email first, then sign in.";
-  }
-  if (m.includes("already registered") || m.includes("already been registered")) {
-    return "There is already an account with that email. Sign in instead, or use the forgotten password link.";
-  }
-  return message;
-}

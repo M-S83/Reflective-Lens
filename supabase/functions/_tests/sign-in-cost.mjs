@@ -26,6 +26,9 @@ const app = web("App.tsx");
 const provider = web("auth/AuthProvider.tsx");
 const client = web("lib/supabase.ts");
 const setPw = web("components/SetPassword.tsx");
+// The error wording moved into a shared mapper once SetPassword needed it too,
+// so the password rules could be answered in one place rather than two.
+const authErr = web("lib/authErrors.ts");
 const account = web("screens/Account.tsx");
 
 let pass = 0, fail = 0;
@@ -79,7 +82,7 @@ ok("saving actually sets it", /auth\.updateUser\(\{ password \}\)/.test(code(set
 ok("a signed-in coach can set a password with no email at all",
   /<SetPasswordForm \/>/.test(code(account)));
 ok("and the sign-in error points the rest at the reset link",
-  /joined before we had passwords/i.test(signIn));
+  /joined before we had passwords/i.test(authErr));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

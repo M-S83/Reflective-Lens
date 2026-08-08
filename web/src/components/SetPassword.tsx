@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { ErrorText, Spinner } from "./ui";
+import { friendlyAuthError } from "../lib/authErrors";
 
 // Setting a password, used in the two places it is needed:
 //
@@ -37,7 +38,7 @@ export function SetPasswordForm({ onDone, cta = "Save password" }: {
       setAgain("");
       onDone?.();
     } catch (e) {
-      setErr((e as Error).message ?? "Could not save that password.");
+      setErr(friendlyAuthError((e as Error).message ?? "Could not save that password."));
     } finally {
       setBusy(false);
     }
