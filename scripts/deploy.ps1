@@ -136,6 +136,6 @@ foreach ($fn in @('run-learning','purge-due-accounts','send-trial-reminders','bi
 }
 
 Write-Host ""
-Write-Host "==> Done. 21 migrations and 16 functions are live." -ForegroundColor Green
+Write-Host "==> Done. 22 migrations and 16 functions are live." -ForegroundColor Green
 Write-Host "    Next: sign up once in the app, then run supabase/go-live.sql to make"
 Write-Host "    yourself admin. Then walk through docs/staging-run.md to check the reports."
