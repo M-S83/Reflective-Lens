@@ -19,7 +19,7 @@ command -v supabase >/dev/null || { echo "supabase CLI not found — install it 
 # shellcheck disable=SC1091
 set -a; . ./.env; set +a
 
-echo "==> Pushing database migrations (0001-0019)"
+echo "==> Pushing database migrations (0001-0021)"
 supabase db push
 
 echo "==> Setting function secrets"
@@ -47,7 +47,7 @@ fi
 echo "==> Deploying edge functions (JWT-protected)"
 for fn in transcribe-audio process-team-sheet clean-observation \
           generate-reflection-questions enrich-reflection review-intent \
-          generate-report generate-period-report generate-player-summary \
+          generate-report generate-period-report \
           update-insights update-voice-profile create-checkout delete-account; do
   supabase functions deploy "$fn"
 done

@@ -301,7 +301,7 @@ export async function getReflection(eventId: string): Promise<Reflection | null>
 }
 
 export async function saveTextReflection(
-  eventId: string, text: string, kind: "coach" | "player" = "coach",
+  eventId: string, text: string,
 ): Promise<Reflection> {
   const me = await uid();
   const existing = await getReflection(eventId);
@@ -314,7 +314,7 @@ export async function saveTextReflection(
   }
   const { data, error } = await supabase
     .from("reflections")
-    .insert({ event_id: eventId, user_id: me, reflection_type: kind, raw_transcript: text, summary: text })
+    .insert({ event_id: eventId, user_id: me, reflection_type: "coach", raw_transcript: text, summary: text })
     .select().single();
   if (error) throw error;
   return data as Reflection;
@@ -322,7 +322,7 @@ export async function saveTextReflection(
 
 // Save a voice reflection: upload, insert/attach, transcribe.
 export async function saveVoiceReflection(
-  eventId: string, blob: Blob, kind: "coach" | "player" = "coach",
+  eventId: string, blob: Blob,
 ): Promise<Reflection> {
   const me = await uid();
   const path = `${me}/${eventId}/reflection-${crypto.randomUUID()}.webm`;
@@ -333,7 +333,7 @@ export async function saveVoiceReflection(
   if (!ref) {
     const { data, error } = await supabase
       .from("reflections")
-      .insert({ event_id: eventId, user_id: me, reflection_type: kind, audio_path: path })
+      .insert({ event_id: eventId, user_id: me, reflection_type: "coach", audio_path: path })
       .select().single();
     if (error) throw error;
     ref = data as Reflection;

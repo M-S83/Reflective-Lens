@@ -12,15 +12,18 @@ sessions and games in their own words, and reflects them back. It never grades.
 > user actually said. It never judges, grades, or teaches at them. If any output
 > reads as instruction or a verdict, it has crossed the line.
 
-Two independent, private journeys on one account: **Coach** and **Player**. Their
-reflections never mix.
+**One journey: the coach.** The player journey was withdrawn (migration `0021`).
+Its screens, the role chooser, the mode switch and `generate-player-summary` are
+gone; the dormant tables and enum values are left in place because dropping them
+is irreversible and buys nothing. "Player" now means only a member of a coach's
+squad, never an account.
 
 (This repo is Reflective Lens only. Everything under `supabase/`, `web/`, `docs/`,
 `types/` is the app.)
 
 ## Where things are
 
-- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`–`0019`.
+- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`–`0021`.
   Validated on PostgreSQL 16 (stubbed `auth`/`storage` schemas + a `test.uid` GUC).
 - `supabase/functions/` — Deno/TypeScript edge functions. Shared helpers in
   `_shared/` (`clients.ts` = model tiering + Claude/usage helpers, `voice.ts` =

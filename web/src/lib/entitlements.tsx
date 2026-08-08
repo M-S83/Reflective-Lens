@@ -3,12 +3,17 @@ import {
 } from "react";
 import { supabase } from "./supabase";
 import { useAuth } from "../auth/AuthProvider";
-import type { Mode } from "./mode";
 
-// Which modes a user may use is decided by their subscription, and coach/player
-// stay isolated. A user holds a role if they have a subscription for a plan
-// tagged with that role (plans.features.role). It is "active" if the plan is
-// paid-active or within an unexpired trial; otherwise it is "lapsed" (read-only).
+// Whether the app is usable is decided by the subscription. A user holds the
+// coach role if they have a subscription for a plan tagged with it
+// (plans.features.role). It is "active" if the plan is paid-active or within an
+// unexpired trial; otherwise it is "lapsed" (read-only).
+//
+// The player journey was removed, so this is now a one-role system. The shape is
+// kept as arrays rather than a boolean because the entitlement model itself is
+// unchanged (plans still carry a role tag) and a second journey, if one ever
+// returns, should not need this rewritten.
+type Mode = "coach";
 interface Entitlements {
   loading: boolean;
   activeRoles: Mode[]; // usable now
@@ -23,7 +28,7 @@ const Ctx = createContext<Entitlements>({
   refresh: async () => {}, startTrial: async () => {},
 });
 
-const ROLES: Mode[] = ["coach", "player"];
+const ROLES: Mode[] = ["coach"];
 
 export function EntitlementProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
@@ -50,13 +55,32 @@ export function EntitlementProvider({ children }: { children: ReactNode }) {
     for (const r of rows) {
       const planObj = Array.isArray(r.plan) ? r.plan[0] : r.plan;
       const role = planObj?.features?.role as Mode | undefined;
-      if (role !== "coach" && role !== "player") continue;
+      if (role !== "coach") continue;
       held.add(role);
       const usable = r.status === "active" ||
         (r.status === "trialing" &&
           (!r.trial_ends_at || new Date(r.trial_ends_at).getTime() >= now));
       if (usable) active.add(role);
     }
+    // A signed-in account with no subscription at all is brand new. There is no
+    // role to choose any more, so the free month starts here rather than on a
+    // screen the user has to get through first. start_trial is idempotent and
+    // refuses to restart a lapsed trial, so this cannot hand out a second one.
+    if (rows.length === 0) {
+      const { error } = await supabase.rpc("start_trial", { p_role: "coach" });
+      if (!error) {
+        const { data: after } = await supabase
+          .from("subscriptions").select("status, trial_ends_at").limit(1);
+        const row = (after ?? [])[0] as { status: string; trial_ends_at: string | null } | undefined;
+        const usable = row && (row.status === "active" ||
+          (row.status === "trialing" &&
+            (!row.trial_ends_at || new Date(row.trial_ends_at).getTime() >= now)));
+        if (usable) { active.add("coach"); held.add("coach"); }
+      }
+      // A failure here is not fatal: the user lands read-only rather than
+      // locked out, and the next refresh tries again.
+    }
+
     setActive(ROLES.filter((r) => active.has(r)));
     setLapsed(ROLES.filter((r) => held.has(r) && !active.has(r)));
     setLoading(false);

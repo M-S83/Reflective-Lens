@@ -56,9 +56,7 @@ Deno.serve(async (req) => {
       suggested_next_focus: ref.suggested_next_focus,
     };
     const context = JSON.stringify(
-      ref.reflection_type === "player"
-        ? { raw_transcript: ref.raw_transcript, summary: ref.summary, ...structured }
-        : { reflection: ref.summary ?? ref.raw_transcript ?? "", ...structured },
+      { reflection: ref.summary ?? ref.raw_transcript ?? "", ...structured },
     );
 
     const admin = serviceClient();
@@ -71,29 +69,10 @@ Deno.serve(async (req) => {
       .from("followup_questions").select("question_type, skipped").limit(300);
     const engagementHint = buildEngagementHint(qHistory ?? []);
 
-    // Ground coach nudges in the curated reflective-prompt bank (players already
-    // get their own open questions, so no coach-prompt grounding for them).
-    const grounding = ref.reflection_type === "player"
-      ? ""
-      : await reflectionGrounding(admin, reflection_id);
+    // Ground the nudges in the curated reflective-prompt bank.
+    const grounding = await reflectionGrounding(admin, reflection_id);
 
-    // Players and coaches get a different kind of question.
-    //  • Player: open reflective questions ARE the point — always offer a few,
-    //    grounded in what they wrote, to help them think it through.
-    //  • Coach: a light nudge, only where the reflection is brief or broad.
-    const playerSystem =
-      "You help a PLAYER reflect on their own game, from what they wrote or said. " +
-      "Principle: MIRROR, NOT VERDICT — never judge or tell them what to do. Ask a " +
-      "few open, curious, personal questions grounded in THEIR account: what made a " +
-      "moment feel the way it did, when they felt most/least themselves, what they'd " +
-      "want from next time. Where it fits, you may also ask whether their coach said " +
-      "anything to them about their game and what they made of it (the player reflects " +
-      "on real feedback they were given — nothing is shared between accounts). " +
-      "Questions open a door; they don't lead to an answer.\n" +
-      `- Ask ${max_questions} short open questions, each tied to something they said.\n` +
-      "- Every question is optional and skippable.\n";
-
-    const coachSystem =
+    const system =
       "You help a coach add a little context to their own reflection. " +
       MIRROR_NOT_VERDICT +
       " Never suggest what they should have done. Your ONLY job is to invite a bit more detail " +
@@ -110,7 +89,7 @@ Deno.serve(async (req) => {
 
     const raw = await callClaude({
       system:
-        (ref.reflection_type === "player" ? playerSystem : coachSystem) +
+        system +
         grounding +
         engagementHint +
         'Return ONLY a JSON array of objects with keys: question_text (string), ' +

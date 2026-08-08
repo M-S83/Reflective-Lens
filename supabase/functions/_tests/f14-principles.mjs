@@ -35,15 +35,10 @@ for (const [file, phrase] of Object.entries(taskPhrase)) {
   ok(`F14 ${file} keeps its task clause`, src.includes(phrase));
 }
 
-// Player-only caller still left inline. generate-report used to be here too.
-for (const f of ["generate-player-summary/index.ts"]) {
-  const src = read(f);
-  ok(`F14 ${f} NOT repointed (player/mixed, left)`, !src.includes('from "../_shared/principles.ts"'));
-  ok(`F14 ${f} still has inline principle`, src.includes("MIRROR, NOT VERDICT"));
-}
-// player question branch unchanged
-const gq = read("generate-reflection-questions/index.ts");
-ok("F14 playerSystem left unchanged", gq.includes("never judge or tell them what to do"));
+// Every remaining AI caller now uses the shared principle. The two exceptions
+// this check used to carry are both gone: generate-report was repointed once its
+// weaker inline copy let praise through, and generate-player-summary was deleted
+// with the player journey.
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

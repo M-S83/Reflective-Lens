@@ -47,8 +47,8 @@ git pull origin main
 > into the new folder.
 
 To confirm you have the new version, run `ls supabase\migrations`. You should
-see files numbered up to `0019_feedback_beta_analytics.sql`. If the highest
-number you see is `0007`, `0015` or `0017`, you are still on older code and the publish would achieve
+see files numbered up to `0021_coach_only.sql`. If the highest
+number you see is `0007`, `0015`, `0017` or `0019`, you are still on older code and the publish would achieve
 nothing. Stop here and sort that first.
 
 ## Step 2: Install the Supabase CLI
@@ -188,12 +188,12 @@ Save the file in Notepad (Ctrl+S) and close it.
 
 This is the actual publish. It takes a minute or two and prints what it is
 doing. You will see it push the database changes, set your secrets, then deploy
-seventeen functions one by one.
+sixteen functions one by one.
 
 When it finishes you should see:
 
 ```
-==> Done. 19 migrations and 17 functions are live.
+==> Done. 21 migrations and 16 functions are live.
 ```
 
 If it stops early with a red ERROR line, that is the script protecting you: it

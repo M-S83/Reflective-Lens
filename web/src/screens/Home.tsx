@@ -6,7 +6,6 @@ import { sessionLabel } from "../lib/types";
 import { Thoughts } from "../components/Thoughts";
 import { useAuth } from "../auth/AuthProvider";
 import { ErrorText, Loading, TopBar, isIOS, useInstallPrompt } from "../components/ui";
-import { ModeSwitch } from "../components/ModeSwitch";
 
 function fmtDate(d: string | null) {
   if (!d) return "";
@@ -31,7 +30,7 @@ export default function Home() {
       <TopBar
         title="Reflective Lens"
         eyebrow="Coach"
-        right={<div className="row" style={{ gap: 6 }}><ModeSwitch /><button className="btn ghost sm" onClick={() => signOut()}>Sign out</button></div>}
+        right={<button className="btn ghost sm" onClick={() => signOut()}>Sign out</button>}
       />
       <div className="screen stack">
         {(canInstall || isIOS()) && !dismissInstall && (
@@ -50,11 +49,12 @@ export default function Home() {
 
         <button className="btn block" onClick={() => nav("/new")}>+ Start a session or match</button>
 
+        <Thoughts />
+
         <div>
           <div className="row" style={{ marginBottom: 8 }}>
             <h2 className="serif" style={{ fontSize: 16, color: "var(--pitch)" }}>Recent</h2>
           </div>
-          <Thoughts />
           <ErrorText>{err}</ErrorText>
           {events === null ? (
             <Loading />

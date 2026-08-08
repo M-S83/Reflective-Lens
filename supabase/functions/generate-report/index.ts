@@ -59,9 +59,6 @@ Deno.serve(async (req) => {
         (q.followup_answers ?? [])[0]?.selected_option ?? null,
     })).filter((x) => x.answer);
 
-    // Player Mode: the player's own game context (position/role/result).
-    const { data: playerGame } = await supa
-      .from("player_game_log").select("*").eq("event_id", event_id).maybeSingle();
 
     // Under-18 name privacy: players are referred to by first name only (last
     // initial to disambiguate), keyed off the team age group. No names beyond
@@ -75,8 +72,6 @@ Deno.serve(async (req) => {
     const statName = (s: any) =>
       nameMap[s.player_id] ?? safeName({ display_name: s.players?.display_name }, under18);
 
-    const isPlayer = report_type === "player_report" ||
-      reflections?.[0]?.reflection_type === "player";
 
     const payload = JSON.stringify({
       event: {
@@ -92,23 +87,18 @@ Deno.serve(async (req) => {
         note: o.cleaned_note ?? o.raw_note, tags: o.tags, sentiment: o.sentiment,
         phase: o.phase_of_play,
       })),
-      // F24: the coach report needs only the reflection TEXT (enriched summary,
-      // else summary, else the raw transcript for voice reflections). The whole
-      // row - a duplicate transcript, the AI-generated fields written back by a
-      // prior report, ids and timestamps - is not sent. The player report keeps
-      // the full row unchanged (byte-identical payload).
+      // F24: the report needs only the reflection TEXT (enriched summary, else
+      // summary, else the raw transcript for voice reflections). The whole row,
+      // a duplicate transcript plus the AI-generated fields written back by a
+      // prior report plus ids and timestamps, is not sent.
       reflection: reflections?.[0]
-        ? (isPlayer
-          ? { ...reflections[0], summary: reflections[0].enriched_summary ?? reflections[0].summary }
-          : {
-            summary: reflections[0].enriched_summary ?? reflections[0].summary ??
-              reflections[0].raw_transcript ?? null,
-          })
+        ? {
+          summary: reflections[0].enriched_summary ?? reflections[0].summary ??
+            reflections[0].raw_transcript ?? null,
+        }
         : null,
       // The reflective questions and the person's own answers.
       reflective_qa,
-      // Player Mode game context (position(s), role, match details) — null otherwise.
-      player_game: playerGame ?? null,
       // Included for match reports (null/empty for training). Player labelled by
       // first name only (under-18 privacy).
       match_result: matchDetails ?? null,
@@ -127,7 +117,7 @@ Deno.serve(async (req) => {
 
     // Step 6 runs on a COMPLETE session only. A coach report needs a reflection
     // with content: never generate on partial input (aims and notes alone).
-    if (!isPlayer) {
+    {
       const r = reflections?.[0];
       const hasReflection = !!(r && (((r.summary ?? "") as string).trim() ||
         ((r.raw_transcript ?? "") as string).trim()));
@@ -139,11 +129,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Change-detection (coach reports only): fingerprint ONLY what the coach
+    // Change-detection: fingerprint ONLY what the coach
     // supplied (aims, notes, reflection, answers, result), not any AI-derived
     // field, so folding the structured summary back into the reflection does not
     // itself count as a change. Unchanged source returns the existing report;
-    // changed regenerates in place. Player per-game reports keep old behaviour.
+    // changed regenerates in place.
     const sourceForHash = JSON.stringify({
       aims: event.hoping_to_see ?? [],
       focus: event.focus_area ?? null,
@@ -155,7 +145,7 @@ Deno.serve(async (req) => {
     });
     const fingerprint = await sha256(sourceForHash);
     let prior: { id: string; source_fingerprint: string | null } | null = null;
-    if (!isPlayer) {
+    {
       const { data } = await supa
         .from("reports").select("id, source_fingerprint")
         .eq("event_id", event_id).eq("report_type", report_type)
@@ -181,25 +171,11 @@ Deno.serve(async (req) => {
         // the praise rule out concretely, and this is the function that most
         // needed it.
         MIRROR_NOT_VERDICT + " " +
-        "RESTATE ONLY what the coach or player actually said: never add a " +
+        "RESTATE ONLY what the coach actually said: never add a " +
         "characterisation of the game or a person they did not make themselves " +
         "(e.g. don't call it 'a sharp game' unless they did — 'felt sharp' is " +
         "about them, not the match). " +
-        (isPlayer
-          ? "This is a PLAYER'S PERSONAL report. Keep it in their voice, personal " +
-            "and first/second person. Lead with their own account of the game. " +
-            "Draw the next-focus points from THEIR answers to the reflective " +
-            "questions (reflective_qa) — not your own ideas. Do not add tactical " +
-            "analysis they didn't raise. You may accurately reference their game " +
-            "context from player_game (position(s), whether they started or " +
-            "featured as a game changer, the result) but never invent stats. If " +
-            "they came off the bench, call it a \"game changer\" (their word for " +
-            "it) — never \"sub\" or \"came on\". " +
-            'Return ONLY JSON with keys: "headline" (string), "sections" (array ' +
-            'of {heading, points: string[]}), "hoped_to_see" (array of {item, ' +
-            'status, note}), "patterns" (string[]), "suggested_next_focus" ' +
-            "(string[])."
-          : "This is a COACH'S single-session report. Draw ONLY on what the coach " +
+        "This is a COACH'S single-session report. Draw ONLY on what the coach " +
             "provided for THIS session: the aims, the notes captured, their " +
             "reflection, and their answers to the reflective questions. If " +
             "something was not raised, do NOT mention it. Any field with no " +
@@ -232,7 +208,7 @@ Deno.serve(async (req) => {
             'of {aim, status, note}), "what_went_well" (string[]), ' +
             '"what_did_not_work" (string[]), "action_points" (string[]), ' +
             '"noted_for_next" (string[]), "learning_evidence" (string[]), ' +
-            '"session_patterns" (string[], patterns WITHIN this one session only).') +
+            '"session_patterns" (string[], patterns WITHIN this one session only).' +
         voice,
       prompt: `Report type: ${report_type}\n\nData:\n${payload}`,
       maxTokens: 4096,
@@ -245,14 +221,8 @@ Deno.serve(async (req) => {
     const c = content_json as Record<string, unknown>;
     const heading = title ?? `${event.title}: Report`;
 
-    // Never store a blank report. Structured shape differs coach vs player.
-    const structured = isPlayer
-      ? !!(
-        (Array.isArray(c.sections) && c.sections.length) || c.headline ||
-        (Array.isArray(c.patterns) && c.patterns.length) ||
-        (Array.isArray(c.hoped_to_see) && c.hoped_to_see.length)
-      )
-      : !!(
+    // Never store a blank report.
+    const structured = !!(
         c.headline ||
         (Array.isArray(c.aims_review) && c.aims_review.length) ||
         (Array.isArray(c.what_went_well) && c.what_went_well.length) ||
@@ -262,8 +232,6 @@ Deno.serve(async (req) => {
     const content_markdown = !structured
       ? `# ${heading}\n\n${(raw ?? "").trim() ||
           "_The report came back empty. Please try generating it again._"}`
-      : isPlayer
-      ? toMarkdown(heading, content_json)
       : coachMarkdown(heading, content_json);
     if (!structured) {
       // Never log the reply body: it contains player names and note text (youth
@@ -275,9 +243,9 @@ Deno.serve(async (req) => {
     }
 
     // F4: fold the structured summary back into the reflection so the period
-    // report (which aggregates these fields) has real data. Coach only, and only
-    // when the reply was usable (never overwrite good content with empty).
-    if (!isPlayer && structured && reflections?.[0]?.id) {
+    // report (which aggregates these fields) has real data. Only when the reply
+    // was usable, so good content is never overwritten with empty.
+    if (structured && reflections?.[0]?.id) {
       await admin.from("reflections").update({
         what_went_well: Array.isArray(c.what_went_well) ? c.what_went_well : [],
         what_did_not_work: Array.isArray(c.what_did_not_work) ? c.what_did_not_work : [],
@@ -295,7 +263,7 @@ Deno.serve(async (req) => {
       title: heading,
       content_json,
       content_markdown,
-      source_fingerprint: isPlayer ? null : fingerprint,
+      source_fingerprint: fingerprint,
     };
 
     // Coach report whose source changed: regenerate in place, no duplicate row.
@@ -354,20 +322,3 @@ function coachMarkdown(title: string, c: any): string {
   return renderReport(title, c.headline, blocks);
 }
 
-// Player per-game report (unchanged output; composed from shared blocks).
-function toMarkdown(title: string, c: any): string {
-  const blocks: MdBlock[] = [{ t: "sections", sections: c.sections ?? [] }];
-  if (c.hoped_to_see?.length) {
-    const mark = (st: string) => st === "showed_up" ? "✓" : st === "partly" ? "~" : "✗";
-    blocks.push({
-      t: "checklist",
-      heading: "What you hoped to see",
-      items: c.hoped_to_see.map((h: any) => ({ mark: mark(h.status), label: h.item, note: h.note })),
-    });
-  }
-  if (c.patterns?.length) blocks.push({ t: "bullets", heading: "Patterns", items: c.patterns });
-  if (c.suggested_next_focus?.length) {
-    blocks.push({ t: "bullets", heading: "Noted for next", items: c.suggested_next_focus });
-  }
-  return renderReport(title, c.headline, blocks);
-}

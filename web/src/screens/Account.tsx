@@ -14,7 +14,7 @@ import {
 
 // One place for everything about the account rather than the person: the free
 // month, the coach's own vocabulary, and the danger zone. DeleteAccount used to
-// sit at the bottom of Home and PlayerHome, which put "erase everything" one
+// sit at the bottom of the home screen, which put "erase everything" one
 // scroll below the day's work.
 export default function Account() {
   const ent = useEntitlements();

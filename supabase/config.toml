@@ -52,8 +52,6 @@ verify_jwt = true
 [functions.generate-period-report]
 verify_jwt = true
 
-[functions.generate-player-summary]
-verify_jwt = true
 
 [functions.update-insights]
 verify_jwt = true

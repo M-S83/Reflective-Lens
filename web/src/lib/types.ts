@@ -55,7 +55,9 @@ export interface Observation {
   sentiment: Sentiment; audio_path: string | null; created_at: string;
 }
 export interface Reflection {
-  id: string; event_id: string; reflection_type: "coach" | "player";
+  // reflection_type stays in the schema (the enum has a player value) but the
+  // player journey was removed, so everything this app writes is a coach's.
+  id: string; event_id: string; reflection_type: "coach";
   raw_transcript: string | null; summary: string | null; enriched_summary: string | null;
   audio_path: string | null; created_at: string;
 }
