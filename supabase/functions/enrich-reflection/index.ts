@@ -55,12 +55,28 @@ Deno.serve(async (req) => {
 
     const raw = await callClaude({
       system:
-        "You refine a football coach's own session reflection by folding in the " +
-        "extra context they added when answering follow-up questions. " +
+        // NOT "refine". The earlier wording was "you refine a coach's own
+        // reflection", and the model dutifully returned "Here's a refined
+        // version of your reflection: ...", which was then saved and shown back
+        // to the coach under a heading that says "with your added context". Two
+        // problems in one line: the model narrating its own job into the
+        // artefact, and the word "refined" telling a coach their own words
+        // needed improving. The app joins their sentences together; it does not
+        // upgrade them.
+        "A coach wrote a reflection, then answered some follow-up questions. " +
+        "Join the two into one piece of writing, so what they said in the " +
+        "answers sits naturally alongside what they wrote first. " +
         MIRROR_NOT_VERDICT +
-        " Integrate ONLY what the coach actually wrote, in their voice. Do not " +
-        "invent detail or add advice. Keep it concise and faithful. Return ONLY " +
-        "the enriched summary as plain text." +
+        " Use ONLY what the coach actually wrote, in their voice and their " +
+        "words. Do not invent detail, do not add advice, and do not improve " +
+        "their phrasing for the sake of it: this is their reflection joined up, " +
+        "not a better one. " +
+        // Models reach for a preamble when asked to transform text, and this
+        // output is stored and read as the coach's own writing.
+        "Return ONLY the reflection itself, as plain text. No preamble, no " +
+        "\"Here is\", no heading, no commentary about what you did, and no " +
+        "sign-off. The first word of your reply is the first word of the " +
+        "reflection." +
         voice,
       prompt: JSON.stringify({
         original_summary: ref.summary,
@@ -74,7 +90,13 @@ Deno.serve(async (req) => {
       log: { admin, userId: ref.user_id },
     });
 
-    const enriched_summary = raw.trim();
+    // Backstop for the same failure. A prompt rule reduces the preamble but
+    // does not remove it, and this text is stored and shown to the coach as
+    // their own reflection, so one leaking through is worse than a little
+    // defensiveness here. Narrow on purpose: it only fires on a short opening
+    // clause that announces itself and ends in a colon, so a reflection that
+    // genuinely begins "The thing is:" survives.
+    const enriched_summary = stripPreamble(raw.trim());
 
     // A bad or empty model reply must never blank an existing enriched summary.
     // Keep whatever was there and report the no-op instead of overwriting.
@@ -94,3 +116,14 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: String(e) }, 500);
   }
 });
+
+// Remove an opening "Here's a refined version of your reflection:" style
+// announcement, if the model added one despite being told not to. Requires all
+// of: the very start of the text, one of a few announcing verbs, no more than
+// 80 characters before the colon, and real content after it.
+function stripPreamble(text: string): string {
+  const m = text.match(
+    /^\s*(?:here\s*(?:'|\u2019)?s|here is|this is|below is|the following is)\b[^:\n]{0,80}:\s*(?=\S)/i,
+  );
+  return m ? text.slice(m[0].length).trim() : text;
+}
