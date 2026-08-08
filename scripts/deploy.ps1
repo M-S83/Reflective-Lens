@@ -66,7 +66,7 @@ if ($missing.Count -gt 0) {
   Fail "These are missing or empty in .env: $($missing -join ', '). See docs/deploy-windows.md, step 4."
 }
 
-Write-Host "==> Pushing database migrations (0001-0021)" -ForegroundColor Cyan
+Write-Host "==> Pushing database migrations (0001-0022)" -ForegroundColor Cyan
 & supabase db push
 if ($LASTEXITCODE -ne 0) {
   Write-Host ""

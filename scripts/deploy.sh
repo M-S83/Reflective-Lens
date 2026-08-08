@@ -19,7 +19,7 @@ command -v supabase >/dev/null || { echo "supabase CLI not found — install it 
 # shellcheck disable=SC1091
 set -a; . ./.env; set +a
 
-echo "==> Pushing database migrations (0001-0021)"
+echo "==> Pushing database migrations (0001-0022)"
 supabase db push
 
 echo "==> Setting function secrets"
