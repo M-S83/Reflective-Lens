@@ -17,6 +17,22 @@ import { reflectionGrounding } from "../_shared/knowledge.ts";
 import { firstJsonArray } from "../_shared/json.ts";
 import { MIRROR_NOT_VERDICT } from "../_shared/principles.ts";
 
+// The question that turns toward next time. Deliberately NOT written by the
+// model, and deliberately the same every time.
+//
+// The model was writing it, tied to something from the reflection. But choosing
+// WHICH thing to ask about is itself a judgement: it decides which part of the
+// session deserved changing, which is a quieter version of the advice this
+// product does not give. A fixed, open question decides nothing. The coach
+// picks what to think about, or picks nothing.
+//
+// Written in code rather than prompted, so it cannot drift into a suggestion,
+// cannot be skipped when the reflection looks complete, costs no tokens, and
+// reads the same after every session, which is what a reflective habit is made
+// of. "If at all" is load-bearing: it presumes nothing went wrong.
+const FORWARD_QUESTION =
+  "If you ran this session again, how would you change or improve it, if at all?";
+
 interface GeneratedQuestion {
   question_text: string;
   question_type: "multiple_choice" | "voice" | "text" | "rating";
@@ -83,37 +99,23 @@ Deno.serve(async (req) => {
       "they should have done or should do next. If you find yourself about to " +
       "recommend something, turn it back into a question about what THEY " +
       "would want.\n" +
-      "You have two jobs.\n" +
-      "1. LOOKING BACK: invite a bit more detail where the reflection reads as " +
+      "Your job is to invite a bit more detail where the reflection reads as " +
       "brief or broad. A concrete example, what something looked like, which " +
       "player or moment, or what a vague word (\"chaotic\", \"good\", " +
       "\"better\") actually meant here.\n" +
+      // A question about next time IS asked, but not here: it is appended in
+      // code below, identically every time. See FORWARD_QUESTION.
+      "Do NOT ask anything about next time, about changing or improving the " +
+      "session, or about what they would do differently. That question is " +
+      "already asked separately and must not be duplicated here.\n" +
       // Without this the cycle stops at describing what happened. A coach can
       // write up every session for a season and never once be invited to think
       // about doing it differently, which is most of the value of reflecting.
-      "2. LOOKING FORWARD: ALWAYS ask exactly one question that turns toward " +
-      "next time. This one is never omitted. Where you can, tie it to " +
-      "something THEY raised: if they named something that did not go the way " +
-      "they wanted, ask what they would want to see instead; if they named " +
-      "something that worked, ask how they would keep it or where else it would " +
-      "help. If the reflection gives you nothing specific to hang it on, ask " +
-      "plainly whether there is anything they would do differently. Ask about " +
-      "their intention, never supply it: \"what would you want to see " +
-      "instead?\" is right, \"you could shrink the pitch\" is not.\n" +
-      // Being asked is the point, not the answer. A coach who reads the question
-      // and decides they would not change anything has still reflected, and that
-      // is a real answer rather than a skipped one.
-      "Phrase it so that \"nothing, it went how I wanted\" is an easy and " +
-      "perfectly good answer. Never imply something must have been wrong, and " +
-      "never ask it twice in different words.\n" +
       "Rules:\n" +
       "- If a point is already specific and detailed, do NOT ask about it.\n" +
-      "- The forward question is asked LAST, after any detail questions.\n" +
-      "- NEVER return an empty array. Even when the reflection is rich and " +
-      "needs no detail questions at all, the forward question is still asked, " +
-      "on its own.\n" +
-      `- Ask AT MOST ${max_questions} short, gentle, open questions in total, ` +
-      "the last of which is always the forward one.\n" +
+      "- If the whole reflection is already specific and detailed, return an " +
+      "empty array []. That is a fine outcome.\n" +
+      `- Ask AT MOST ${max_questions} short, gentle, open questions.\n` +
       "- Questions invite context, not analysis or self-criticism, and are " +
       "always skippable.\n";
 
@@ -134,12 +136,24 @@ Deno.serve(async (req) => {
 
     const questions = firstJsonArray<GeneratedQuestion>(raw).slice(0, max_questions);
 
-    const rows = questions.map((q) => ({
+    const rows = questions
+      // Belt and braces: if the model asks about next time anyway, drop it
+      // rather than ask the same thing twice in different words.
+      .filter((q) => !/next time|next session|differently|change or improve/i.test(q.question_text ?? ""))
+      .map((q) => ({
+        reflection_id,
+        question_text: q.question_text,
+        question_type: q.question_type ?? "text",
+        options: q.options ?? [],
+      }));
+
+    // Always last, always asked, even when there are no detail questions at all.
+    rows.push({
       reflection_id,
-      question_text: q.question_text,
-      question_type: q.question_type ?? "text",
-      options: q.options ?? [],
-    }));
+      question_text: FORWARD_QUESTION,
+      question_type: "text",
+      options: [],
+    });
 
     // NOTE: insights are disabled for this dispatch (migration 0013). The old
     // wire that appended up to two cross-session "recurring theme" prompts here
