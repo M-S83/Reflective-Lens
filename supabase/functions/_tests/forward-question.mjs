@@ -50,14 +50,25 @@ ok("carries a worked example of the line", /what would you want to see instead\?
 ok("names a suggestion as the wrong side of it", /you could shrink the pitch" is not/i.test(prompt));
 ok("keeps the shared principle", /MIRROR_NOT_VERDICT/.test(src));
 
-// --- restraint ---------------------------------------------------------------
-// One forward question, last, and only when their own words support it. A
-// reflection that already says what they want next time should be left alone.
-ok("exactly one forward question", /ask ONE question that turns toward next time/.test(prompt));
+// --- always asked, and only once ---------------------------------------------
+// One forward question, asked last, and asked every time.
+ok("exactly one forward question", /ALWAYS ask exactly one question that turns toward/.test(prompt));
 ok("it comes last", /forward question is asked LAST/.test(prompt));
-ok("it is grounded in what they raised", /tied to something THEY raised/.test(prompt));
-ok("omitted when nothing supports it", /If nothing does, leave it out/.test(prompt));
-ok("silent when they have already said it", /already says what they want next time, return an empty array/.test(prompt));
+ok("grounded in what they raised where possible", /tie it to something THEY raised/.test(prompt));
+
+// It is ALWAYS asked, and that is the point. Being asked is the value, not the
+// answer: a coach who reads it and decides they would change nothing has still
+// reflected. The earlier version let it be dropped whenever the reflection
+// looked complete, which is exactly when the nudge is worth most.
+ok("never omitted", /This one is never omitted/.test(prompt));
+ok("asked plainly when nothing specific to hang it on", /ask plainly whether there is anything they would do differently/.test(prompt));
+ok("the array is never empty", /NEVER return an empty array/.test(prompt));
+ok("asked alone when no detail questions are needed", /the forward question is still asked, on its own/.test(prompt));
+
+// And "nothing" has to be an easy answer, or the question becomes a leading one.
+ok("makes 'nothing' a good answer", /nothing, it went how I wanted" is an easy and perfectly good answer/.test(prompt));
+ok("never implies something was wrong", /Never imply something must have been wrong/.test(prompt));
+ok("not asked twice in different words", /never ask it twice in different words/.test(prompt));
 ok("still skippable", /always skippable/.test(prompt));
 
 // --- house style -------------------------------------------------------------

@@ -91,20 +91,29 @@ Deno.serve(async (req) => {
       // Without this the cycle stops at describing what happened. A coach can
       // write up every session for a season and never once be invited to think
       // about doing it differently, which is most of the value of reflecting.
-      "2. LOOKING FORWARD: ask ONE question that turns toward next time, tied " +
-      "to something THEY raised. If they named something that did not go the " +
-      "way they wanted, ask what they would want to see instead, or what they " +
-      "might try. If they named something that worked, ask how they would keep " +
-      "it, or where else it would help. Ask about their intention, never supply " +
-      "it: \"what would you want to see instead?\" is right, \"you could " +
-      "shrink the pitch\" is not.\n" +
+      "2. LOOKING FORWARD: ALWAYS ask exactly one question that turns toward " +
+      "next time. This one is never omitted. Where you can, tie it to " +
+      "something THEY raised: if they named something that did not go the way " +
+      "they wanted, ask what they would want to see instead; if they named " +
+      "something that worked, ask how they would keep it or where else it would " +
+      "help. If the reflection gives you nothing specific to hang it on, ask " +
+      "plainly whether there is anything they would do differently. Ask about " +
+      "their intention, never supply it: \"what would you want to see " +
+      "instead?\" is right, \"you could shrink the pitch\" is not.\n" +
+      // Being asked is the point, not the answer. A coach who reads the question
+      // and decides they would not change anything has still reflected, and that
+      // is a real answer rather than a skipped one.
+      "Phrase it so that \"nothing, it went how I wanted\" is an easy and " +
+      "perfectly good answer. Never imply something must have been wrong, and " +
+      "never ask it twice in different words.\n" +
       "Rules:\n" +
       "- If a point is already specific and detailed, do NOT ask about it.\n" +
-      "- The forward question is asked LAST, and only where their own words " +
-      "give you something to ask about. If nothing does, leave it out.\n" +
-      "- If the whole reflection is already rich AND already says what they " +
-      "want next time, return an empty array [].\n" +
-      `- Ask AT MOST ${max_questions} short, gentle, open questions.\n` +
+      "- The forward question is asked LAST, after any detail questions.\n" +
+      "- NEVER return an empty array. Even when the reflection is rich and " +
+      "needs no detail questions at all, the forward question is still asked, " +
+      "on its own.\n" +
+      `- Ask AT MOST ${max_questions} short, gentle, open questions in total, ` +
+      "the last of which is always the forward one.\n" +
       "- Questions invite context, not analysis or self-criticism, and are " +
       "always skippable.\n";
 
