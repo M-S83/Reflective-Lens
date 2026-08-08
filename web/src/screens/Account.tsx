@@ -9,17 +9,65 @@ import {
   myGlossary,
   saveGlossaryTerm,
   removeGlossaryTerm,
-  trialDaysLeft,
   type GlossaryEntry,
 } from "../lib/account";
 
-// One place for everything about the account rather than the person: the free
-// month, the coach's own vocabulary, and the danger zone. DeleteAccount used to
-// sit at the bottom of the home screen, which put "erase everything" one
-// scroll below the day's work.
+// One sentence per kind of access, and each one true. The rule underneath: say
+// what they have, say when it ends if it ends, and never nag someone who was
+// given the app for nothing.
+function PlanLine() {
+  const { access } = useEntitlements();
+  const { kind, daysLeft, endsAt } = access;
+  const on = endsAt
+    ? new Date(endsAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+    : null;
+  const left = daysLeft === null ? "" : `${daysLeft} ${daysLeft === 1 ? "day" : "days"}`;
+
+  if (kind === "comp") {
+    return (
+      <div className="muted small">
+        Complimentary access, with no end date. Nothing to pay and nothing to renew.
+      </div>
+    );
+  }
+  if (kind === "beta") {
+    return (
+      <div className="muted small">
+        You are on the beta, free until {on}{daysLeft !== null ? ` (${left})` : ""}.
+        Everything you write stays yours, and we will tell you before anything changes.
+      </div>
+    );
+  }
+  if (kind === "paid") {
+    return <div className="muted small">Your subscription is active. Thank you.</div>;
+  }
+  if (kind === "trial") {
+    return (
+      <div className="muted small">
+        {daysLeft === null
+          ? "You are on your free month."
+          : `You have ${left} left of your free month${on ? `, ending ${on}` : ""}.`}{" "}
+        Everything you have written stays yours either way.
+      </div>
+    );
+  }
+  if (kind === "lapsed") {
+    return (
+      <div className="muted small">
+        Your free access has ended. You can still read and export everything you
+        have written. Choose a plan to add new reflections and reports.
+      </div>
+    );
+  }
+  return <div className="muted small">No plan yet.</div>;
+}
+
+// One place for everything about the account rather than the person: the plan,
+// the password, the coach's own vocabulary, and the danger zone. DeleteAccount
+// used to sit at the bottom of the home screen, which put "erase everything"
+// one scroll below the day's work.
 export default function Account() {
   const ent = useEntitlements();
-  const [days, setDays] = useState<number | null>(null);
   const [terms, setTerms] = useState<GlossaryEntry[] | null>(null);
   const [term, setTerm] = useState("");
   const [meaning, setMeaning] = useState("");
@@ -28,7 +76,6 @@ export default function Account() {
 
   useEffect(() => {
     logFeature(FEATURES.accountOpened);
-    trialDaysLeft().then(setDays).catch(() => {});
     myGlossary().then(setTerms).catch((e) => {
       setErr(e.message ?? "Could not load your words.");
       setTerms([]);
@@ -72,28 +119,17 @@ export default function Account() {
       <div className="screen stack">
         <ErrorText>{err}</ErrorText>
 
-        {/* --- The free month ------------------------------------------- */}
+        {/* --- What you are on ------------------------------------------ */}
+        {/* This used to lead with "Active: coach. Thank you." for anyone with
+            usable access, which includes an unexpired trial. So a coach on their
+            free month was thanked as though they were paying, and the countdown
+            below it could never be reached: nobody was ever told their trial was
+            running out. Reading the KIND of access rather than a boolean is what
+            fixes it, and it is also what lets beta and comped accounts say
+            something true. */}
         <div className="card stack">
           <strong>Your plan</strong>
-          {ent.loading ? (
-            <Loading />
-          ) : ent.activeRoles.length > 0 ? (
-            <div className="muted small">
-              Active: {ent.activeRoles.join(" and ")}. Thank you.
-            </div>
-          ) : days === null ? (
-            <div className="muted small">No plan yet.</div>
-          ) : days > 0 ? (
-            <div className="muted small">
-              You have {days} {days === 1 ? "day" : "days"} left of your free month.
-              Everything you have written stays yours either way.
-            </div>
-          ) : (
-            <div className="muted small">
-              Your free month has ended. You can still read and export everything
-              you have written. Choose a plan to add new reflections and reports.
-            </div>
-          )}
+          {ent.loading ? <Loading /> : <PlanLine />}
         </div>
 
         {/* --- Signing in ------------------------------------------------ */}

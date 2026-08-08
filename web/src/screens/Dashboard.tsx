@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { allFeedback, setFeedbackStatus, type FeedbackRow } from "../lib/feedback";
+import {
+  listAccounts, grantPlan, revokePlan, PLAN_BETA, PLAN_COMP, type AccountRow,
+} from "../lib/accounts";
 import { TopBar, Loading, ErrorText } from "../components/ui";
 import {
   getOverview, getMrr, getFeatureUsage, getUserCosts, getCostDaily,
@@ -69,6 +72,7 @@ export default function Dashboard() {
           <Tile label="Paying / trialing" value={String(ov?.paying_or_trialing ?? 0)} sub={`${ov?.total_users ?? 0} total users`} />
         </div>
 
+        <AccountsPanel />
         <FeedbackPanel />
         <AdoptionPanel />
 
@@ -215,6 +219,123 @@ function ModelPanel() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ---- Who is on what, and giving access -------------------------------------
+// Three kinds of account, all of them ordinary subscription rows (0022):
+// beta is a trial with a date on it, complimentary is active with no end date,
+// and paid is what Stripe will set. So this panel writes nothing special, it
+// just calls the two admin functions and lists the view.
+function AccountsPanel() {
+  const [rows, setRows] = useState<AccountRow[] | null>(null);
+  const [email, setEmail] = useState("");
+  const [plan, setPlan] = useState<string>(PLAN_BETA);
+  const [days, setDays] = useState(90);
+  const [busy, setBusy] = useState(false);
+  const [said, setSaid] = useState("");
+  const [err, setErr] = useState("");
+
+  const load = () => listAccounts().then(setRows).catch((e) => setErr(e.message ?? "Could not load accounts."));
+  useEffect(() => { load(); }, []);
+
+  const run = async (fn: () => Promise<string>) => {
+    setBusy(true); setErr(""); setSaid("");
+    try { setSaid(await fn()); await load(); }
+    catch (e) { setErr((e as Error).message ?? "That did not work."); }
+    finally { setBusy(false); }
+  };
+
+  // Beta is time-boxed, complimentary is not. Passing days for a comp would give
+  // a coach you meant to gift the app to a countdown, so the form follows the
+  // plan rather than leaving both boxes live.
+  const timed = plan === PLAN_BETA;
+  const counts = (rows ?? []).reduce((acc, r) => {
+    const key = !r.plan_id ? "none" : !r.usable ? "lapsed" : r.kind;
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  return (
+    <div className="card stack" style={{ gap: 8 }}>
+      <div className="row">
+        <strong>Accounts</strong>
+        <div className="spacer" />
+        <span className="muted small">
+          {(["beta", "comp", "paid", "lapsed"] as const)
+            .filter((k) => counts[k])
+            .map((k) => `${counts[k]} ${k === "comp" ? "complimentary" : k}`)
+            .join(" · ") || "nobody yet"}
+        </span>
+      </div>
+      <p className="muted small" style={{ marginTop: -4 }}>
+        Give someone beta access for a set number of days, or complimentary
+        access with no end date. They must have signed up first, and the email
+        must be the one they signed up with.
+      </p>
+
+      <div className="field">
+        <label htmlFor="acc-email">Their email</label>
+        <input id="acc-email" type="email" value={email} placeholder="coach@example.com"
+          onChange={(e) => setEmail(e.target.value)} autoComplete="off" />
+      </div>
+
+      <div style={{ display: "flex", gap: 6 }}>
+        <button className="btn ghost sm" onClick={() => setPlan(PLAN_BETA)}
+          style={{ flex: 1, ...(plan === PLAN_BETA ? { background: "#dff1ee", color: "#2a7d70", borderColor: "#9fd3c9" } : {}) }}>
+          Beta, on a timer
+        </button>
+        <button className="btn ghost sm" onClick={() => setPlan(PLAN_COMP)}
+          style={{ flex: 1, ...(plan === PLAN_COMP ? { background: "#dff1ee", color: "#2a7d70", borderColor: "#9fd3c9" } : {}) }}>
+          Complimentary, no end
+        </button>
+      </div>
+
+      {timed && (
+        <div className="field">
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span className="small">Days</span>
+            <span className="mono small" style={{ color: "#2a7d70" }}>{days}</span>
+          </div>
+          <input type="range" min={7} max={365} step={7} value={days}
+            onChange={(e) => setDays(+e.target.value)} style={{ width: "100%", accentColor: "#2a7d70" }} />
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 6 }}>
+        <button className="btn" style={{ flex: 1 }} disabled={busy || !email.trim()}
+          onClick={() => run(() => grantPlan(email, plan, timed ? days : null))}>
+          {busy ? "Working" : "Give access"}
+        </button>
+        <button className="btn ghost" disabled={busy || !email.trim()}
+          onClick={() => run(() => revokePlan(email, plan))}>
+          Take it back
+        </button>
+      </div>
+
+      {said && <div className="banner">{said}</div>}
+      <ErrorText>{err}</ErrorText>
+
+      {rows === null ? <Loading /> : rows.length === 0 ? (
+        <div className="muted small">No accounts yet.</div>
+      ) : (
+        <div className="list">
+          {rows.map((r) => (
+            <div key={r.user_id} className="row" style={{ gap: 8, borderTop: "1px solid #eee", padding: "6px 0" }}>
+              <span className="small" style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+                {r.email ?? "(no email)"}
+                <em className="muted" style={{ fontSize: 11, display: "block", fontStyle: "normal" }}>
+                  {!r.plan_id ? "no plan"
+                    : `${r.plan_name}${r.days_left !== null ? `, ${r.days_left} ${r.days_left === 1 ? "day" : "days"} left` : ""}`}
+                </em>
+              </span>
+              <div className="spacer" />
+              <span className={`pill ${r.usable ? "good" : ""}`}>{r.usable ? "active" : "read-only"}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -23,7 +23,7 @@ squad, never an account.
 
 ## Where things are
 
-- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`–`0021`.
+- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`-`0022`.
   Validated on PostgreSQL 16 (stubbed `auth`/`storage` schemas + a `test.uid` GUC).
 - `supabase/functions/` — Deno/TypeScript edge functions. Shared helpers in
   `_shared/` (`clients.ts` = model tiering + Claude/usage helpers, `voice.ts` =
@@ -35,7 +35,7 @@ squad, never an account.
   checks (`node <file>`); `*-db.sh` stand up a throwaway PG16 from
   `_tests/bootstrap.sql` and assert against real migrations + RLS.
 - `web/` — React + Vite + TypeScript PWA (the app). `npm run build` must pass.
-- `docs/` — `deploy.md`, `cost-model.md`, `analytics.md`, `continuous-learning.md`,
+- `docs/` — `deploy.md`, `accounts.md`, `cost-model.md`, `analytics.md`, `continuous-learning.md`,
   `coaching-knowledge.md`, `lovable-prompt.md`, `system-audit.md`, `staging-run.md`
   (+ `staging-seed.sql`), `handoff-to-cowork.md` (inventory of the coach subsystem
   work and what is still to deploy).
@@ -49,6 +49,13 @@ squad, never an account.
   (house style), and applies to UI microcopy and docs too.
 - **"Game changer"** is the word for a substitute who comes off the bench. Never
   "sub" or "came on".
+- **Signing in costs no email.** Email and password: one confirmation at sign-up
+  and nothing after. It was passwordless, and every sign-in sent a magic link,
+  which spent the project's hourly allowance on people simply returning. A reset
+  link must always END in a password (`App.tsx` routes recovery to a set-password
+  screen), or it becomes an email per visit again. `Account` can set one with no
+  email at all, which is the only route in for accounts made before passwords.
+  Held by `_tests/sign-in-cost.mjs`.
 - **Voice or text everywhere** — notes, reflections, and follow-up answers can all
   be a voice note or typed.
 - **Patterns never cross a session boundary.** A theme belongs to the team AND
@@ -61,6 +68,17 @@ squad, never an account.
   to honour (see `_tests/session-scope.mjs`).
 - **Ownership-only access.** Users see only what they created. No in-app sharing
   (share by PDF export). One person can own several clubs/teams.
+- **Three kinds of account, one mechanism** (migration `0022`). `active_roles()`
+  grants access when a subscription is `active`, or `trialing` and unexpired, and
+  never asks why. So beta is `coach_beta` trialing with an end date, complimentary
+  is `coach_comp` active with none, and paid is the monthly or annual plan. Both
+  granted plans are `is_active = false` (off the catalogue, not buyable) and
+  priced at 0 (never revenue); access does not read `is_active`, and
+  `account-kinds-db.sh` proves it. Hand them out with `grant_plan(email, plan,
+  days)` / `revoke_plan(email, plan)`, which raise unless `is_admin()`; the Owner
+  dashboard drives them. Granting cancels the coach's other trials so there is
+  one clock. Never nag a comped coach: the Account copy is per kind, and a test
+  asserts the complimentary line neither counts down nor sells.
 - **Admin lives in `user_roles`, never `profiles.role`** (migration `0016`). A
   user can update their own profile row, so a privilege sitting on it was one
   `update` away from being self-granted. `profiles.role` is now only the journey
