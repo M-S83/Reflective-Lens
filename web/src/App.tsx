@@ -88,7 +88,22 @@ export default function App() {
   const ent = useEntitlements();
 
   if (loading || ent.loading) return <Loading />;
-  if (!session) return <SignIn />;
+
+  // The legal pages are PUBLIC, and sit above the sign-in gate deliberately.
+  // They were inside it, which meant the one moment a coach most needs to read
+  // what happens to their notes about children, before handing any over, was
+  // the one moment they could not: the link bounced them to a sign-in screen.
+  // Nothing on these pages is personal to anyone, so there is nothing to gate.
+  if (!session) {
+    return (
+      <Routes>
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/refunds" element={<Refunds />} />
+        <Route path="*" element={<SignIn />} />
+      </Routes>
+    );
+  }
   if (recovery) return <ChooseNewPassword />;
 
   // One journey. There is no mode to resolve, no role to choose, and nothing to

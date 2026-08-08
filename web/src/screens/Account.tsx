@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { TopBar, ErrorText, Loading } from "../components/ui";
 import { DeleteAccount } from "../components/DeleteAccount";
 import { FeedbackForm } from "../components/Feedback";
@@ -224,6 +225,16 @@ export default function Account() {
         </div>
 
         <DeleteAccount />
+
+        {/* The pages exist and are routed; without this nobody could reach them
+            without typing the URL. */}
+        <p className="muted small center">
+          <Link to="/privacy">Privacy</Link>
+          {" · "}
+          <Link to="/terms">Terms</Link>
+          {" · "}
+          <Link to="/refunds">Refunds</Link>
+        </p>
       </div>
     </div>
   );

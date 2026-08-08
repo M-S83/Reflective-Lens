@@ -35,7 +35,7 @@ squad, never an account.
   checks (`node <file>`); `*-db.sh` stand up a throwaway PG16 from
   `_tests/bootstrap.sql` and assert against real migrations + RLS.
 - `web/` — React + Vite + TypeScript PWA (the app). `npm run build` must pass.
-- `docs/` — `deploy.md`, `accounts.md`, `cost-model.md`, `analytics.md`, `continuous-learning.md`,
+- `docs/` — `beta-launch.md` (the ordered checklist to go live), `deploy.md`, `accounts.md`, `cost-model.md`, `analytics.md`, `continuous-learning.md`,
   `coaching-knowledge.md`, `lovable-prompt.md`, `system-audit.md`, `staging-run.md`
   (+ `staging-seed.sql`), `handoff-to-cowork.md` (inventory of the coach subsystem
   work and what is still to deploy).

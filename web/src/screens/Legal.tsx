@@ -5,9 +5,45 @@ import { TopBar } from "../components/ui";
 // anyway given the app holds reflections about children.
 //
 // Written plainly and in the first person, because a coach reading these is the
-// same person reading the reports. Placeholders in ALL CAPS are the things only
-// the operator can fill in, and they are deliberately loud so they cannot be
-// published by accident.
+// same person reading the reports.
+//
+// The operator's own details were previously written into the prose in five
+// places across three pages, which is a good way to fill in four of them and
+// publish the fifth. They live in one block now, and _tests/legal-details.mjs
+// fails while any is unfilled, because a privacy notice that says
+// YOUR_LEGAL_ENTITY is worse than none: it tells a coach handing over notes
+// about children that nobody thought about who holds them.
+
+// -----------------------------------------------------------------------------
+// Fill these in. Nothing else on this screen needs editing.
+// -----------------------------------------------------------------------------
+// On the app's own domain rather than a personal inbox, so it stays right when
+// personal addresses change. It must actually receive mail before anyone is
+// invited: a privacy notice giving an address that bounces is worse than one
+// giving a Gmail account that works.
+const CONTACT_EMAIL = "hello@reflectivelens.co.uk";
+
+// Who legally holds the data. A sole trader's own name is a valid answer.
+const LEGAL_ENTITY = "Michael Smith";
+
+// Optional, and deliberately so. UK GDPR wants the controller identified and
+// contactable, which an email address satisfies; a registered office is expected
+// of a company but publishing a sole trader's home address is not something to
+// do by default. Leave it empty and the sentence simply does not mention one.
+const REGISTERED_ADDRESS = "";
+
+// "England and Wales", "Scotland" or "Northern Ireland" are separate legal
+// systems, so this is not decoration.
+const JURISDICTION = "England and Wales";
+
+// Not charging during the beta. The Terms describe billing because they have to
+// be right when it starts, and this keeps them from reading as though a tester
+// is about to be charged for something.
+const CHARGING = false;
+// -----------------------------------------------------------------------------
+
+// A live mailto rather than text a coach has to retype from a phone screen.
+const Mail = () => <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>;
 
 function Page({ title, eyebrow, children }: {
   title: string; eyebrow: string; children: React.ReactNode;
@@ -67,9 +103,9 @@ export function Privacy() {
 
       <h3>Getting in touch</h3>
       <p>
-        For anything about your data, including a copy of it, write to
-        YOUR_CONTACT_EMAIL. The data controller is YOUR_LEGAL_ENTITY of
-        YOUR_REGISTERED_ADDRESS.
+        For anything about your data, including a copy of it, write to <Mail />.
+        The data controller is {LEGAL_ENTITY}
+        {REGISTERED_ADDRESS ? ` of ${REGISTERED_ADDRESS}` : ""}.
       </p>
     </Page>
   );
@@ -100,6 +136,14 @@ export function Terms() {
       </p>
 
       <h3>Paying</h3>
+      {!CHARGING && (
+        <p>
+          <strong>Nothing is being charged at the moment.</strong> The app is in
+          beta and free to use. If that changes we will tell you first, and you
+          will never be charged for something you did not choose. The rest of
+          this section describes how paying will work when it starts.
+        </p>
+      )}
       <p>
         Plans are billed in advance. You can cancel at any time and keep access
         until the end of the period you have paid for. If a plan lapses, your
@@ -120,7 +164,7 @@ export function Terms() {
         which is exactly why you should read what it produces rather than rely on
         it blindly. Nothing here removes rights you have as a consumer.
       </p>
-      <p>These terms are governed by the law of YOUR_JURISDICTION.</p>
+      <p>These terms are governed by the law of {JURISDICTION}.</p>
     </Page>
   );
 }
@@ -128,11 +172,19 @@ export function Terms() {
 export function Refunds() {
   return (
     <Page title="Refunds" eyebrow="If it is not for you">
+      {!CHARGING && (
+        <p>
+          <strong>Nothing is being charged at the moment</strong>, so there is
+          nothing to refund. This is here so you can see the terms before they
+          ever apply to you.
+        </p>
+      )}
+
       <h3>Changed your mind</h3>
       <p>
         If you subscribe and decide within 14 days that it is not for you, write
-        to YOUR_CONTACT_EMAIL and we will refund that payment in full. You do not
-        need to give a reason.
+        to <Mail /> and we will refund that payment in full. You do not need to
+        give a reason.
       </p>
 
       <h3>After 14 days</h3>
@@ -151,8 +203,8 @@ export function Refunds() {
 
       <h3>How to ask</h3>
       <p>
-        Write to YOUR_CONTACT_EMAIL from the address on your account. Refunds go
-        back to the card that paid, usually within five to ten working days once
+        Write to <Mail /> from the address on your account. Refunds go back to
+        the card that paid, usually within five to ten working days once
         approved.
       </p>
     </Page>

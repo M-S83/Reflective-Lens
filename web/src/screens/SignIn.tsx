@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase, isConfigured } from "../lib/supabase";
 import { Brandmark, ErrorText, Spinner } from "../components/ui";
 
@@ -156,6 +157,16 @@ export default function SignIn() {
           {mode === "up"
             ? "Creating an account sends one confirmation email. After that you sign in with your password and we will not email you again."
             : "After signing in you can add the app to your phone or iPad, and allow the microphone to record your reflections."}
+        </p>
+
+        {/* Readable BEFORE signing up, which is the only time reading them is
+            any use. Someone about to write notes about the children they coach
+            should be able to find out who holds that without first handing it
+            over. */}
+        <p className="muted small center">
+          <Link to="/privacy">Privacy</Link>
+          {" · "}
+          <Link to="/terms">Terms</Link>
         </p>
       </div>
     </div>
