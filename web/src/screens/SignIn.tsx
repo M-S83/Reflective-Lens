@@ -51,8 +51,19 @@ export default function SignIn() {
           "Account created. Check your email and tap the confirmation link, then come back and sign in. That is the only email we will send you.",
         );
       } else {
+        // A PATH, not the bare origin. Where the link lands is the only signal
+        // about why someone arrived that survives everything: it does not depend
+        // on the shape of the URL fragment, it is not lost to a reload, it works
+        // the same under either auth flow, and when it goes wrong you can see it
+        // in the address bar.
+        //
+        // Sniffing the URL and listening for PASSWORD_RECOVERY were both tried
+        // and both let a real reset through to the home screen. The event is
+        // emitted from a setTimeout while the Supabase client initialises, which
+        // is at module load, before React has mounted anything to listen with,
+        // so it fires into an empty room.
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}/set-password`,
         });
         if (error) throw error;
         setDone("If that address has an account, we have emailed you a link to set a new password.");

@@ -1,4 +1,4 @@
-import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { Link, NavLink, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { useAuth } from "./auth/AuthProvider";
 import { useEntitlements } from "./lib/entitlements";
 import { Loading } from "./components/ui";
@@ -65,8 +65,20 @@ function RenewWall({ label }: { label: string }) {
 // Arriving on a reset link. The link has already signed them in, so without
 // this they would land on Home with the same password that did not work, and
 // the only way back next time is another email.
+//
+// Reached by PATH (/set-password), which is what resetPasswordForEmail asks
+// Supabase to redirect to. The recovery FLAG is kept as a second route in, for
+// a link made before this change or a template pointed at the root, but the
+// path is the one that can be relied on.
 function ChooseNewPassword() {
   const { passwordSet } = useAuth();
+  const navigate = useNavigate();
+  const done = () => {
+    passwordSet();
+    // Off the reset path, so a refresh does not put them back on a screen
+    // asking for a password they have just set.
+    navigate("/", { replace: true });
+  };
   return (
     <div className="app">
       <div className="screen stack" style={{ maxWidth: 420, margin: "0 auto", paddingTop: "8vh" }}>
@@ -76,7 +88,31 @@ function ChooseNewPassword() {
           <p className="muted">Set one now and you can sign in with it from any device, with no more emails.</p>
         </div>
         <div className="card stack">
-          <SetPasswordForm cta="Save and continue" onDone={passwordSet} />
+          <SetPasswordForm cta="Save and continue" onDone={done} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// A reset link is one-shot and time-limited. Opened twice, or opened after it
+// expired, it lands here with no session. Falling through to the sign-in form
+// would leave someone certain they had done as they were told, staring at the
+// screen they were trying to get past.
+function ResetLinkExpired() {
+  return (
+    <div className="app">
+      <div className="screen stack" style={{ maxWidth: 420, margin: "0 auto", paddingTop: "8vh" }}>
+        <div className="center stack" style={{ gap: 8, marginBottom: 8 }}>
+          <div style={{ display: "flex", justifyContent: "center" }}><Brandmark size={54} /></div>
+          <h1 className="serif" style={{ fontSize: 24, color: "var(--pitch)" }}>That link has expired</h1>
+        </div>
+        <div className="card stack">
+          <p className="muted">
+            Reset links only work once, and not for long. Ask for a fresh one and
+            it will bring you straight to a screen to choose a password.
+          </p>
+          <Link className="btn block" to="/">Back to signing in</Link>
         </div>
       </div>
     </div>
@@ -100,6 +136,10 @@ export default function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/refunds" element={<Refunds />} />
+        {/* A reset link that has expired, or was opened twice, arrives here
+            with no session. Landing silently on a sign-in form leaves someone
+            certain they followed the instructions and none the wiser. */}
+        <Route path="/set-password" element={<ResetLinkExpired />} />
         <Route path="*" element={<SignIn />} />
       </Routes>
     );
@@ -126,6 +166,7 @@ export default function App() {
         <Route path="/events/:eventId" element={<EventDetail />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/account" element={<Account />} />
+        <Route path="/set-password" element={<ChooseNewPassword />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/refunds" element={<Refunds />} />

@@ -70,8 +70,22 @@ ok("a reset link is offered when a password is forgotten", /resetPasswordForEmai
 ok("arriving on one is noticed before the hash is consumed",
   /arrivedOnRecoveryLink/.test(code(client)) && /type=recovery/.test(code(client)));
 ok("and noticed again from the auth event", /PASSWORD_RECOVERY/.test(code(provider)));
-ok("which routes to choosing a password, not to Home",
+// The PATH is what this rests on now. Sniffing the URL fragment and listening
+// for PASSWORD_RECOVERY were both tried, and a real reset still landed on the
+// home screen: the event is emitted from a setTimeout while the Supabase client
+// initialises, which happens at module load, before React has mounted anything
+// to listen with. Where the link lands cannot be lost to a race or a reload.
+ok("the reset link is sent to a path of its own",
+  /redirectTo: `\$\{window\.location\.origin\}\/set-password`/.test(code(signIn)));
+ok("and that path shows the password screen",
+  /<Route path="\/set-password" element=\{<ChooseNewPassword \/>\} \/>/.test(code(app)));
+ok("the flag is kept as a second way in",
   /if \(recovery\) return <ChooseNewPassword \/>;/.test(code(app)));
+// One-shot and time-limited, so this is a normal outcome, not an edge case.
+ok("an expired link says so instead of silently showing sign-in",
+  /<Route path="\/set-password" element=\{<ResetLinkExpired \/>\} \/>/.test(code(app)));
+ok("saving moves them off the reset path",
+  /navigate\("\/", \{ replace: true \}\)/.test(code(app)));
 ok("the flag clears only once one is saved", /passwordSet: \(\) => setRecovery\(false\)/.test(code(provider)));
 ok("saving actually sets it", /auth\.updateUser\(\{ password \}\)/.test(code(setPw)));
 
