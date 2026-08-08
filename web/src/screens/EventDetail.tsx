@@ -67,6 +67,9 @@ export default function EventDetail() {
       <div className="screen stack">
         {(ev.focus_area || ev.purpose || ev.hoping_to_see.length > 0) && (
           <div className="card">
+            <div className="muted small" style={{ textTransform: "uppercase", letterSpacing: ".06em", fontSize: 11, marginBottom: 6 }}>
+              Your plan, set when you created this
+            </div>
             {ev.focus_area && <div><span className="muted small">Focus:</span> {ev.focus_area}</div>}
             {ev.purpose && <div><span className="muted small">Purpose:</span> {ev.purpose}</div>}
             {ev.hoping_to_see.length > 0 && (
@@ -90,7 +93,8 @@ export default function EventDetail() {
             eventId={eventId}
             teamId={ev.team_id}
             only={["pre_event"]}
-            intro="What you are walking into today. The numbers you have, who is missing, anything that means the session will not run as planned. Your aims for it are already set above."
+            intro="How you are finding today, before you start. Who turned up, what sort of mood they are in, anything that means it will not run the way you planned. Not the plan itself, that is set above."
+            placeholder="Only eight turned up and they look flat after school"
           />
         )}
         {active === "squad" && (ev.team_id
@@ -102,7 +106,8 @@ export default function EventDetail() {
             eventId={eventId}
             teamId={ev.team_id}
             only={["live"]}
-            intro="What you notice as it happens. Short is fine: you can tidy it up later, and what you think about it afterwards goes in Reflect."
+            intro="What you notice as it happens. Short is fine. What you make of it afterwards goes in Reflect."
+            placeholder="Third time they have gone long instead of playing out"
           />
         )}
         {active === "reflect" && <Reflect eventId={eventId} />}
@@ -137,13 +142,17 @@ export default function EventDetail() {
 }
 
 // ---- Notes ------------------------------------------------------------------
-function Notes({ eventId, teamId, only, intro }: {
+function Notes({ eventId, teamId, only, intro, placeholder }: {
   eventId: string; teamId: string | null;
   // Which capture phases this instance offers. The Before tab passes a single
   // phase so there are no chips to choose from at all, which is the whole point
   // of splitting it out: before a session there is only one kind of note.
   only?: CapturePhase[];
   intro?: string;
+  // A real example rather than "Type a quick note". The Before and During boxes
+  // are asking for genuinely different things, and a coach reads a placeholder
+  // where they skim a paragraph.
+  placeholder?: string;
 }) {
   const [list, setList] = useState<Observation[] | null>(null);
   const allowed = PHASES.filter((p) => !only || only.includes(p.value));
@@ -182,7 +191,7 @@ function Notes({ eventId, teamId, only, intro }: {
             </button>
           ))}
         </div>
-        <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Type a quick note…" />
+        <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={placeholder ?? "Type a quick note…"} />
         <div className="row">
           <button className="btn" onClick={saveText} disabled={busy || !text.trim()}>
             {busy ? <Spinner /> : "Add note"}
