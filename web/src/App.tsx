@@ -10,6 +10,7 @@ import NewEvent from "./screens/NewEvent";
 import EventDetail from "./screens/EventDetail";
 import Dashboard from "./screens/Dashboard";
 import Account from "./screens/Account";
+import Reports from "./screens/Reports";
 import { Privacy, Terms, Refunds } from "./screens/Legal";
 import { FeedbackButton } from "./components/Feedback";
 
@@ -35,6 +36,7 @@ const COACH_TABS: Tab[] = [
   { to: "/new", label: "New", path: "M12 5v14M5 12h14" },
 ];
 const OWNER_TAB: Tab = { to: "/admin", label: "Owner", path: "M3 3v18h18M8 17V9M13 17V5M18 17v-6" };
+const REPORTS_TAB: Tab = { to: "/reports", label: "Reports", path: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" };
 const ACCOUNT_TAB: Tab = { to: "/account", label: "Account", path: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" };
 
 function RenewBanner({ label }: { label: string }) {
@@ -71,8 +73,8 @@ export default function App() {
   const readOnly = !ent.activeRoles.includes("coach");
 
   const tabs = ent.isAdmin
-    ? [...COACH_TABS, ACCOUNT_TAB, OWNER_TAB]
-    : [...COACH_TABS, ACCOUNT_TAB];
+    ? [...COACH_TABS, REPORTS_TAB, ACCOUNT_TAB, OWNER_TAB]
+    : [...COACH_TABS, REPORTS_TAB, ACCOUNT_TAB];
 
   return (
     <>
@@ -83,6 +85,7 @@ export default function App() {
         <Route path="/teams/:teamId" element={<TeamDetail />} />
         <Route path="/new" element={readOnly ? <RenewWall label="coach" /> : <NewEvent />} />
         <Route path="/events/:eventId" element={<EventDetail />} />
+        <Route path="/reports" element={<Reports />} />
         <Route path="/account" element={<Account />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />

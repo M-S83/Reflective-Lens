@@ -463,23 +463,40 @@ export async function generatePlayerReport(eventId: string): Promise<Report | nu
   return (data?.report as Report) ?? null;
 }
 
-export async function playerSummaries(): Promise<Report[]> {
-  const { data, error } = await supabase
-    .from("reports").select("*").is("event_id", null).is("team_id", null)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as Report[];
-}
 
-export async function generatePlayerSummary(
-  reportType: "weekly_report" | "monthly_report" | "season_report",
-  periodStart: string, periodEnd: string,
+// ---- Period reports --------------------------------------------------------
+// The weekly, monthly or season picture for one team. generate-period-report has
+// been deployed since the beginning and nothing in the app ever called it, so a
+// coach could reflect on eight sessions and only ever see eight separate
+// reports. This is where the value compounds: the training-to-match comparison
+// only exists here.
+
+export type PeriodType = "weekly_report" | "monthly_report" | "season_report";
+
+export async function generatePeriodReport(
+  teamId: string, reportType: PeriodType, periodStart: string, periodEnd: string,
 ): Promise<Report | null> {
-  const { data, error } = await supabase.functions.invoke("generate-player-summary", {
-    body: { report_type: reportType, period_start: periodStart, period_end: periodEnd },
+  const { data, error } = await supabase.functions.invoke("generate-period-report", {
+    body: {
+      team_id: teamId,
+      report_type: reportType,
+      period_start: periodStart,
+      period_end: periodEnd,
+    },
   });
   if (error) throw error;
   return (data?.report as Report) ?? null;
+}
+
+// Every report this coach has, session and period alike, newest first. RLS
+// scopes it to their own (0015).
+export async function allReports(): Promise<Report[]> {
+  const { data, error } = await supabase
+    .from("reports").select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return (data ?? []) as Report[];
 }
 
 // ---- Standalone thoughts ---------------------------------------------------
