@@ -86,16 +86,35 @@ export async function reflectionGrounding(
 // them directly is both better and free. Nothing can drift into advice when
 // nothing is generating.
 //
+// ONLY THE OPEN ONES ARE ASKED. Two thirds of the bank is phrased as a yes/no
+// against an implied standard: "Did I connect before I corrected?", "Did I
+// listen, or just transmit?", "Was this a genuinely new session, or last week
+// repeated?". Those are not questions, they are standards with a question mark
+// on them, and asking one verbatim tells a coach what they should have done.
+// That is teaching, which is the line this product does not cross.
+//
+// A question that opens with what / where / who / which / how / when asks the
+// coach to describe. One that opens with did I / was I / am I asks them to
+// judge themselves against something unstated. The rule is a heuristic rather
+// than a truth, but it is applied consistently, it is visible here, and a prompt
+// added to the bank later is screened by it automatically.
+//
+// The loaded ones are not wasted: reflectionGrounding still shows the WHOLE bank
+// to the model, where they shape the style of a question about what the coach
+// actually wrote. Fine as influence, not fine as an interrogation.
+const OPENS_DESCRIPTIVELY = /^\s*(what|where|who|which|how|when)\b/i;
+
 // One per group, so the set spans different kinds of thinking (where my eyes
-// went, how I spoke, what I noticed about a player) rather than three angles on
-// the same thing. The seed rotates the window, so a coach reflecting every week
-// works through the bank instead of meeting the same question each time.
+// went, how I spoke, what I noticed about a player) rather than several angles
+// on the same thing. The seed rotates the window, so a coach reflecting every
+// week works through the bank instead of meeting the same question each time.
 export async function reflectivePrompts(
   admin: SupabaseClient,
   seed: string,
-  count = 2,
+  count = 1,
 ): Promise<string[]> {
-  const prompts = await loadPrompts(admin);
+  const all = await loadPrompts(admin);
+  const prompts = all.filter((p) => OPENS_DESCRIPTIVELY.test(p.prompt));
   if (prompts.length === 0) return [];
 
   const byGroup = new Map<string, string[]>();

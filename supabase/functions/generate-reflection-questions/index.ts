@@ -148,14 +148,16 @@ Deno.serve(async (req) => {
         options: q.options ?? [],
       }));
 
-    // Curated reflective prompts, asked verbatim from the bank (0006). These are
-    // the questions that open new thinking rather than filling gaps in what was
-    // written: where your eyes went, whether you connected before you corrected,
-    // whether you left space for players to decide. They were only ever used to
-    // ground the model's style, never asked, which wasted the best questions in
-    // the app. Seeded on the reflection so a coach works through the bank week by
-    // week instead of meeting the same one every time.
-    for (const prompt of await reflectivePrompts(admin, reflection_id, 2)) {
+    // ONE curated prompt from the bank (0006), asked verbatim, and only from the
+    // openly-phrased third of it. See reflectivePrompts.
+    //
+    // One rather than two, deliberately. Every other question in the set is
+    // about something the coach themselves raised; this is the only one that
+    // introduces a subject they did not. That is worth doing, since a reflection
+    // tool that only ever asks about what you already thought of is not opening
+    // much. But it is an imposition, however gentle, so it takes up as little of
+    // the set as it can while still being there.
+    for (const prompt of await reflectivePrompts(admin, reflection_id, 1)) {
       rows.push({
         reflection_id,
         question_text: prompt,

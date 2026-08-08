@@ -10,10 +10,17 @@
 // Now there are three sources, and only one of them is generated:
 //
 //   2 x detail      written by the model, only where the reflection is thin
-//   2 x reflective  taken verbatim from the curated bank, rotated per session
+//   1 x reflective  verbatim from the OPEN part of the curated bank, rotated
 //   1 x forward     fixed text in code, always last, always asked
 //
 // The more of the set that is fixed, the less there is to drift into advice.
+//
+// Only one curated prompt, and only an openly-phrased one. Two thirds of the
+// bank reads as a yes/no against an implied standard ("Did I connect before I
+// corrected?", "Did I listen, or just transmit?"), which is a verdict with a
+// question mark on it. And it is the only question in the set that raises a
+// subject the coach did not, so it takes up as little room as it can while
+// still being there.
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -41,9 +48,27 @@ ok("they are questions", prompts.filter((p) => p.text.trim().endsWith("?")).leng
 const advisory = prompts.filter((p) => /\byou should\b|\btry to\b|\bmake sure\b|\bremember to\b/i.test(p.text));
 ok(`none of the bank gives instructions (${advisory.length} found)`, advisory.length === 0);
 
+// --- only the open ones are asked -------------------------------------------
+// The screen that matters. "Where did my eyes go?" asks a coach to describe.
+// "Did I connect before I corrected?" asks them to judge themselves against a
+// standard nobody stated, which is teaching wearing a question mark.
+const rule = kn.match(/const OPENS_DESCRIPTIVELY = \/(.+?)\/i;/);
+ok("there is a screen on what may be asked", !!rule);
+const OPEN = new RegExp(rule[1], "i");
+const askable = prompts.filter((p) => OPEN.test(p.text));
+const screened = prompts.filter((p) => !OPEN.test(p.text));
+ok(`a real share is screened out (${screened.length} of ${prompts.length})`, screened.length > prompts.length / 3);
+ok(`enough survive to rotate (${askable.length})`, askable.length >= 8);
+ok("nothing askable opens with 'did I'", !askable.some((p) => /^\s*did i\b/i.test(p.text)));
+ok("nothing askable opens with 'was I'", !askable.some((p) => /^\s*was i\b/i.test(p.text)));
+ok("the loaded ones ARE screened", screened.some((p) => /^did i connect before i corrected/i.test(p.text)));
+ok("askable ones span groups", new Set(askable.map((p) => p.group)).size >= 4);
+// The screened ones still ground the model's style, they are just never asked.
+ok("the whole bank still grounds the generated questions", /reflectionGrounding/.test(fn));
+
 // --- they are now asked, not just shown to the model ------------------------
 ok("a picker exists that returns whole prompts", /export async function reflectivePrompts/.test(kn));
-ok("the function asks them", /for \(const prompt of await reflectivePrompts\(admin, reflection_id, 2\)\)/.test(fn));
+ok("the function asks one of them", /for \(const prompt of await reflectivePrompts\(admin, reflection_id, 1\)\)/.test(fn));
 ok("verbatim, not rewritten", /question_text: prompt,/.test(fn));
 ok("grounding is still used for the generated ones", /reflectionGrounding/.test(fn));
 
