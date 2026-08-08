@@ -46,10 +46,15 @@ edge functions. Re-runnable any time you change the backend.
 ## 4. Auth setup (dashboard)
 
 In **Authentication → URL Configuration**: set **Site URL** to your `APP_URL` and
-add it to **Redirect URLs** (needed for email magic-link/OTP and the PWA).
-- **Email** sign-in works out of the box.
-- **Phone/SMS** sign-in: add a provider under **Authentication → Providers →
-  Phone** (e.g. Twilio) — see the SMS note in `supabase/config.toml`.
+add it to **Redirect URLs** (needed for the confirmation and reset links, and
+the PWA).
+
+In **Authentication → Providers → Email**:
+- Enable the email provider with **password** sign-in. The app calls
+  `signInWithPassword`; with this off, nobody can sign in.
+- Leave **Confirm email** on. That is one email per account, ever, which is what
+  the sign-up screen promises. Sign-in itself sends nothing, so the email
+  allowance is no longer the limit on how many people can use the app.
 
 Storage buckets (`audio-recordings`, `uploads`, `reports`) are created by the
 migrations — confirm under **Storage**.

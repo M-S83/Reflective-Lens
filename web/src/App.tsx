@@ -3,6 +3,8 @@ import { useAuth } from "./auth/AuthProvider";
 import { useEntitlements } from "./lib/entitlements";
 import { Loading } from "./components/ui";
 import SignIn from "./screens/SignIn";
+import { SetPasswordForm } from "./components/SetPassword";
+import { Brandmark } from "./components/ui";
 import Home from "./screens/Home";
 import Teams from "./screens/Teams";
 import TeamDetail from "./screens/TeamDetail";
@@ -60,12 +62,34 @@ function RenewWall({ label }: { label: string }) {
   );
 }
 
+// Arriving on a reset link. The link has already signed them in, so without
+// this they would land on Home with the same password that did not work, and
+// the only way back next time is another email.
+function ChooseNewPassword() {
+  const { passwordSet } = useAuth();
+  return (
+    <div className="app">
+      <div className="screen stack" style={{ maxWidth: 420, margin: "0 auto", paddingTop: "8vh" }}>
+        <div className="center stack" style={{ gap: 8, marginBottom: 8 }}>
+          <div style={{ display: "flex", justifyContent: "center" }}><Brandmark size={54} /></div>
+          <h1 className="serif" style={{ fontSize: 24, color: "var(--pitch)" }}>Choose a password</h1>
+          <p className="muted">Set one now and you can sign in with it from any device, with no more emails.</p>
+        </div>
+        <div className="card stack">
+          <SetPasswordForm cta="Save and continue" onDone={passwordSet} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
-  const { session, loading } = useAuth();
+  const { session, loading, recovery } = useAuth();
   const ent = useEntitlements();
 
   if (loading || ent.loading) return <Loading />;
   if (!session) return <SignIn />;
+  if (recovery) return <ChooseNewPassword />;
 
   // One journey. There is no mode to resolve, no role to choose, and nothing to
   // switch between: everyone who signs in is a coach. A coach whose free month

@@ -67,7 +67,7 @@ every build, so they are cached for a year.
 **Do this before you try to sign in**, or the sign-in email will send testers to
 your laptop.
 
-Supabase builds every magic link from one global **Site URL**, which is still
+Supabase builds every emailed link from one global **Site URL**, which is still
 pointing at `localhost:5173` from development. In the Supabase dashboard, under
 **Authentication**, then **URL Configuration**:
 
@@ -77,36 +77,52 @@ pointing at `localhost:5173` from development. In the Supabase dashboard, under
   work. The app asks to be sent back to whichever address it is running on
   (`emailRedirectTo`), but Supabase only honours addresses on this list.
 
+## Sign-in: turn the password provider on
+
+**Authentication**, then **Providers**, then **Email**. Two switches matter:
+
+- **Enable email provider** must be on, with **password** sign-in allowed. The
+  app calls `signInWithPassword`, and with this off every sign-in fails.
+- **Confirm email** decides whether a new account gets one email before it can
+  be used. Leave it on: it is one email per person, ever, and the sign-up screen
+  promises exactly that. Turning it off means zero emails, but anyone can sign
+  up with an address they do not own.
+
+This is what keeps the email allowance out of the way. The app used to be
+passwordless, which meant **every sign-in sent an email**: a coach signing in on
+their phone at training and their laptop at home spent two before writing a
+word, and ten testers exhausted the project's hourly allowance between them. Now
+the only emails Auth sends are the one confirmation at sign-up and a reset link
+if someone forgets, so the allowance stops being the thing that breaks.
+
+Anyone who joined before this change has an account but no password. They
+should use **Forgotten your password?** once, which signs them in and takes them
+straight to a screen to choose one. A coach who is already signed in can set one
+under **Account**, which sends nothing at all.
+
 ## Email: do this before you invite anyone
 
 Supabase's built-in email sender is for development. It is **rate limited to a
 handful of messages an hour**, and it is the same allowance for your whole
-project. A group of testers signing in on the same evening will hit that ceiling
-and simply not receive their emails, which looks exactly like the app being
-broken.
+project. Passwords mean you are no longer anywhere near that ceiling for
+sign-in, but sign-up confirmations still go through it, and a group joining on
+the same evening is exactly the burst it refuses.
 
 It also locks the email templates: the dashboard says "set up custom SMTP to
-edit templates", so the sign-in email cannot be changed while you are on it.
-That is why testers get a link but no six-digit code, even though the app offers
-a box for one.
+edit templates", so the confirmation email cannot be reworded while you are on
+it.
 
 Both are fixed by pointing Supabase at a real sending provider, and you need one
 anyway for the trial reminder emails (`_shared/email.ts` uses Resend), so this is
 one job rather than two:
 
-1. Create an account at <https://resend.com> and verify a sending domain.
+1. Create an account at <https://resend.com> and verify a sending domain
+   (`reflectivelens.co.uk`).
 2. In Supabase, **Authentication**, then **Emails**, then **Set up SMTP**, and
    enter Resend's SMTP host, port and API key.
-3. The templates unlock. Under **Magic link or OTP**, add the code alongside the
-   link so both routes work, since email clients sometimes mangle links:
-
-```html
-<p>Your code: <strong>{{ .Token }}</strong></p>
-<p>Or tap this link: <a href="{{ .ConfirmationURL }}">Sign in</a></p>
-```
-
-Until you do this, sign-in still works through the link. It is the volume that
-will catch you out, not the mechanism.
+3. The templates unlock. The two that now matter are **Confirm signup** and
+   **Reset password**. Both send a link, not a code, so keep
+   `{{ .ConfirmationURL }}` in each and say plainly what tapping it does.
 
 ## Afterwards
 

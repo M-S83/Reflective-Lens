@@ -35,11 +35,12 @@ Functions in `../supabase`).
 > AI response comes back in their words and at their level (grassroots → badged),
 > so never impose textbook jargon — reflect how the coach actually speaks.
 >
-> **Auth:** Supabase Auth — users sign in with **email and/or mobile number**
-> (email magic-link/OTP and phone SMS OTP; both enabled). On signup a `profiles`
-> row is auto-created (with `email`, `phone`, `role`). Route the user by
-> `profiles.role`: `coach`, `player`, `coach_developer`, `admin`. Let users pick
-> their role + optional default club during onboarding.
+> **Auth:** Supabase Auth — users sign in with **email and password**. Sign-up
+> sends one confirmation email and nothing after that, so returning does not
+> cost an email; a forgotten password sends a reset link, which lands on a screen
+> to choose a new one. On signup a `profiles` row is auto-created (with `email`,
+> `role`). Everyone who signs in is a coach: there is no role chooser, and admin
+> lives in `user_roles`, never on the profile.
 >
 > **Installable app (PWA):** build the app as an installable PWA (web app
 > manifest + icon + service worker). Right after signup, show a step that helps

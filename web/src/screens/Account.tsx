@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { TopBar, ErrorText, Loading } from "../components/ui";
 import { DeleteAccount } from "../components/DeleteAccount";
 import { FeedbackForm } from "../components/Feedback";
+import { SetPasswordForm } from "../components/SetPassword";
 import { useEntitlements } from "../lib/entitlements";
 import { FEATURES, logFeature } from "../lib/features";
 import {
@@ -93,6 +94,19 @@ export default function Account() {
               you have written. Choose a plan to add new reflections and reports.
             </div>
           )}
+        </div>
+
+        {/* --- Signing in ------------------------------------------------ */}
+        {/* Costs nothing and sends nothing. Anyone who joined before passwords
+            existed has no working one, and this is how they get one without
+            going out through an email to come back in again. */}
+        <div className="card stack">
+          <strong>Your password</strong>
+          <div className="muted small">
+            Set or change the password you sign in with. Signing in with a
+            password sends no email, so you can come back as often as you like.
+          </div>
+          <SetPasswordForm />
         </div>
 
         {/* --- The coach's own words ------------------------------------ */}

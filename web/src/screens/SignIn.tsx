@@ -2,60 +2,68 @@ import { useState } from "react";
 import { supabase, isConfigured } from "../lib/supabase";
 import { Brandmark, ErrorText, Spinner } from "../components/ui";
 
-type Method = "email" | "phone";
-type Stage = "enter" | "code";
+// Sign in with a password, so signing in costs no email.
+//
+// This screen used to be passwordless: every sign-in sent a magic link. That is
+// pleasant with two users and unworkable with ten, because the email allowance
+// is spent by people simply coming back. A coach who signs in on their phone at
+// training and their laptop at home has cost two emails before writing a word,
+// and when the allowance runs out the app looks broken to whoever is next.
+//
+// With a password there is exactly ONE email per person, ever: the confirmation
+// at sign-up. Everything after that is free and instant.
+//
+// The magic link stays as the way back in when a password is forgotten, which is
+// the moment it is genuinely the better tool.
+
+type Mode = "in" | "up" | "forgot";
 
 export default function SignIn() {
-  const [method, setMethod] = useState<Method>("email");
-  const [stage, setStage] = useState<Stage>("enter");
-  const [value, setValue] = useState("");
-  const [code, setCode] = useState("");
+  const [mode, setMode] = useState<Mode>("in");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const [sent, setSent] = useState(false);
+  const [done, setDone] = useState("");
 
-  const send = async () => {
-    setErr(""); setBusy(true);
+  const submit = async () => {
+    setErr(""); setDone(""); setBusy(true);
     try {
-      const res = method === "email"
-        ? await supabase.auth.signInWithOtp({
-          email: value.trim(),
-          options: {
-            shouldCreateUser: true,
-            // Send the magic link back to wherever the app is ACTUALLY running.
-            // Without this, Supabase builds the link from its single global Site
-            // URL, so whichever environment that points at wins and every other
-            // one sends people somewhere useless: a hosted tester gets a link to
-            // localhost, or a developer gets bounced to production mid-test.
-            emailRedirectTo: window.location.origin,
-          },
-        })
-        : await supabase.auth.signInWithOtp({ phone: value.trim() });
-      if (res.error) throw res.error;
-      setSent(true);
-      // Email sends a magic link AND a code; phone sends a code. Offer code entry.
-      setStage("code");
+      if (mode === "in") {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (error) throw error;
+        // AuthProvider picks up the session and routes onward.
+      } else if (mode === "up") {
+        const { error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          // Land them back wherever the app is actually running, rather than on
+          // whichever single Site URL Supabase happens to hold.
+          options: { emailRedirectTo: window.location.origin },
+        });
+        if (error) throw error;
+        setDone(
+          "Account created. Check your email and tap the confirmation link, then come back and sign in. That is the only email we will send you.",
+        );
+      } else {
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: window.location.origin,
+        });
+        if (error) throw error;
+        setDone("If that address has an account, we have emailed you a link to set a new password.");
+      }
     } catch (e) {
-      setErr((e as Error).message);
+      setErr(friendly((e as Error).message));
     } finally {
       setBusy(false);
     }
   };
 
-  const verify = async () => {
-    setErr(""); setBusy(true);
-    try {
-      const res = method === "email"
-        ? await supabase.auth.verifyOtp({ email: value.trim(), token: code.trim(), type: "email" })
-        : await supabase.auth.verifyOtp({ phone: value.trim(), token: code.trim(), type: "sms" });
-      if (res.error) throw res.error;
-      // On success, AuthProvider picks up the session and routes onward.
-    } catch (e) {
-      setErr((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
+  const tooShort = mode !== "forgot" && password.length > 0 && password.length < 8;
+  const canSubmit = !!email.trim() && (mode === "forgot" || password.length >= 8);
 
   return (
     <div className="app">
@@ -74,56 +82,100 @@ export default function SignIn() {
         )}
 
         <div className="card stack">
-          {stage === "enter" ? (
-            <>
-              <div className="chipset" role="tablist" aria-label="Sign-in method">
-                <button className={`chip ${method === "email" ? "on" : ""}`} onClick={() => setMethod("email")}>Email</button>
-                <button className={`chip ${method === "phone" ? "on" : ""}`} onClick={() => setMethod("phone")}>Mobile</button>
-              </div>
-              <div className="field">
-                <label htmlFor="id">{method === "email" ? "Email address" : "Mobile number"}</label>
-                <input
-                  id="id"
-                  type={method === "email" ? "email" : "tel"}
-                  inputMode={method === "email" ? "email" : "tel"}
-                  placeholder={method === "email" ? "you@example.com" : "+44…"}
-                  value={value}
-                  onChange={(e) => setValue(e.target.value)}
-                  autoComplete={method === "email" ? "email" : "tel"}
-                />
-              </div>
-              <button className="btn block" onClick={send} disabled={busy || !value || !isConfigured}>
-                {busy ? <Spinner /> : "Email me a sign-in link"}
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="small">
-                {sent && method === "email"
-                  ? "We have emailed you a sign-in link. Tap it and you are in. If your email also has a 6-digit code, you can type it here instead."
-                  : "We texted you a 6-digit code."}
-              </p>
-              <div className="field">
-                <label htmlFor="code">Code</label>
-                <input id="code" inputMode="numeric" placeholder="123456" value={code}
-                  onChange={(e) => setCode(e.target.value)} />
-              </div>
-              <button className="btn block" onClick={verify} disabled={busy || code.length < 4}>
-                {busy ? <Spinner /> : "Verify & sign in"}
-              </button>
-              <button className="btn ghost sm" onClick={() => { setStage("enter"); setCode(""); }}>
-                Use a different {method === "email" ? "email" : "number"}
-              </button>
-            </>
+          <div className="chipset" role="tablist" aria-label="Sign in or create an account">
+            <button
+              className={`chip ${mode === "in" ? "on" : ""}`}
+              onClick={() => { setMode("in"); setErr(""); setDone(""); }}
+            >
+              Sign in
+            </button>
+            <button
+              className={`chip ${mode === "up" ? "on" : ""}`}
+              onClick={() => { setMode("up"); setErr(""); setDone(""); }}
+            >
+              Create account
+            </button>
+          </div>
+
+          <div className="field">
+            <label htmlFor="email">Email address</label>
+            <input
+              id="email"
+              type="email"
+              inputMode="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+            />
+          </div>
+
+          {mode !== "forgot" && (
+            <div className="field">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && canSubmit) submit(); }}
+                // Tells a password manager to offer a new one on sign-up and the
+                // saved one on sign-in, which is most of why passwords are
+                // bearable at all.
+                autoComplete={mode === "up" ? "new-password" : "current-password"}
+              />
+              {mode === "up" && (
+                <div className="muted small" style={{ marginTop: 4 }}>
+                  At least 8 characters. Your browser will offer to remember it.
+                </div>
+              )}
+              {tooShort && <div className="muted small" style={{ marginTop: 4 }}>A bit longer, 8 characters or more.</div>}
+            </div>
           )}
+
+          <button className="btn block" onClick={submit} disabled={busy || !canSubmit || !isConfigured}>
+            {busy ? <Spinner /> : mode === "in" ? "Sign in" : mode === "up" ? "Create my account" : "Email me a reset link"}
+          </button>
+
+          {done && <div className="banner">{done}</div>}
           <ErrorText>{err}</ErrorText>
+
+          {mode === "in" && (
+            <button className="btn ghost sm" onClick={() => { setMode("forgot"); setErr(""); setDone(""); }}>
+              Forgotten your password?
+            </button>
+          )}
+          {mode === "forgot" && (
+            <button className="btn ghost sm" onClick={() => { setMode("in"); setErr(""); setDone(""); }}>
+              Back to signing in
+            </button>
+          )}
         </div>
 
         <p className="muted small center">
-          New here? Entering your details creates your account. After signing in you can add the app to
-          your phone or iPad, and allow the microphone to record your reflections.
+          {mode === "up"
+            ? "Creating an account sends one confirmation email. After that you sign in with your password and we will not email you again."
+            : "After signing in you can add the app to your phone or iPad, and allow the microphone to record your reflections."}
         </p>
       </div>
     </div>
   );
+}
+
+// Supabase's own wording is accurate and unhelpful. These are the three a coach
+// will actually hit.
+function friendly(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login credentials")) {
+    // Also what an account from before passwords existed hits, and there is no
+    // way to tell the two apart from here, so the message has to serve both.
+    return "That email and password do not match an account. If you joined before we had passwords, use the forgotten password link below to set one.";
+  }
+  if (m.includes("email not confirmed")) {
+    return "Almost there. Tap the confirmation link in your email first, then sign in.";
+  }
+  if (m.includes("already registered") || m.includes("already been registered")) {
+    return "There is already an account with that email. Sign in instead, or use the forgotten password link.";
+  }
+  return message;
 }
