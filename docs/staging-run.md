@@ -86,10 +86,16 @@ to confirm the boundaries hold and the writing is specific, not to match a strin
 ### A) Per-session (training) report — the aim-aware checklist and "only what was said"
 
 - [ ] **All three aims are present** under "What you hoped to see", and
-      **"Players scan before they receive" shows as `○ … (stated, not recorded)`** —
+      **"Players scan before they receive" shows as `· … (nothing in your notes
+      about this one)`** —
       no note touched scanning, so it must be **kept, not dropped**. (F4)
-- [ ] "The keeper starts moves calmly" reads as recorded (✓); "Full-backs get
-      wide" as recorded or partly (~) (right side was noted, left was narrow).
+- [ ] "The keeper starts moves calmly" reads as "you wrote about this";
+      "Full-backs get wide" as that or "your notes touch on this" (right side was
+      noted, left was narrow).
+- [ ] **Nothing reads as a mark.** No ticks, crosses or scores against an aim,
+      and no heading that calls part of the session a failure. An aim the coach
+      never came back to is described, not scored: the point is that they can see
+      it, not that they are docked for it.
 - [ ] **Only what was said**: every bullet traces to a seeded note or the coach's
       answer. **Red flags** = a verdict or characterisation the coach never made
       ("great session", "the team is progressing"), an invented detail, a player

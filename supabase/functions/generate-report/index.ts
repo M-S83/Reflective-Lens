@@ -298,14 +298,33 @@ async function sha256(s: string): Promise<string> {
 function coachMarkdown(title: string, c: any): string {
   const blocks: MdBlock[] = [];
   if (c.aims_review?.length) {
-    const mark = (st: string) => st === "recorded" ? "✓" : st === "partly" ? "~" : "○";
+    // No ticks, no crosses, no empty circles.
+    //
+    // This used to render as a checklist marked "✓ ~ ○", with an aim the coach
+    // never came back to shown as an empty circle labelled "(stated, not
+    // recorded)". However it was meant, that is a scorecard: a tick for the ones
+    // they managed and a blank for the one they did not. A coach reading their
+    // own session back should not find it marked out of three.
+    //
+    // The information is worth keeping, and it is the reason this section
+    // exists: an aim you set and never wrote anything about is the single most
+    // useful thing a reflection can show you. So it still appears, in the same
+    // position, described rather than scored. The neutral bullet gives every aim
+    // the same weight on the page, and the words say what happened without
+    // saying how it went.
+    const said = (st: string) =>
+      st === "recorded"
+        ? "you wrote about this"
+        : st === "partly"
+        ? "your notes touch on this"
+        : "nothing in your notes about this one";
     blocks.push({
       t: "checklist",
       heading: "What you hoped to see",
       items: c.aims_review.map((a: any) => ({
-        mark: mark(a.status),
+        mark: "·",
         label: a.aim,
-        suffix: a.status === "stated_not_recorded" ? " (stated, not recorded)" : "",
+        suffix: ` (${said(a.status)})`,
         note: a.note,
       })),
     });
@@ -314,7 +333,13 @@ function coachMarkdown(title: string, c: any): string {
     if (arr?.length) blocks.push({ t: "bullets", heading: h, items: arr });
   };
   bl("What went well", c.what_went_well);
-  bl("What did not work", c.what_did_not_work);
+  // "What did not work" is the app's word for the coach's session, and it lands
+  // as a verdict on a page they are reading about their own evening. In testing
+  // the section held "you didn't have the numbers you wanted and were missing
+  // key defenders", which is not something that failed, it is what they were up
+  // against. This heading holds both that and a genuine "this did not work"
+  // without the app being the one calling it a failure.
+  bl("What got in the way", c.what_did_not_work);
   bl("In this session", c.session_patterns);
   bl("Action points", c.action_points);
   bl("Noted for next", c.noted_for_next);

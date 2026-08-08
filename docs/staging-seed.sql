@@ -8,7 +8,7 @@
 --
 -- The scenario is built to exercise exactly what changed this pass:
 --   * an aim that has NO matching note (so the aim-aware checklist must show it
---     as "stated, not recorded", kept not dropped)  -> F4
+--     described as not written about, kept not dropped)  -> F4
 --   * plain coach notes only (so you can check the report invents nothing)  -> F4
 --   * a U12 team with TWO players called "Jack" (so first-name-only must
 --     disambiguate to "Jack S" / "Jack B", no surnames)  -> under-18 rule
