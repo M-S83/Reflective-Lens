@@ -70,6 +70,20 @@ ok("a breached password explains why, not just that",
 ok("a rate limit says to wait",
   /wait a minute/i.test(f("For security purposes, you can only request this after 51 seconds.")));
 
+// --- an error with nothing readable in it -----------------------------------
+// supabase-js JSON.stringifies a body it cannot turn into text, so a server-side
+// failure arrives as the literal string "{}". Rendering that is worse than
+// saying nothing: it reads as the app being broken in a way the person can do
+// nothing about, exactly when they need to know whether to try again.
+for (const junk of ["{}", "", "   ", "[object Object]"]) {
+  const out = f(junk);
+  ok(`${JSON.stringify(junk)} becomes something readable`,
+    /our end, not yours/.test(out) && !/\{\}|object Object/.test(out));
+}
+// The commonest cause on these screens, and not the coach's fault either.
+ok("a failed send says whose problem it is",
+  /not with your address/.test(f("Error sending recovery email")));
+
 // --- anything unrecognised is passed through, not swallowed ------------------
 // A message nobody has seen before is more use raw than replaced by a guess.
 ok("an unknown error survives intact", f("Some new thing went wrong") === "Some new thing went wrong");

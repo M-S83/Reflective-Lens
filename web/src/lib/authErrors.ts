@@ -12,7 +12,19 @@ const list = (xs: string[]) =>
   xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`;
 
 export function friendlyAuthError(message: string): string {
-  const m = message.toLowerCase();
+  // An error with nothing readable in it. supabase-js JSON.stringifies a body it
+  // cannot turn into text, so a server-side failure with an empty or unexpected
+  // response arrives as the literal string "{}". Rendering that is worse than
+  // saying nothing: it looks like the app is broken in a way the person reading
+  // it can do nothing about, at the exact moment they need to know whether to
+  // try again. The commonest cause on these screens is the email itself failing
+  // to send, which is not their fault and not their problem to fix.
+  const bare = (message ?? "").trim();
+  if (!bare || bare === "{}" || bare === "[object Object]") {
+    return "Something went wrong at our end, not yours. Please try again in a minute, and tell me if it keeps happening.";
+  }
+
+  const m = bare.toLowerCase();
 
   // --- signing in -----------------------------------------------------------
   if (m.includes("invalid login credentials")) {
@@ -50,6 +62,15 @@ export function friendlyAuthError(message: string): string {
   }
   if (m.includes("same as the old password") || m.includes("should be different from the old")) {
     return "That is the password you already have. Choose a different one.";
+  }
+
+  // --- the email itself failed to leave ---------------------------------------
+  // Supabase says "Error sending recovery email" when the SMTP handoff fails:
+  // wrong credentials, an unverified sender, or the provider refusing it. The
+  // person reading this did nothing wrong and can fix nothing, so say so rather
+  // than leaving them to conclude their email address is not recognised.
+  if (m.includes("error sending") || m.includes("failed to send") || m.includes("smtp")) {
+    return "We could not send that email just now. That is a problem at our end, not with your address. Please try again shortly.";
   }
 
   // --- rate limits ----------------------------------------------------------
