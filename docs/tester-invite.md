@@ -87,3 +87,46 @@ Owner tab, **Accounts**, enter their address, **Beta**, **90 days**.
 It ends by itself, so there is nothing in your diary. Anyone you want to keep on
 it for good gets **Complimentary** instead, which has no end date and never shows
 them a countdown or asks them for money.
+
+**Getting the addresses out.** Tap any address in the Accounts list to copy it.
+"Copy all with access" copies every address that currently has usable access,
+comma separated, ready to paste into a Bcc box.
+
+---
+
+## Confirming their place
+
+Send this once you have granted them. They will see it in the app on the Account
+tab as well, but nobody opens an app to find out something they were not told.
+
+**Subject: You are on the Reflective Lens beta**
+
+Hello,
+
+You are on. Your place runs to [date], and there is nothing to pay, nothing to
+set up and nothing to renew. Just open the app and carry on.
+
+Two things I would ask, and neither takes long:
+
+**Use it after real sessions.** Once or twice a week is plenty. It has more to
+work with the more you put in, so the reports get better the longer you go.
+
+**Tell me when it gets it wrong.** Especially if anything it writes ever reads
+like it is marking you, correcting you or telling you what to do. That is the
+one thing it must never do, and you spotting it is worth more to me than
+anything else you could send. The box is at the bottom of the Account tab.
+
+Thank you for the time. It matters more than you would think at this stage.
+
+Michael
+
+---
+
+## If someone drops to read-only
+
+It means their free month ran out before they were granted beta. The app tells
+them plainly, and points them at the Account tab to ask. Grant them the same way
+as anyone else and everything they wrote is still exactly where they left it.
+
+Better not to let it happen: the Accounts list shows who is using it and when
+they were last in, so grant the ones who are going before their month is out.

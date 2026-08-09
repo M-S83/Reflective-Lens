@@ -32,6 +32,22 @@ export interface AccountRow {
   last_active: string | null;
 }
 
+// Getting the addresses back OUT.
+//
+// Granting someone beta is half the job: they do not know it happened unless
+// you tell them. Selecting ten addresses out of a list by dragging a finger
+// across a phone screen is miserable enough that it does not get done, and a
+// mailto: link is no help either, because on a Windows machine running Gmail in
+// a browser it usually opens nothing at all. Copying works everywhere.
+export async function copyText(s: string): Promise<void> {
+  // Needs HTTPS and a real click, which is what both callers are.
+  await navigator.clipboard.writeText(s);
+}
+
+// Comma separated, which is what a To or Bcc box wants pasted into it.
+export const emailList = (rows: AccountRow[]): string =>
+  rows.map((r) => r.email).filter(Boolean).join(", ");
+
 // "Last seen four days ago" is the number the beta decision gets made on, so it
 // is worth reading at a glance rather than working out from a date.
 export function lastSeen(iso: string | null): string {

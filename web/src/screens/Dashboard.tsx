@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { allFeedback, setFeedbackStatus, type FeedbackRow } from "../lib/feedback";
 import {
-  listAccounts, grantPlan, revokePlan, lastSeen, PLAN_BETA, PLAN_COMP, type AccountRow,
+  listAccounts, grantPlan, revokePlan, lastSeen, copyText, emailList,
+  PLAN_BETA, PLAN_COMP, type AccountRow,
 } from "../lib/accounts";
 import { TopBar, Loading, ErrorText } from "../components/ui";
 import {
@@ -236,9 +237,23 @@ function AccountsPanel() {
   const [busy, setBusy] = useState(false);
   const [said, setSaid] = useState("");
   const [err, setErr] = useState("");
+  const [copied, setCopied] = useState("");
 
   const load = () => listAccounts().then(setRows).catch((e) => setErr(e.message ?? "Could not load accounts."));
   useEffect(() => { load(); }, []);
+
+  // Copying is silent, so without the flash back there is no way to tell it
+  // worked from a tap that missed.
+  const copy = async (text: string, what: string) => {
+    setErr("");
+    try {
+      await copyText(text);
+      setCopied(what);
+      setTimeout(() => setCopied(""), 1600);
+    } catch {
+      setErr("Could not copy. Your browser blocked it, so select the address by hand.");
+    }
+  };
 
   const run = async (fn: () => Promise<string>) => {
     setBusy(true); setErr(""); setSaid("");
@@ -251,6 +266,10 @@ function AccountsPanel() {
   // a coach you meant to gift the app to a countdown, so the form follows the
   // plan rather than leaving both boxes live.
   const timed = plan === PLAN_BETA;
+  // The people you would be writing to: everyone who currently has access. Not
+  // everyone who ever signed up, because a note confirming a place on the beta
+  // makes no sense to someone who has not been given one.
+  const withAccess = (rows ?? []).filter((r) => r.usable && r.email);
   const counts = (rows ?? []).reduce((acc, r) => {
     const key = !r.plan_id ? "none" : !r.usable ? "lapsed" : r.kind;
     acc[key] = (acc[key] ?? 0) + 1;
@@ -320,11 +339,38 @@ function AccountsPanel() {
       {rows === null ? <Loading /> : rows.length === 0 ? (
         <div className="muted small">No accounts yet.</div>
       ) : (
+        <>
+        {/* Granting someone access is only half of it: they do not know it
+            happened until you tell them. One tap gets every address with access
+            into the clipboard, ready to paste into a Bcc box. */}
+        <div className="row" style={{ gap: 6, marginTop: 4 }}>
+          <span className="muted small">
+            {copied === "all"
+              ? `${withAccess.length} ${withAccess.length === 1 ? "address" : "addresses"} copied`
+              : "Tap an address to copy it"}
+          </span>
+          <div className="spacer" />
+          <button className="btn ghost sm" disabled={!withAccess.length}
+            onClick={() => copy(emailList(withAccess), "all")}>
+            Copy all with access
+          </button>
+        </div>
         <div className="list">
           {rows.map((r) => (
             <div key={r.user_id} className="row" style={{ gap: 8, borderTop: "1px solid #eee", padding: "6px 0" }}>
               <span className="small" style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
-                {r.email ?? "(no email)"}
+                <button
+                  onClick={() => r.email && copy(r.email, r.user_id)}
+                  disabled={!r.email}
+                  title="Copy this address"
+                  style={{
+                    background: "none", border: 0, padding: 0, font: "inherit",
+                    color: copied === r.user_id ? "#2a7d70" : "inherit",
+                    cursor: r.email ? "pointer" : "default", textAlign: "left",
+                  }}
+                >
+                  {copied === r.user_id ? "Copied" : (r.email ?? "(no email)")}
+                </button>
                 <em className="muted" style={{ fontSize: 11, display: "block", fontStyle: "normal" }}>
                   {!r.plan_id ? "no plan"
                     : `${r.plan_name}${r.days_left !== null ? `, ${r.days_left} ${r.days_left === 1 ? "day" : "days"} left` : ""}`}
@@ -345,6 +391,7 @@ function AccountsPanel() {
             </div>
           ))}
         </div>
+        </>
       )}
     </div>
   );
