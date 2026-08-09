@@ -95,6 +95,15 @@ export function useInstallPrompt() {
   return { canInstall: !!evt, promptInstall };
 }
 
+// Already added to the home screen and opened from it. Matters because the two
+// platforms need opposite advice, and because iOS cannot add a home screen icon
+// from INSIDE an installed app: there is no Share button in that chrome. The
+// setup has to happen in Safari or not at all.
+export const isStandalone = () =>
+  window.matchMedia?.("(display-mode: standalone)").matches ||
+  // iOS predates display-mode and still reports it here.
+  (navigator as unknown as { standalone?: boolean }).standalone === true;
+
 export const isIOS = () =>
   /iphone|ipad|ipod/i.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);

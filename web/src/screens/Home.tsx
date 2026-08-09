@@ -5,7 +5,8 @@ import type { EventRow } from "../lib/types";
 import { sessionLabel } from "../lib/types";
 import { Thoughts } from "../components/Thoughts";
 import { useAuth } from "../auth/AuthProvider";
-import { ErrorText, Loading, TopBar, isIOS, useInstallPrompt } from "../components/ui";
+import { ErrorText, Loading, TopBar, isIOS, isStandalone, useInstallPrompt } from "../components/ui";
+import { QuickCapture } from "../components/QuickCapture";
 
 function fmtDate(d: string | null) {
   if (!d) return "";
@@ -48,6 +49,11 @@ export default function Home({ capture = false }: { capture?: boolean }) {
         )}
 
         <button className="btn block" onClick={() => nav("/new")}>+ Start a session or match</button>
+
+        {/* Shown on /capture when they are still in a browser, because Safari
+            can only add a home screen icon for the page it is looking at. Put
+            anywhere else, the instruction is one nobody can follow. */}
+        {capture && !isStandalone() && <QuickCapture onCapturePage />}
 
         <Thoughts arriving={capture} />
 

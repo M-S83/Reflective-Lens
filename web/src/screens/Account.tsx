@@ -4,6 +4,7 @@ import { TopBar, ErrorText, Loading } from "../components/ui";
 import { DeleteAccount } from "../components/DeleteAccount";
 import { FeedbackForm } from "../components/Feedback";
 import { SetPasswordForm } from "../components/SetPassword";
+import { QuickCapture } from "../components/QuickCapture";
 import { useEntitlements } from "../lib/entitlements";
 import { FEATURES, logFeature } from "../lib/features";
 import {
@@ -132,6 +133,9 @@ export default function Account() {
           <strong>Your plan</strong>
           {ent.loading ? <Loading /> : <PlanLine />}
         </div>
+
+        {/* --- Getting to the microphone --------------------------------- */}
+        <QuickCapture />
 
         {/* --- Signing in ------------------------------------------------ */}
         {/* Costs nothing and sends nothing. Anyone who joined before passwords
