@@ -23,7 +23,7 @@ squad, never an account.
 
 ## Where things are
 
-- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`-`0024`.
+- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`-`0025`.
   Validated on PostgreSQL 16 (stubbed `auth`/`storage` schemas + a `test.uid` GUC).
 - `supabase/functions/` — Deno/TypeScript edge functions. Shared helpers in
   `_shared/` (`clients.ts` = model tiering + Claude/usage helpers, `voice.ts` =
@@ -71,6 +71,14 @@ squad, never an account.
   ONE cross-context link that is always legitimate. Anything else must be
   supported by the coach's own notes. This is the rule the insights rebuild has
   to honour (see `_tests/session-scope.mjs`).
+- **Views run as their caller** (migration `0025`). Every `analytics_*` and
+  `admin_*` view gates itself with `is_admin()` in its body, which worked and was
+  the ONLY guard: one view added later without the where clause and there was
+  nothing underneath, because a view reads past RLS by default. They are all
+  `security_invoker = true` now, so the tables' own policies apply as well and a
+  forgotten gate leaks nothing. `profiles` gained an admin read to make that
+  possible (it was self-only); writing is still self-only and `0016`'s trigger
+  still refuses self-granted admin.
 - **Ownership-only access.** Users see only what they created. No in-app sharing
   (share by PDF export). One person can own several clubs/teams.
 - **Three kinds of account, one mechanism** (migration `0022`). `active_roles()`

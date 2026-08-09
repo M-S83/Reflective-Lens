@@ -233,6 +233,41 @@ ok "a revoked one does not" \
 ok "someone who never signed in shows no plan" \
   "$(asu "$OWNER" "select coalesce(plan_id,'none') from public.admin_accounts where email='owner@test';")" "none"
 
+# --- 0025: the views run as the caller ---------------------------------------
+# The gate inside each view body was the only thing stopping a non-admin reading
+# every coach's email and cost data. It worked, and it was the sole defence: one
+# view added later without a where clause and there was nothing underneath. Under
+# security_invoker the tables' own RLS applies too, so a forgotten gate leaks
+# nothing. Both directions matter, so both are asserted.
+for v in analytics_overview analytics_mrr analytics_feature_usage analytics_cost_daily \
+         analytics_user_budget analytics_learning_recent analytics_feature_adoption \
+         analytics_feature_daily analytics_landing analytics_feedback_summary \
+         analytics_daily_active_users analytics_user_cost_monthly \
+         admin_accounts admin_duplicate_emails; do
+  ok "$v runs as its caller" \
+    "$($P -c "select coalesce((select option_value from pg_options_to_table((select reloptions from pg_class where relname='$v')) where option_name='security_invoker'),'unset')")" "true"
+done
+
+# Still works for the person it is for.
+ok "the owner still sees every account" \
+  "$(asu "$OWNER" "select count(*) from public.admin_accounts;")" "5"
+ok "and still sees the numbers" \
+  "$(asu "$OWNER" "select active_subscriptions from public.analytics_mrr;")" "0"
+# And still refuses everyone else, now for two reasons rather than one.
+ok "an ordinary user still sees no accounts" \
+  "$(asu "$SNEAK" "select count(*) from public.admin_accounts;")" "0"
+ok "and no analytics" \
+  "$(asu "$SNEAK" "select count(*) from public.analytics_feature_usage;")" "0"
+
+# profiles: the one table that had no admin read, which invoker mode needed.
+ok "an admin may read another coach's profile" \
+  "$(asu "$OWNER" "select count(*) from public.profiles;")" "5"
+ok "a coach still sees only their own" \
+  "$(asu "$SNEAK" "select count(*) from public.profiles;")" "1"
+# Reading is widened, writing is not, and 0016's trigger still holds.
+ok "a coach still cannot make themselves admin" \
+  "$(try "$SNEAK" "update public.profiles set role='admin' where id='$SNEAK';")" "blocked"
+
 sudo -u postgres /usr/lib/postgresql/16/bin/pg_ctl -D "$WORK/pgdata" -m immediate stop >/dev/null 2>&1 || true
 echo
 if [ "$fail" -eq 0 ]; then echo "ALL PASS ($pass checks)"; else echo "$pass passed, $fail FAILED"; exit 1; fi
