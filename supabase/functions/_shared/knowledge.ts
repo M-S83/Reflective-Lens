@@ -104,6 +104,56 @@ export async function reflectionGrounding(
 // actually wrote. Fine as influence, not fine as an interrogation.
 const OPENS_DESCRIPTIVELY = /^\s*(what|where|who|which|how|when)\b/i;
 
+// A second screen, because opening descriptively is not enough. These are asked
+// WORD FOR WORD, so anything in the bank that breaks the product's own rules
+// reaches a coach unfiltered, and four of the thirteen that passed the opener
+// did exactly that:
+//
+//   "What would players say if I asked them to score me 1-6 tonight?"
+//     invites a coach to imagine being marked out of six, in the app whose
+//     whole promise is that it never grades.
+//   "...and why (the now what)?"  names a reflective model at them.
+//   "How many of the six capabilities..."  is England Football jargon, taught
+//     back rather than reflected.
+//   "...did I ask is it me / my session? before blaming the player?"  presumes
+//     they blame players, which is a verdict wearing a question mark.
+//
+// The grounding already tells the MODEL never to name a framework or teach; it
+// says nothing about the prompts asked directly, because when that text was
+// written none of them were.
+const CROSSES_THE_LINE =
+  /\bscore (me|you|them)\b|\b1-6\b|\bout of (six|6|ten|10)\b|\brate\b|\(the now what\)|\bsix capabilities\b|before blaming/i;
+
+// The bank is written in the first person, as a coach's own journal prompt:
+// "Where did my eyes go?". Asked alongside questions the app writes ("When you
+// say you were pleased, what did that look like?"), the voices collide in one
+// list. This converts, rather than rewrites: the curated wording survives, so
+// nothing is being generated, and it is mechanical enough to test exhaustively.
+//
+// Order matters. "I was" has to be handled before a bare "I", or "what did I
+// think I was teaching" becomes "what did you think you was teaching".
+export function toSecondPerson(q: string): string {
+  return q
+    // House style, and these are shown to a coach exactly as stored.
+    .replace(/\s*[—–]\s*/g, ", ")
+    .replace(/\bam I\b/g, "are you")
+    .replace(/\bwas I\b/g, "were you")
+    .replace(/\bI am\b/g, "you are")
+    .replace(/\bI was\b/g, "you were")
+    .replace(/\bI'm\b/g, "you are")
+    .replace(/\bI've\b/g, "you have")
+    .replace(/\bI'll\b/g, "you will")
+    .replace(/\bI'd\b/g, "you would")
+    .replace(/\bI\b/g, "you")
+    .replace(/\bmyself\b/g, "yourself")
+    .replace(/\bMyself\b/g, "Yourself")
+    .replace(/\bmine\b/g, "yours")
+    .replace(/\bmy\b/g, "your")
+    .replace(/\bMy\b/g, "Your")
+    .replace(/\bme\b/g, "you")
+    .replace(/\bMe\b/g, "You");
+}
+
 // One per group, so the set spans different kinds of thinking (where my eyes
 // went, how I spoke, what I noticed about a player) rather than several angles
 // on the same thing. The seed rotates the window, so a coach reflecting every
@@ -114,7 +164,9 @@ export async function reflectivePrompts(
   count = 1,
 ): Promise<string[]> {
   const all = await loadPrompts(admin);
-  const prompts = all.filter((p) => OPENS_DESCRIPTIVELY.test(p.prompt));
+  const prompts = all.filter((p) =>
+    OPENS_DESCRIPTIVELY.test(p.prompt) && !CROSSES_THE_LINE.test(p.prompt)
+  );
   if (prompts.length === 0) return [];
 
   const byGroup = new Map<string, string[]>();
@@ -133,7 +185,7 @@ export async function reflectivePrompts(
   const out: string[] = [];
   for (let i = 0; i < count && i < groups.length; i++) {
     const list = byGroup.get(groups[(offset + i) % groups.length])!;
-    out.push(list[(offset + i) % list.length]);
+    out.push(toSecondPerson(list[(offset + i) % list.length]));
   }
   return out;
 }

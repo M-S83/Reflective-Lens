@@ -55,8 +55,26 @@ ok(`none of the bank gives instructions (${advisory.length} found)`, advisory.le
 const rule = kn.match(/const OPENS_DESCRIPTIVELY = \/(.+?)\/i;/);
 ok("there is a screen on what may be asked", !!rule);
 const OPEN = new RegExp(rule[1], "i");
-const askable = prompts.filter((p) => OPEN.test(p.text));
-const screened = prompts.filter((p) => !OPEN.test(p.text));
+
+// A second screen, because opening descriptively is not enough. These are asked
+// word for word, so a prompt that breaks the product's own rules reaches a coach
+// unfiltered, and four that passed the opener did: one invited them to imagine
+// being scored 1-6, one named a reflective model, one taught England Football
+// jargon back at them, and one presumed they blame players.
+const lineRule = kn.match(/const CROSSES_THE_LINE =\s*\n?\s*\/(.+?)\/i;/);
+ok("there is a second screen on what it may say", !!lineRule);
+const BAD = new RegExp(lineRule[1], "i");
+
+const askable = prompts.filter((p) => OPEN.test(p.text) && !BAD.test(p.text));
+const screened = prompts.filter((p) => !OPEN.test(p.text) || BAD.test(p.text));
+
+// The one that matters most: this app does not grade, so it must not ask a
+// coach to picture being graded.
+ok("nothing askable invites a score",
+  !askable.some((p) => /score me|1-6|out of six/i.test(p.text)));
+ok("nothing askable names a model", !askable.some((p) => /\(the now what\)/i.test(p.text)));
+ok("nothing askable teaches jargon", !askable.some((p) => /six capabilities/i.test(p.text)));
+ok("the loaded ones ARE caught", prompts.some((p) => BAD.test(p.text)));
 ok(`a real share is screened out (${screened.length} of ${prompts.length})`, screened.length > prompts.length / 3);
 ok(`enough survive to rotate (${askable.length})`, askable.length >= 8);
 ok("nothing askable opens with 'did I'", !askable.some((p) => /^\s*did i\b/i.test(p.text)));
@@ -66,10 +84,33 @@ ok("askable ones span groups", new Set(askable.map((p) => p.group)).size >= 4);
 // The screened ones still ground the model's style, they are just never asked.
 ok("the whole bank still grounds the generated questions", /reflectionGrounding/.test(fn));
 
+// --- and they are asked in the app's voice ----------------------------------
+// The bank is written in the first person, as a coach's own journal prompt.
+// Asked next to questions the app writes ("When you say you were pleased..."),
+// the two voices collided in one list. Converting rather than rewriting keeps
+// the curated wording, so nothing is generated, and makes it testable against
+// every prompt that can actually be asked.
+const tsFn = kn.match(/export function toSecondPerson[\s\S]*?\n\}/)?.[0] ?? "";
+ok("there is a conversion", tsFn.length > 0);
+const toSecondPerson = eval(`(${tsFn.replace("export function", "function").replace(/: string/g, "")})`);
+
+for (const p of askable) {
+  const out = toSecondPerson(p.text);
+  ok(`no "I" left in: ${out.slice(0, 46)}...`, !/\bI\b|\bmy\b|\bme\b|\bmyself\b/i.test(out));
+  ok(`  and it still ends as a question`, out.trim().endsWith("?"));
+  ok(`  and carries no em or en dash`, !/[—–]/.test(out));
+}
+// Order matters in the transform: "I was" has to go before a bare "I", or
+// "what did I think I was teaching" becomes "you was teaching".
+ok("verb agreement survives",
+  toSecondPerson("What did I think I was teaching?") === "What did you think you were teaching?");
+ok("am I becomes are you", toSecondPerson("Where am I looking?") === "Where are you looking?");
+ok("contractions too", toSecondPerson("What's one thing I'll change?") === "What's one thing you will change?");
+
 // --- they are now asked, not just shown to the model ------------------------
 ok("a picker exists that returns whole prompts", /export async function reflectivePrompts/.test(kn));
 ok("the function asks one of them", /for \(const prompt of await reflectivePrompts\(admin, reflection_id, 1\)\)/.test(fn));
-ok("verbatim, not rewritten", /question_text: prompt,/.test(fn));
+ok("asked as written, only the voice turned", /question_text: prompt,/.test(fn));
 ok("grounding is still used for the generated ones", /reflectionGrounding/.test(fn));
 
 // --- variety ----------------------------------------------------------------
