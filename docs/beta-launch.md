@@ -15,8 +15,10 @@ From the repo root on your PC:
 Re-runnable and safe to repeat. It pushes any migrations the project has not
 seen and redeploys all 16 functions.
 
-**Worked when:** the last line reads `Done. 22 migrations and 16 functions are
-live.`
+**Worked when:** the last line reads `Done. N migrations and 16 functions are
+live.` The script counts them, so the number goes up as the app grows. What
+matters is that it printed the line at all, and that the count is not lower than
+last time.
 
 ## 2. Frontend
 
@@ -72,13 +74,30 @@ bounces is worse than one giving a Gmail account that works.
 
 ## 6. Give your testers access
 
-Owner tab, **Accounts** panel. They sign up first, then you grant.
+Owner tab, **Accounts** panel. They sign up first, then you grant: `grant_plan`
+refuses an address with no account behind it.
 
-For ten testers: **Beta, 90 days**. It ends by itself, so there is nothing to
-remember. Coaches you want to keep on it permanently get **Complimentary**,
-which has no end date and never shows them a countdown.
+**Nobody is waiting on you, though.** The first sign-in starts a free month by
+itself, so a tester can be writing within two minutes of the invite. Granting
+beta afterwards replaces that month with the 90 days and cancels the trial, so
+there is one clock rather than two.
 
-Full detail in `accounts.md`.
+That is what makes it reasonable to **wait and see who actually uses it** before
+handing out the 90 days. The Accounts list is ordered by who was here most
+recently and shows what each person has written: sessions, notes, how many they
+reflected on, and when they were last in. Counts only. Nobody's notes are
+readable by anyone but the coach who wrote them, including you.
+
+**The one date to keep an eye on.** The free month is 30 days. A tester who is
+still going at day 31 and has not been granted beta drops to read-only, and the
+app tells them to ask you for it back. That is honest, but it is still a coach
+who has to stop and write to you mid-flow, so grant the ones who are using it
+before the month is out rather than after.
+
+Coaches you want to keep permanently get **Complimentary**, which has no end
+date and never shows them a countdown.
+
+Full detail in `accounts.md`. What to send them is in `tester-invite.md`.
 
 ## Getting to the microphone fast
 

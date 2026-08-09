@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { allFeedback, setFeedbackStatus, type FeedbackRow } from "../lib/feedback";
 import {
-  listAccounts, grantPlan, revokePlan, PLAN_BETA, PLAN_COMP, type AccountRow,
+  listAccounts, grantPlan, revokePlan, lastSeen, PLAN_BETA, PLAN_COMP, type AccountRow,
 } from "../lib/accounts";
 import { TopBar, Loading, ErrorText } from "../components/ui";
 import {
@@ -328,6 +328,16 @@ function AccountsPanel() {
                 <em className="muted" style={{ fontSize: 11, display: "block", fontStyle: "normal" }}>
                   {!r.plan_id ? "no plan"
                     : `${r.plan_name}${r.days_left !== null ? `, ${r.days_left} ${r.days_left === 1 ? "day" : "days"} left` : ""}`}
+                </em>
+                {/* The line the beta decision is actually made on. Counts and a
+                    date, never content: 0026 can say a coach wrote four
+                    sessions and cannot say what was in them. */}
+                <em className="muted" style={{ fontSize: 11, display: "block", fontStyle: "normal" }}>
+                  {r.sessions === 0 && r.notes === 0
+                    ? "nothing written yet"
+                    : `${r.sessions} ${r.sessions === 1 ? "session" : "sessions"}, ${r.notes} ${r.notes === 1 ? "note" : "notes"}, ${r.reflections} reflected on`}
+                  {" · "}
+                  {lastSeen(r.last_active)}
                 </em>
               </span>
               <div className="spacer" />
