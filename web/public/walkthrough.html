@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Reflective Lens: Coach and Player walkthrough</title>
+<title>Reflective Lens: the coach walkthrough</title>
 <style>
   /* Page chrome, adapts to viewer light/dark. */
   /* Deliberately light on every device, so the brand presentation is consistent. */
@@ -142,7 +142,11 @@
   .sheet ul{ margin:0; padding:0; list-style:none; }
   .sheet li{ font-size:13px; margin:6px 0; padding-left:20px; position:relative; line-height:1.5; }
   .sheet li .m{ position:absolute; left:0; font-weight:700; }
-  .m.t{ color:var(--sgood); } .m.p{ color:var(--swarn); } .m.x{ color:var(--scrit); }
+  /* One neutral mark, deliberately. Ticks and crosses against a coach's own
+     aims are a scorecard, which is the one thing this product does not do. The
+     app stopped rendering them; this page had gone on showing them. */
+  .m.n{ color:var(--ssub); }
+  .sheet li em{ color:var(--ssub); font-style:italic; }
   .sheet li.dot{ padding-left:15px; } .sheet li.dot::before{ content:"•"; position:absolute; left:0; color:var(--sgood); }
   .sheet .footnote{ font-size:11.5px; color:var(--ssub); font-style:italic; margin-top:16px; border-top:1px solid var(--sline); padding-top:10px; }
 </style>
@@ -159,13 +163,14 @@
     </svg>
     <div>
       <h1 class="serif">Reflective Lens</h1>
-      <div class="tag">A walkthrough for coaches and players</div>
+      <div class="tag">A walkthrough for coaches</div>
     </div>
   </header>
-  <p class="lede">Two separate journeys in one app. Coaches reflect on their sessions. Players reflect on their
-    own games, privately, and the two never mix. Both work the same way. You capture your thoughts in your own
-    words, by speaking or typing, answer a gentle prompt or two for a little more, and see it reflected back.
-    Notes, reflections and answers can all be a voice note or text. Nothing is ever graded.</p>
+  <p class="lede">One journey, for the coach. You capture your thoughts in your own words, by speaking or
+    typing, answer a gentle prompt or two for a little more, and see it reflected back. Notes, reflections and
+    answers can all be a voice note or text. Nothing is ever graded. Players appear as members of your squad:
+    they have no accounts, they are never contacted, and only their first names are used in anything written
+    back to you.</p>
   <span class="principle">A mirror, not a verdict</span>
 
   <!-- ============================ COACH ============================ -->
@@ -201,7 +206,7 @@
         <div class="stepnum"><b>02</b><span>Home</span></div>
         <div class="phone"><div class="notch"></div><div class="scr">
           <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="var(--ggrass)" stroke-width="3"/><circle cx="20" cy="20" r="8" stroke="var(--ggrass)" stroke-width="3"/></svg>
-            <div><div class="e">Coach</div><div class="t">Reflective Lens</div></div><div class="sp"></div><div class="mini">Player mode</div></div>
+            <div><div class="e">Coach</div><div class="t">Reflective Lens</div></div><div class="sp"></div></div>
           <div class="banner">Add Reflective Lens to your home screen for one-tap access.</div>
           <div class="btn block">+ Start a session or match</div>
           <div class="s strong" style="color:var(--gpitch)">Recent</div>
@@ -338,122 +343,15 @@
           <div class="chips"><span class="chip">Notes</span><span class="chip">Reflect</span><span class="chip on">Report</span></div>
           <div class="card md">
             <div class="serif" style="font-size:15px; color:var(--gpitch)">Training report</div>
-            <div class="hl">Build-up work is settling; the press is still the sticking point.</div>
+            <div class="hl">You wrote most about the build-up. You did not come back to the press.</div>
             <h4>What you hoped to see</h4>
-            <ul><li><span class="tick">✓</span> GK starts moves, noted twice</li><li><span class="cross">✗</span> Calm under pressure, rushed once, not yet</li></ul>
+            <ul><li>&middot; GK starts moves <em>(you wrote about this)</em></li><li>&middot; Calm under pressure <em>(nothing in your notes)</em></li></ul>
             <h4>Noted for next</h4>
-            <ul><li>Rehearse the press-release you flagged</li><li>Give the centre-backs a retreat option</li></ul>
+            <ul><li>You said you would rehearse the press-release</li></ul>
           </div>
         </div></div>
         <p class="cap">A report that restates only what you and your notes actually said. It reviews the things
           you hoped to see honestly, and reflects back what you noted for next time. Export it as a PDF to share.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================ PLAYER ============================ -->
-  <section class="section">
-    <h2><span class="badge">Player</span> A private space of their own</h2>
-    <p>Completely separate from any coach. Players log their own game, say what it was like in their own words,
-      and build a story across the season. For their eyes only.</p>
-    <div class="rail">
-
-      <!-- P1 Player home -->
-      <div class="step">
-        <div class="stepnum"><b>01</b><span>Your games</span></div>
-        <div class="phone"><div class="notch"></div><div class="scr">
-          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="var(--ggrass)" stroke-width="3"/><circle cx="20" cy="20" r="8" stroke="var(--ggrass)" stroke-width="3"/></svg><div><div class="e">Player</div><div class="t">Reflective Lens</div></div><div class="sp"></div><div class="mini">Coach mode</div></div>
-          <div class="banner">Your reflections are private, just for you. No coach or club sees them.</div>
-          <div class="btn block">+ Log a game</div>
-          <div class="row"><span class="s strong" style="color:var(--gpitch)">Your games</span><div class="sp"></div><span class="btn subtle">My story</span></div>
-          <div class="card"><div class="row"><span class="strong">Game vs Ashwood</span><div class="sp"></div><span class="pill good">win</span></div><div class="muted xs" style="margin-top:3px">CM, LW · 3-1 · 12 Jul</div></div>
-          <div class="card"><div class="row"><span class="strong">Game vs Marsh Rovers</span><div class="sp"></div><span class="pill crit">loss</span></div><div class="muted xs" style="margin-top:3px">CM · 1-2 · 5 Jul</div></div>
-          <div class="tabbar"><div class="on"><i class="c"></i>Home</div><div><i class="p"></i>Log game</div><div><i></i>My story</div></div>
-        </div></div>
-        <p class="cap">A private feed of their own games. Nothing here is shared with a coach or a club.</p>
-      </div>
-
-      <!-- P2 Log a game -->
-      <div class="step">
-        <div class="stepnum"><b>02</b><span>Log a game</span></div>
-        <div class="phone"><div class="notch"></div><div class="scr">
-          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="var(--ggrass)" stroke-width="3"/><circle cx="20" cy="20" r="8" stroke="var(--ggrass)" stroke-width="3"/></svg><div><div class="e">Player</div><div class="t">Log a game</div></div></div>
-          <div class="card" style="display:flex; flex-direction:column; gap:8px;">
-            <div class="chips"><span class="chip on">Match</span><span class="chip">Training</span></div>
-            <div><span class="lab">Positions you played</span><div class="tags"><span class="tag">CM ✕</span><span class="tag">LW ✕</span></div></div>
-            <div><span class="lab">How you featured</span><div class="chips"><span class="chip on">Started</span><span class="chip">Game changer</span></div></div>
-          </div>
-          <div class="card" style="display:flex; flex-direction:column; gap:7px;">
-            <h3>The game</h3>
-            <div class="row" style="gap:7px"><div style="flex:1"><span class="lab">Goals for</span><div class="inp">3</div></div><div style="flex:1"><span class="lab">Against</span><div class="inp">1</div></div></div>
-            <div class="row" style="gap:7px"><div style="flex:1"><span class="lab">Your goals</span><div class="inp">1</div></div><div style="flex:1"><span class="lab">Assists</span><div class="inp">1</div></div></div>
-          </div>
-          <div class="btn block">Save and reflect</div>
-        </div></div>
-        <p class="cap">Their own game context: the positions they played, how they featured, the score, and their
-          goals and assists. Match or training.</p>
-      </div>
-
-      <!-- P3 Reflect -->
-      <div class="step">
-        <div class="stepnum"><b>03</b><span>Reflect</span></div>
-        <div class="phone"><div class="notch"></div><div class="scr">
-          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="var(--ggrass)" stroke-width="3"/><circle cx="20" cy="20" r="8" stroke="var(--ggrass)" stroke-width="3"/></svg><div><div class="e">Your game</div><div class="t">Game vs Ashwood</div></div></div>
-          <div class="card"><div class="chips"><span class="pill good">win</span><span class="pill">3-1</span><span class="pill">CM, LW</span><span class="pill good">1 goal</span><span class="pill">1 assist</span></div></div>
-          <div class="card" style="display:flex; flex-direction:column; gap:6px;">
-            <div class="row"><h3>What was the game like for you?</h3><div class="sp"></div>
-              <span class="vt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4"/></svg> Voice or text</span></div>
-            <div class="inp" style="color:var(--ink)">Felt sharp on the ball. Faded a bit in the second half.</div>
-            <div class="row" style="gap:6px"><span class="micbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4"/></svg></span><span class="xs muted">Type it above, or tap to speak</span></div>
-          </div>
-          <div class="card" style="display:flex; flex-direction:column; gap:7px;">
-            <div class="row"><h3>Reflect deeper</h3><div class="sp"></div><span class="btn subtle">Ask me</span></div>
-            <span class="xs muted">Answer each by voice or text, or skip.</span>
-            <div><span class="lab">What made you feel sharp early on? Can you name it?</span>
-              <div class="row" style="gap:6px"><div class="inp" style="flex:1">Type your answer…</div><span class="micbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4"/></svg></span></div></div>
-            <div><span class="lab">Did your coach say anything to you, and what did you make of it?</span>
-              <div class="row" style="gap:6px"><div class="inp" style="flex:1">Type your answer…</div><span class="micbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4"/></svg></span></div></div>
-          </div>
-        </div></div>
-        <p class="cap">In their own words, spoken or typed. The open questions come from what they wrote,
-          including reflecting on any coach feedback, and they answer those by voice or text too.</p>
-      </div>
-
-      <!-- P4 Focus -->
-      <div class="step">
-        <div class="stepnum"><b>04</b><span>Your focus</span></div>
-        <div class="phone"><div class="notch"></div><div class="scr">
-          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="var(--ggrass)" stroke-width="3"/><circle cx="20" cy="20" r="8" stroke="var(--ggrass)" stroke-width="3"/></svg><div><div class="e">Your game</div><div class="t">Game vs Ashwood</div></div></div>
-          <div class="card md">
-            <div class="serif" style="font-size:14px; color:var(--gpitch)">My game, Ashwood</div>
-            <div class="hl">You felt sharp on the ball and made things happen early.</div>
-            <h4>Your focus for next</h4>
-            <ul><li>Hold the intensity into the second half</li><li>Keep taking the ball on the half-turn, it worked</li></ul>
-            <div class="muted xs" style="margin-top:6px; font-style:italic">Drawn from your own answers. Never graded, never imposed.</div>
-          </div>
-        </div></div>
-        <p class="cap">Focus points taken straight from their own reflection. A mirror of what they said, turned
-          gently towards next time.</p>
-      </div>
-
-      <!-- P5 My story -->
-      <div class="step">
-        <div class="stepnum"><b>05</b><span>My story</span></div>
-        <div class="phone"><div class="notch"></div><div class="scr">
-          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="var(--ggrass)" stroke-width="3"/><circle cx="20" cy="20" r="8" stroke="var(--ggrass)" stroke-width="3"/></svg><div><div class="e">Player</div><div class="t">My story</div></div></div>
-          <div class="card" style="display:flex; flex-direction:column; gap:7px;">
-            <div class="muted xs">A summary of your own reflections over time.</div>
-            <div class="chips"><span class="chip">This week</span><span class="chip on">This month</span><span class="chip">This season</span></div>
-            <div class="btn block">Build my summary</div>
-          </div>
-          <div class="card md">
-            <div class="hl">A confident month on the ball, though the second-half fade keeps coming up.</div>
-            <h4>What keeps showing</h4><ul><li>Sharp in the first half, on the half-turn</li></ul>
-            <h4>What you keep working on</h4><ul><li>Staying in games physically late on</li></ul>
-          </div>
-        </div></div>
-        <p class="cap">Week, month or season: their reflections woven into a story. What keeps showing, what they
-          keep working on, and what has shifted. Theirs alone.</p>
       </div>
     </div>
   </section>
@@ -469,61 +367,63 @@
       <div class="sheet">
         <div class="kicker">Coach, match report</div>
         <h3 class="serif">U12 Lions vs Ashwood</h3>
-        <div class="hl">You wanted brave build-up and calmer heads under pressure. The build-up looked good.
-          The pressure still rushes them.</div>
+        <div class="hl">You wanted brave build-up and calmer heads under pressure. You wrote most about the
+          build-up. You did not come back to the pressure.</div>
         <div class="meta">Result: won 3-1, at home. Saturday 12 July.</div>
         <h4>What you hoped to see</h4>
         <ul>
-          <li><span class="m t">✓</span> Keeper starts the moves. Noted twice, and calmly.</li>
-          <li><span class="m p">~</span> Centre-backs split wide. There in the first half, less so in the second.</li>
-          <li><span class="m x">✗</span> Calm under pressure. Rushed it once and lost the ball in midfield.</li>
+          <li><span class="m n">&middot;</span> Keeper starts the moves <em>(you wrote about this)</em>. Noted twice, and calmly.</li>
+          <li><span class="m n">&middot;</span> Centre-backs split wide <em>(your notes touch on this)</em>. There in the first half.</li>
+          <li><span class="m n">&middot;</span> Calm under pressure <em>(nothing in your notes about this one)</em>.</li>
         </ul>
-        <h4>What stood out</h4>
+        <h4>What went well</h4>
         <ul>
           <li class="dot">Two of the three goals started with the keeper playing short.</li>
-          <li class="dot">The panic came when Ashwood pressed with two, not one.</li>
+        </ul>
+        <h4>What got in the way</h4>
+        <ul>
+          <li class="dot">You said the panic came when Ashwood pressed with two, not one.</li>
         </ul>
         <h4>Noted for next</h4>
         <ul>
-          <li class="dot">Rehearse the press-release you flagged.</li>
-          <li class="dot">Give the centre-backs a retreat option.</li>
+          <li class="dot">You said you would rehearse the press-release.</li>
         </ul>
         <div class="footnote">Drawn from your notes and your reflection. Export as a PDF to share.</div>
       </div>
 
       <div class="sheet">
-        <div class="kicker">Player, monthly summary</div>
-        <h3 class="serif">My month in reflection</h3>
-        <div class="hl">A confident month on the ball. You keep saying you feel sharp early and fade late.</div>
-        <div class="meta">Four games reflected on. July.</div>
-        <h4>What keeps showing</h4>
+        <div class="kicker">Coach, monthly report</div>
+        <h3 class="serif">U12 Lions, training in July</h3>
+        <div class="hl">Four training sessions reflected on. The build-up keeps coming up in your notes. So
+          does the last twenty minutes.</div>
+        <div class="meta">Training only. Matchdays are reported separately.</div>
+        <h4>What keeps appearing</h4>
         <ul>
-          <li class="dot">Sharp in the first half, taking the ball on the half-turn.</li>
-          <li class="dot">Happy to take players on one against one.</li>
+          <li class="dot">You mentioned playing out from the back in three of the four sessions.</li>
+          <li class="dot">You twice wrote that concentration dropped near the end.</li>
         </ul>
-        <h4>What you keep working on</h4>
+        <h4>What you said changed</h4>
         <ul>
-          <li class="dot">Staying in games physically in the last twenty minutes.</li>
+          <li class="dot">You wrote that the keeper is starting moves without being told to.</li>
         </ul>
-        <h4>What has shifted</h4>
+        <h4>Training and matchday</h4>
         <ul>
-          <li class="dot">You have started talking more to your full-back.</li>
+          <li class="dot">The build-up you have worked on in training is what you wrote most about on Saturday.</li>
         </ul>
-        <h4>Focus ahead</h4>
+        <h4>Looking back over the month</h4>
         <ul>
-          <li class="dot">Hold the intensity after you score.</li>
-          <li class="dot">Keep taking the half-turn. It worked.</li>
+          <li class="dot">What would you change or improve, if anything?</li>
         </ul>
-        <div class="footnote">Your own reflections, woven into a story. Yours alone.</div>
+        <div class="footnote">Drawn only from what you wrote. Kept to one team and one kind of session, because
+          a goalkeeping session is not the team's training picture.</div>
       </div>
     </div>
   </section>
 
   <div class="foot">
-    <strong style="color:var(--pitch)">One principle, both journeys.</strong> You capture your thoughts in your
-    own words, answer a gentle prompt for a little more, and see it reflected back rather than judged. Coaches
-    see their coaching clearly. Players see their own game clearly. Grounded in England Football coaching
-    practice, and always written in your voice.
+    <strong style="color:var(--pitch)">One principle, all the way through.</strong> You capture your thoughts
+    in your own words, answer a gentle prompt for a little more, and see it reflected back rather than judged.
+    Grounded in England Football coaching practice, and always written in your voice.
   </div>
 </div>
 
