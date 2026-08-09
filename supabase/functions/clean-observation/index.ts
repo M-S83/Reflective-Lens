@@ -46,6 +46,14 @@ Deno.serve(async (req) => {
         MIRROR_NOT_VERDICT +
         " Tidy transcription slips and grammar, but KEEP the coach's own words and " +
         "terminology: do NOT rewrite their phrasing into textbook language. " +
+        // "You noted alot to work on" reached a finished report. Spelling is
+        // safe to fix; finishing their sentence is not. A note reading "had a
+        // bad at school" is missing a word, and guessing "day" is the same
+        // instinct that fills an empty section with something plausible, which
+        // is the one thing this app must never do. Leave the gap.
+        "Correct obvious spelling (alot -> a lot, definately -> definitely). " +
+        "Do NOT add words to complete a sentence they left unfinished, and do " +
+        "NOT guess at a word that is missing: leave it as they left it. " +
         tagHint +
         'Return ONLY JSON: {"cleaned_note": string, "tags": string[], ' +
         '"sentiment": "positive"|"concern"|"neutral", "phase_of_play": string|null}.' +

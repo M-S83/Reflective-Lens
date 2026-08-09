@@ -166,6 +166,28 @@ function Notes({ eventId, teamId, only, intro, placeholder }: {
   }, [eventId]);
   useEffect(() => { load(); }, [load]);
 
+  // A voice note is uploaded, transcribed and tidied by two edge functions,
+  // which takes a few seconds. Until then the row reads "Transcribing…", and
+  // the only way to move it on was a Refresh button the coach had to keep
+  // pressing with no idea how many times. Most people press once, see the same
+  // thing, and conclude it failed.
+  //
+  // So it checks back by itself while anything is still without words, every
+  // two seconds, and stops on its own. Bounded rather than open-ended: a note
+  // that never arrives is a fault to see, not a poll to run all evening. The
+  // Refresh button stays for exactly that case.
+  const awaiting = (list ?? []).some((o) => !o.cleaned_note && !o.raw_note);
+  useEffect(() => {
+    if (!awaiting) return;
+    let tries = 0;
+    const t = setInterval(() => {
+      tries += 1;
+      load();
+      if (tries >= 15) clearInterval(t);
+    }, 2000);
+    return () => clearInterval(t);
+  }, [awaiting, load]);
+
   const saveText = async () => {
     if (!text.trim()) return;
     setBusy(true); setErr("");

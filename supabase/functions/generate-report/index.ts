@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
         supa.from("match_stats").select("*, players(display_name)").eq("event_id", event_id),
       ]);
 
-    // The reflective open questions + the person's own answers — the focus for
+    // The reflective open questions + the person's own answers, the focus for
     // next is drawn from these, not invented.
     const reflectionId = reflections?.[0]?.id;
     const { data: qa } = reflectionId
@@ -82,8 +82,21 @@ Deno.serve(async (req) => {
       // What the coach hoped to see up front, and how the notes matched it.
       hoping_to_see: event.hoping_to_see ?? [],
       hoped_to_see_review: reflections?.[0]?.hoped_to_see_review ?? [],
+      // No `type` or `subject`. Both were sent on every note and both were
+      // CONSTANTS: the app writes observation_type 'team_observation' and
+      // subject_type 'team' on every note it has ever saved, whatever the
+      // session was. So they carried no information, and they cost accuracy.
+      //
+      // A real 1v1 session, about one boy, came back as "You noted the team had
+      // a bad at school". There is no team in a 1v1. The coach never wrote the
+      // word. The model read subject: "team" off the label and believed it.
+      //
+      // The existing rule told it not to narrate the label ("do not write 'the
+      // team observation'"), which it obeyed to the letter while still taking
+      // the subject from it. Rules do not beat a field that is simply wrong, so
+      // the field goes.
       observations: (observations ?? []).map((o) => ({
-        minute: o.match_minute, type: o.observation_type, subject: o.subject_type,
+        minute: o.match_minute,
         note: o.cleaned_note ?? o.raw_note, tags: o.tags, sentiment: o.sentiment,
         phase: o.phase_of_play,
       })),
@@ -184,6 +197,17 @@ Deno.serve(async (req) => {
         "observation\", \"the note says\", \"the reflection states\", \"per the " +
         "record\", or name any field you were passed. The coach said it: write " +
         "\"you said\", \"you noticed\", \"you wrote\", or simply say the thing. " +
+        // The 1v1 that came back as "you noted the team had a bad at school".
+        // The label that caused it is gone from the payload now, so this is the
+        // belt to that braces: a session may be with one player, a small group,
+        // or a squad, and the report has no way to know which unless the coach
+        // said so.
+        "NEVER INVENT WHO IT WAS ABOUT. Do not introduce \"the team\", \"the " +
+        "players\", \"the boys\", \"the group\", \"he\" or \"she\" unless the " +
+        "coach used that word themselves. Sessions here are as often with one " +
+        "player as with a squad. If they did not say who, do not decide for " +
+        "them: restate what they wrote and leave the subject exactly as vague " +
+        "as they left it. " +
         "This is a COACH'S single-session report. Draw ONLY on what the coach " +
             "provided for THIS session: the aims, the notes captured, their " +
             "reflection, and their answers to the reflective questions. If " +
@@ -336,7 +360,16 @@ function coachMarkdown(title: string, c: any): string {
         // a second one: "• · Players that tend to only use their strong foot".
         label: a.aim,
         suffix: ` (${said(a.status)})`,
-        note: a.note,
+        // An aim with nothing written about it says so in the suffix already.
+        // The model's note then said it a second time, in its own words, and a
+        // real report read: "different techniques to get away from defenders
+        // (nothing in your notes about this one): No note directly relates to
+        // this aim." Twice, in one line, for no gain.
+        //
+        // There is also nothing else it COULD say. The note is meant to point at
+        // the notes that touched the aim, and by definition there are none, so
+        // anything written there is either a restatement or an invention.
+        note: a.status === "stated_not_recorded" ? undefined : a.note,
       })),
     });
   }

@@ -53,7 +53,13 @@ a { color: var(--grass-ink); }
 
 /* Layout */
 .app { max-width: 720px; margin: 0 auto; padding: 0 16px calc(84px + env(safe-area-inset-bottom)); }
-.screen { padding-top: 18px; }
+/* The tab bar and the Feedback pill are both position: fixed, so they float
+   OVER the end of the page rather than pushing it up. With no bottom padding
+   here, the last hundred-odd pixels of every screen sat underneath them. On a
+   report that is the "Noted for next" section, which is the part a coach is
+   most likely to want, and it was hidden behind a button offering to take
+   feedback about it. 64px of tab bar, then the pill above that, then air. */
+.screen { padding-top: 18px; padding-bottom: calc(124px + env(safe-area-inset-bottom)); }
 .stack { display: flex; flex-direction: column; gap: 14px; }
 .row { display: flex; gap: 10px; align-items: center; }
 .row.wrap { flex-wrap: wrap; }
