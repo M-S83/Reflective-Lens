@@ -69,10 +69,21 @@ export function EntitlementProvider({ children }: { children: ReactNode }) {
       return;
     }
     setLoading(true);
-    supabase.rpc("is_admin").then(({ data }) => setIsAdmin(!!data));
-    const { data } = await supabase
-      .from("subscriptions")
-      .select("status, trial_ends_at, plan:plans(name, features)");
+    // Both, before loading clears. This was fired and forgotten, so the app
+    // drew its tab bar while the answer was still in the air: five tabs, then
+    // six a moment later. Worse, a single failed call left isAdmin false with
+    // nothing to retry it, so the Owner tab went missing until the next sign-in
+    // and looked like it only ever appeared at sign-in.
+    //
+    // Promise.all rather than two awaits: they do not depend on each other, and
+    // waiting for them in turn would make every load slower for no reason.
+    const [adminRes, subsRes] = await Promise.all([
+      supabase.rpc("is_admin"),
+      supabase.from("subscriptions")
+        .select("status, trial_ends_at, plan:plans(name, features)"),
+    ]);
+    setIsAdmin(!!adminRes.data);
+    const { data } = subsRes;
     type PlanShape = { name?: string; features: { role?: string; kind?: string } | null };
     const rows = (data ?? []) as unknown as Array<{
       status: string; trial_ends_at: string | null;

@@ -26,6 +26,7 @@ const web = (p) => readFileSync(join(here, "../../../web/src", p), "utf8");
 const acct = web("screens/Account.tsx");
 const ent = web("lib/entitlements.tsx");
 const dash = web("screens/Dashboard.tsx");
+const app = web("App.tsx");
 const lib = web("lib/accounts.ts");
 const sql = readFileSync(join(here, "../../migrations/0022_account_kinds.sql"), "utf8");
 
@@ -105,6 +106,17 @@ ok("and revoke", /revokePlan\(/.test(code(dash)));
 ok("days are only sent for the timed plan", /timed \? days : null/.test(code(dash)));
 ok("it reports back what actually happened", /setSaid\(await fn\(\)\)/.test(code(dash)));
 ok("the lib reads the gated view", /from\("admin_accounts"\)/.test(code(lib)));
+
+// --- and the owner can find the panel ----------------------------------------
+// is_admin was fired without being awaited, so loading cleared while the answer
+// was still in the air and the tab bar drew without Owner, then redrew with it.
+// A single failed call left isAdmin false with nothing to retry it, so the tab
+// went missing until the next sign-in.
+ok("the admin check is settled before the app renders",
+  /const \[adminRes, subsRes\] = await Promise\.all\(\[/.test(code(ent)));
+ok("and it is not awaited in series, which would slow every load",
+  !/await supabase\.rpc\("is_admin"\);/.test(code(ent)));
+ok("the Owner tab follows it", /ent\.isAdmin\s*\n?\s*\? \[\.\.\.COACH_TABS/.test(code(app)));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
