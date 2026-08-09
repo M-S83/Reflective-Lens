@@ -177,6 +177,8 @@ export default function SignIn() {
             should be able to find out who holds that without first handing it
             over. */}
         <p className="muted small center">
+          <a href="/walkthrough.html" target="_blank" rel="noreferrer">How it works</a>
+          {" · "}
           <Link to="/privacy">Privacy</Link>
           {" · "}
           <Link to="/terms">Terms</Link>

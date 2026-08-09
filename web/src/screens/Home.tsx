@@ -59,9 +59,19 @@ export default function Home() {
           {events === null ? (
             <Loading />
           ) : events.length === 0 ? (
-            <div className="card muted">
-              Nothing yet. Set up a <Link to="/teams">team</Link>, then start your first session. Capture a
-              few notes, then reflect.
+            <div className="card muted stack">
+              <div>
+                Nothing yet. Set up a <Link to="/teams">team</Link>, then start your first session. Capture a
+                few notes, then reflect.
+              </div>
+              {/* The moment a coach most needs this is the moment they have
+                  nothing, which is also the only moment this card is on screen.
+                  A plain anchor, not a Link: the walkthrough is a standalone page
+                  in /public, so routing it through the app would hit the
+                  catch-all and bounce them home. */}
+              <a href="/walkthrough.html" target="_blank" rel="noreferrer">
+                See how it works, step by step
+              </a>
             </div>
           ) : (
             <div className="list">

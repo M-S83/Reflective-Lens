@@ -229,6 +229,8 @@ export default function Account() {
         {/* The pages exist and are routed; without this nobody could reach them
             without typing the URL. */}
         <p className="muted small center">
+          <a href="/walkthrough.html" target="_blank" rel="noreferrer">How it works</a>
+          {" · "}
           <Link to="/privacy">Privacy</Link>
           {" · "}
           <Link to="/terms">Terms</Link>
