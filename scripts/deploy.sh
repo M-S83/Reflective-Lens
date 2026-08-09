@@ -19,7 +19,9 @@ command -v supabase >/dev/null || { echo "supabase CLI not found — install it 
 # shellcheck disable=SC1091
 set -a; . ./.env; set +a
 
-echo "==> Pushing database migrations (0001-0025)"
+# Counted, not typed: see the note in deploy.ps1.
+_migs=(supabase/migrations/*.sql)
+echo "==> Pushing database migrations ($(basename "${_migs[0]}" | cut -c1-4)-$(basename "${_migs[-1]}" | cut -c1-4), ${#_migs[@]} files)"
 supabase db push
 
 echo "==> Setting function secrets"

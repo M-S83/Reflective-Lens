@@ -66,7 +66,13 @@ if ($missing.Count -gt 0) {
   Fail "These are missing or empty in .env: $($missing -join ', '). See docs/deploy-windows.md, step 4."
 }
 
-Write-Host "==> Pushing database migrations (0001-0025)" -ForegroundColor Cyan
+# Counted, not typed. This line said 21, then 22, then 23, then 24 while the
+# folder said otherwise, because a number in a message has to be remembered and
+# the files are right there to be counted.
+$migrations = @(Get-ChildItem -Path "supabase/migrations" -Filter "*.sql" | Sort-Object Name)
+$first = if ($migrations) { $migrations[0].Name.Substring(0,4) } else { "none" }
+$last  = if ($migrations) { $migrations[-1].Name.Substring(0,4) } else { "none" }
+Write-Host "==> Pushing database migrations ($first-$last, $($migrations.Count) files)" -ForegroundColor Cyan
 & supabase db push
 if ($LASTEXITCODE -ne 0) {
   Write-Host ""
@@ -122,20 +128,22 @@ if (-not [string]::IsNullOrWhiteSpace($envVars['STRIPE_SECRET_KEY'])) {
     "STRIPE_WEBHOOK_SECRET=$($envVars['STRIPE_WEBHOOK_SECRET'])")
 }
 
+$deployed = 0
 Write-Host "==> Deploying edge functions (JWT-protected)" -ForegroundColor Cyan
 foreach ($fn in @(
   'transcribe-audio','process-team-sheet','clean-observation',
   'generate-reflection-questions','enrich-reflection','review-intent',
   'generate-report','generate-period-report',
   'update-insights','update-voice-profile','create-checkout','delete-account'
-)) { Run @('functions','deploy',$fn) }
+)) { Run @('functions','deploy',$fn); $deployed++ }
 
 Write-Host "==> Deploying edge functions (public, secret/signature-authenticated)" -ForegroundColor Cyan
 foreach ($fn in @('run-learning','purge-due-accounts','send-trial-reminders','billing-webhook')) {
   Run @('functions','deploy',$fn,'--no-verify-jwt')
+  $deployed++
 }
 
 Write-Host ""
-Write-Host "==> Done. 25 migrations and 16 functions are live." -ForegroundColor Green
+Write-Host "==> Done. $($migrations.Count) migrations and $deployed functions are live." -ForegroundColor Green
 Write-Host "    Next: sign up once in the app, then run supabase/go-live.sql to make"
 Write-Host "    yourself admin. Then walk through docs/staging-run.md to check the reports."
