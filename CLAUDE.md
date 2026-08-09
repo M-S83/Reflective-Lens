@@ -128,8 +128,11 @@ squad, never an account.
   most of what stops Chalk collapsing into an ordinary dark theme. The mark is
   the offset, two circles out of true, one filled (the coach) and one drawn
   (what came back). Reasoning, the rejected alternatives and what would ruin it
-  are in `docs/brand-direction.md`. Type is still Georgia and the system sans,
-  deliberately not done yet.
+  are in `docs/brand-direction.md`. The coach is set in a serif and the app in a
+  sans, so the two voices differ in shape as well as colour, which matters
+  because colour fails first in bright sun and for anyone colour blind. No web
+  fonts: one that has not downloaded yet is invisible text on the screen someone
+  opened to capture a thought in eight seconds. Held by `_tests/chalk.mjs`.
 - **Output language** comes from `profiles.language` (default `en-GB`); more
   languages later = add labels in `_shared/voice.ts` + a picker. UI is English now.
 
