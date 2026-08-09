@@ -16,6 +16,16 @@ import { firstJsonObject } from "../_shared/json.ts";
 import { type MdBlock, renderReport } from "../_shared/markdown.ts";
 import { MIRROR_NOT_VERDICT } from "../_shared/principles.ts";
 
+// How a report is written, as opposed to what it is written from. Part of the
+// change-detection fingerprint, so bumping it retires every stored report and
+// the next open rewrites it under the current rules.
+//
+//   1  the original
+//   2  never invent who the session was about (a 1v1 came back describing "the
+//      team"); an aim with nothing written about it stops saying so twice; the
+//      session sends the coach's own name for it rather than just "other"
+const REPORT_LOGIC_VERSION = 2;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -159,7 +169,24 @@ Deno.serve(async (req) => {
     // field, so folding the structured summary back into the reflection does not
     // itself count as a change. Unchanged source returns the existing report;
     // changed regenerates in place.
+    //
+    // ...plus the version below, which was the missing half. The fingerprint
+    // assumed the coach's input was the only thing that decides what a report
+    // says. It is not: the prompt and the payload decide it too. So a report
+    // written under a rule we have since fixed stayed exactly as it was, for
+    // ever, and asking for it again cheerfully returned the old one.
+    //
+    // That was not theoretical. A 1v1 came back saying "you noted the team had a
+    // bad at school", the cause was found and fixed, and regenerating would have
+    // handed back the same sentence and looked like the fix had failed.
+    //
+    // BUMP THIS whenever the prompt, the payload or the block-building changes,
+    // and every stored report regenerates the next time it is opened. The cost
+    // of a bump is one model call per report that someone actually looks at,
+    // which is the right price for not showing a coach something we know is
+    // wrong.
     const sourceForHash = JSON.stringify({
+      logic: REPORT_LOGIC_VERSION,
       aims: event.hoping_to_see ?? [],
       focus: event.focus_area ?? null,
       purpose: event.purpose ?? null,

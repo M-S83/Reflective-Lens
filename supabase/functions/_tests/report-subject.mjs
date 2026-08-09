@@ -99,6 +99,17 @@ ok("an 'other' session sends the coach's own name for it",
   /event\.custom_type\?\.trim\(\) \|\| "other"/.test(code(report)));
 ok("and whether there is a squad behind it at all", /has_team: !!event\.team_id/.test(code(report)));
 
+// --- and the fix can actually reach a report already written -----------------
+// Every fix above would have been invisible without this. The cache fingerprints
+// the coach's input and nothing else, so a report written under a rule we have
+// since corrected stayed exactly as it was and regenerating returned it intact.
+ok("how a report is written is versioned", /const REPORT_LOGIC_VERSION = \d+/.test(code(report)));
+ok("and that version is part of the fingerprint", /logic: REPORT_LOGIC_VERSION/.test(code(report)));
+// A bump is the whole mechanism. Shipping a prompt change on version 1 would
+// leave every stored report frozen under the old rules.
+ok("and it was bumped for this change",
+  Number(code(report).match(/const REPORT_LOGIC_VERSION = (\d+)/)[1]) >= 2);
+
 // --- house style -------------------------------------------------------------
 ok("no em or en dashes in either", ![report, clean].some((s) => /[—–]/.test(s)));
 
