@@ -23,7 +23,7 @@ squad, never an account.
 
 ## Where things are
 
-- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`-`0025`.
+- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`-`0027`.
   Validated on PostgreSQL 16 (stubbed `auth`/`storage` schemas + a `test.uid` GUC).
 - `supabase/functions/` — Deno/TypeScript edge functions. Shared helpers in
   `_shared/` (`clients.ts` = model tiering + Claude/usage helpers, `voice.ts` =
@@ -80,7 +80,23 @@ squad, never an account.
   possible (it was self-only); writing is still self-only and `0016`'s trigger
   still refuses self-granted admin.
 - **Ownership-only access.** Users see only what they created. No in-app sharing
-  (share by PDF export). One person can own several clubs/teams.
+  (share by PDF export). One person can own several clubs/teams. The owner is the
+  one exception and only for COUNTING: `admin_activity()` (`0026`) returns how
+  many sessions and notes a coach has and when they were last in, never a word of
+  content, because the Owner dashboard has to be able to see who is using the app.
+- **A new function is callable by everyone until you say otherwise** (migration
+  `0027`). Postgres grants `EXECUTE` to `PUBLIC` by default and Supabase publishes
+  every function in `public` at `/rest/v1/rpc/<name>`, behind the anon key that
+  ships inside the frontend bundle. Nobody wrote a grant opening `learning_due()`
+  to the world; the default did, and it listed the user ids of the whole user
+  base. `clear_learning_pending(target, which)` was worse: any signed-in coach
+  could write to any other coach's row. So a new `SECURITY DEFINER` function ends
+  with an explicit `revoke execute ... from public, anon, authenticated` and a
+  grant to exactly the role that calls it. The exception is a function named
+  inside an RLS policy (`is_admin`, `active_roles`, `has_role`,
+  `has_active_subscription`, `can_access_event`, `can_access_report`): a policy is
+  evaluated as the querying role, so revoking those refuses every read that
+  touches them. `who-may-call-db.sh` holds both halves.
 - **Three kinds of account, one mechanism** (migration `0022`). `active_roles()`
   grants access when a subscription is `active`, or `trialing` and unexpired, and
   never asks why. So beta is `coach_beta` trialing with an end date, complimentary
