@@ -45,8 +45,13 @@
   /* The one solid button on a screen. A deeper blue than the outline colour on
      purpose: filled at full --grass it was the brightest thing on the page,
      louder than the coach's own words, which inverts the entire point of this
-     palette. Nothing outshouts what they wrote. */
-  --grass-deep: #6d97b0;
+     palette. Nothing outshouts what they wrote.
+     Deep enough to carry CHALK text rather than near-black. A pale fill needs
+     dark type, and dark type on a dark board is the one combination on this
+     palette that is genuinely hard to read: everything else here is light on
+     dark, so a single patch of black text fights the eye every time it lands
+     on it. */
+  --grass-deep: #3a6480;
 
   /* Semantic state, separate from the accent. Blue and yellow carry most of
      it; these two exist for the cases that genuinely need alarm. */
@@ -170,7 +175,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--yours); out
    everything else outlined. Chalk is a line medium. */
 .btn {
   font: inherit; font-weight: 600; cursor: pointer; border-radius: 3px;
-  padding: 11px 18px; border: 1px solid var(--grass-deep); background: var(--grass-deep); color: var(--paper);
+  padding: 11px 18px; border: 1px solid var(--grass-deep); background: var(--grass-deep); color: var(--ink);
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
 }
 .btn:disabled { opacity: 0.55; cursor: default; }

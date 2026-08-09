@@ -40,11 +40,13 @@ know about it. That is the single most useful thing you can tell me.
 **The bit worth knowing.** Most reflecting gets lost because you have it in the
 car park and it is gone by the time you are home. So:
 
-- **Android:** press and hold the icon on your home screen and choose **"Capture
-  a thought"**. It opens straight onto the microphone. Press, tap, talk.
-- **iPhone:** open **reflectivelens.co.uk/capture** in Safari, tap Share, "Add to
-  Home Screen", and call it "Thought". You now have a second icon that goes
-  straight to recording.
+- **Both phones:** open **reflectivelens.co.uk/capture**, and add THAT to your
+  home screen as well, named "Thought". You now have a second icon that opens
+  straight onto the microphone. One icon for the app, one for the thought you
+  have in the car park.
+- **Android, if your phone offers it:** press and hold the app icon and see
+  whether "Capture a thought" appears. It does the same job in one fewer icon.
+  Not every launcher shows it, so use the second icon above if it does not.
 
 Recording is **one tap to start and one tap to stop**, not press and hold, so you
 can put the phone down and keep talking. A counter runs while it listens.
@@ -75,8 +77,9 @@ Michael
 > add it to your home screen. Talk to it after a session and it gives your own
 > thinking back to you organised. It never marks you, and if it ever sounds like
 > it is telling you off, tell me, because that is the bug I care about.
-> Android: press and hold the icon and pick "Capture a thought" to go straight to
-> recording. Feedback box is at the bottom of the Account tab. Free, no catch.
+> Add reflectivelens.co.uk/capture to your home screen as a second icon and it
+> opens straight onto the microphone. Feedback box is at the bottom of the
+> Account tab. Free, no catch.
 
 ---
 

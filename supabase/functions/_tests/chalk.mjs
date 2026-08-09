@@ -25,6 +25,7 @@ const evt = web("src/screens/EventDetail.tsx");
 const thoughts = web("src/components/Thoughts.tsx");
 const favicon = web("public/favicon.svg");
 const pwa = web("public/pwa-icon.svg");
+const vite = web("vite.config.ts");
 
 let pass = 0, fail = 0;
 const ok = (n, c) => c ? (pass++, console.log(`  ok  ${n}`)) : (fail++, console.log(`  FAIL ${n}`));
@@ -93,6 +94,24 @@ ok("one filled with the coach's colour", /fill="var\(--yours\)"/.test(code(ui)))
 ok("one drawn in chalk", /stroke="var\(--ink\)"/.test(code(ui)));
 ok("the favicon matches", /#e3c567/i.test(favicon) && !/<line/.test(favicon));
 ok("and so does the home screen icon", /#e3c567/i.test(pwa) && !/<line/.test(pwa));
+
+// --- nothing on this board is dark text --------------------------------------
+// Everything here is light on dark. One patch of near-black type on a pale fill
+// fights the eye every time it lands there, and the solid button was exactly
+// that: a pale blue slab carrying --paper. The fill went darker so the text
+// could be chalk like everything else.
+ok("the solid button carries chalk, not near-black", /\.btn \{[^}]*color: var\(--ink\)/.test(cssCode));
+ok("and nothing anywhere uses the board colour as text",
+  !/color: var\(--paper\)/.test(cssCode));
+
+// --- the home screen icon is something a launcher can draw -------------------
+// Android rasterises manifest icons itself and silently drops an entry whose
+// icon it cannot render. Every icon here was an SVG, so the "Capture a thought"
+// shortcut existed in the manifest and never once appeared on a phone.
+ok("the manifest offers PNG icons", /pwa-icon-512\.png/.test(vite) && /pwa-icon-192\.png/.test(vite));
+ok("including a maskable one", /pwa-icon-maskable\.png[\s\S]{0,80}maskable/.test(vite));
+ok("and the shortcut icon is a PNG too", /shortcuts:[\s\S]{0,400}pwa-icon-96\.png/.test(vite));
+ok("the service worker actually caches them", /globPatterns[^\]]*png/.test(vite));
 
 // --- two voices --------------------------------------------------------------
 // Colour alone was carrying the whole distinction, and colour is the thing that

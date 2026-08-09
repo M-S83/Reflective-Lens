@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "pwa-icon.svg"],
+      includeAssets: ["favicon.svg", "pwa-icon.svg", "pwa-icon-512.png", "pwa-icon-192.png", "pwa-icon-96.png", "pwa-icon-maskable.png"],
       manifest: {
         name: "Reflective Lens",
         short_name: "Reflective Lens",
@@ -18,9 +18,17 @@ export default defineConfig({
         background_color: "#22272b",
         display: "standalone",
         orientation: "portrait",
+        // PNG, not SVG. Android launchers rasterise these themselves and will
+        // quietly ignore an SVG, which is why "press and hold the icon" never
+        // produced the shortcut below: the shortcut was there, its icon was
+        // not, and the launcher dropped the whole entry rather than showing it
+        // without one. The SVG stays last as a nicety for anything that
+        // prefers vector.
         icons: [
+          { src: "pwa-icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: "pwa-icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "pwa-icon-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
           { src: "pwa-icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
-          { src: "pwa-icon.svg", sizes: "any", type: "image/svg+xml", purpose: "maskable" },
         ],
         // A long press on the installed icon offers this, so a thought on the
         // drive home is icon, press, tap, speak. Android honours it; iOS ignores
@@ -38,12 +46,12 @@ export default defineConfig({
             short_name: "Thought",
             description: "Record something without opening a session",
             url: "/capture",
-            icons: [{ src: "pwa-icon.svg", sizes: "any", type: "image/svg+xml" }],
+            icons: [{ src: "pwa-icon-96.png", sizes: "96x96", type: "image/png" }],
           },
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,svg,woff2}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         navigateFallbackDenylist: [/^\/functions\//],
       },
     }),

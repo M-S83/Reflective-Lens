@@ -87,20 +87,27 @@ export function QuickCapture({ onCapturePage = false }: { onCapturePage?: boolea
         </>
       )}
 
+      {/* The route that works on every phone, offered first. The long press
+          below is better when a launcher supports it, and plenty do not, so
+          leading with it left people pressing an icon and getting nothing. */}
       {!ios && installed && (
         <div className="muted small">
-          Press and hold the Reflective Lens icon on your home screen and choose
-          <strong> Capture a thought</strong>. That opens straight into recording,
-          so a thought on the drive home takes one press and a tap.
+          Add <strong>{url}</strong> to your home screen as a second icon and
+          name it Thought. It opens straight into recording, so a thought
+          on the drive home is one tap.
+          <br /><br />
+          Some Android phones also offer this from a long press on the Reflective
+          Lens icon, as <strong>Capture a thought</strong>. Worth a try, but the
+          second icon works either way.
         </div>
       )}
 
       {!ios && !installed && (
         <>
           <div className="muted small">
-            Add Reflective Lens to your home screen first. After that, pressing and
-            holding the icon offers <strong>Capture a thought</strong>, which opens
-            straight into recording.
+            Add Reflective Lens to your home screen first, then add
+            <strong> {url}</strong> as a second icon called Thought.
+            That one opens straight into recording.
           </div>
           {canInstall && <button className="btn block" onClick={promptInstall}>Add to home screen</button>}
         </>

@@ -49,7 +49,13 @@ const labels = [...[thoughts, eventDetail].join("\n").matchAll(/label="([^"]*)"/
 ok("every record label offered to a coach exists", labels.length >= 3);
 ok("and none of them says hold", !labels.some((l) => /hold/i.test(l)));
 ok("nothing in the recorder tells anyone to hold", !/hold/i.test(code(record)));
-ok("the home screen icon instruction is untouched", /Press and hold/.test(quick));
+// The rule above is about the RECORD button. Android's own gesture for a
+// launcher shortcut is a long press, and scrubbing the word everywhere would
+// take that instruction with it. Matched on the gesture rather than one
+// phrasing of it, because the wording changed once already when the shortcut
+// stopped being the headline advice.
+ok("the home screen icon instruction still describes a long press",
+  /long press|press and hold/i.test(quick) && /icon/i.test(quick));
 
 // --- the counter -------------------------------------------------------------
 ok("a second count is kept", /const \[secs, setSecs\] = useState\(0\)/.test(code(record)));

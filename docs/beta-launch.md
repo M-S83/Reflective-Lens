@@ -109,14 +109,18 @@ screen the first few times. On iOS it is Share, then "Add to Home Screen"; on
 Android the browser offers to install it. Until they do this it is a website in
 a tab, and it will get lost among their tabs.
 
-**Android: long press the icon.** A "Capture a thought" shortcut is in the
-manifest, so a long press on the installed icon jumps straight to the recorder
-with the microphone already up. Icon, press, tap, speak.
+**Everyone: add a second icon for capturing.** This is the route that works on
+both platforms and the one to tell people about. Open
+`reflectivelens.co.uk/capture`, add THAT to the home screen, and name it
+"Thought". It opens straight into recording with the microphone already up. Two
+icons: one for the app, one for the thing they do at the roadside.
 
-**iPhone: add a second icon.** iOS ignores manifest shortcuts, so do it by hand.
-Open `reflectivelens.co.uk/capture` in Safari, Share, "Add to Home Screen", and
-name it "Thought". That icon now opens straight into recording. Two icons, one
-for the app and one for the thing they do at the roadside.
+**Android: long press the icon, if your launcher offers it.** A "Capture a
+thought" shortcut is in the manifest. It did not appear for a long time because
+every icon in that manifest was an SVG, and Android launchers rasterise these
+themselves and silently drop an entry whose icon they cannot draw. Real PNGs are
+in there now. Treat it as a nicety rather than the instruction, because launchers
+vary and the second icon above works regardless.
 
 **iPhone 15 Pro and later: the action button.** Settings, Action Button, choose
 Shortcut, and pick a shortcut that opens `reflectivelens.co.uk/capture`. That is
