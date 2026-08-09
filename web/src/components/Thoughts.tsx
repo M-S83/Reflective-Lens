@@ -83,7 +83,7 @@ export function Thoughts({ arriving = false }: { arriving?: boolean }) {
           {/* Arriving to record, the microphone comes first and the typing is
               the alternative. Otherwise the other way round, which is right for
               someone who opened the app to read and then thought of something. */}
-          {arriving && <RecordButton onComplete={saveVoice} label="Hold to record" />}
+          {arriving && <RecordButton onComplete={saveVoice} label="Tap to record" />}
 
           <div className="field">
             <textarea
@@ -97,7 +97,7 @@ export function Thoughts({ arriving = false }: { arriving?: boolean }) {
           <button className="btn" onClick={save} disabled={busy || !text.trim()}>
             {busy ? "Saving" : "Save thought"}
           </button>
-          {!arriving && <RecordButton onComplete={saveVoice} label="...or say it out loud" />}
+          {!arriving && <RecordButton onComplete={saveVoice} label="…or say it out loud" />}
 
           {items === null ? (
             <Loading />
