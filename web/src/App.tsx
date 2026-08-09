@@ -41,21 +41,42 @@ const OWNER_TAB: Tab = { to: "/admin", label: "Owner", path: "M3 3v18h18M8 17V9M
 const REPORTS_TAB: Tab = { to: "/reports", label: "Reports", path: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" };
 const ACCOUNT_TAB: Tab = { to: "/account", label: "Account", path: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" };
 
-function RenewBanner({ label }: { label: string }) {
+// What a coach sees when their access runs out.
+//
+// This used to say "renew", which is a door that does not open: Stripe is not
+// wired in, there is no plan chooser, and nothing in the app can take money. So
+// the most engaged tester, on the day their free month ends, was told to do the
+// one thing that is impossible, and would reasonably conclude the beta was over
+// and stop. Say what is true instead, and give them the one action that works.
+//
+// When paying does exist this becomes a real renew prompt. Until then it does
+// not pretend to be one.
+function LapsedBanner() {
   return (
     <div className="banner warn" style={{ margin: "8px 12px 0" }}>
-      Your {label} plan has ended. You can still read what you saved; renew to add new reflections and reports.
+      Your free access has ended, so nothing new can be added for now. Everything
+      you have written is still here to read. Nothing is being charged while the
+      app is in beta, so ask on the <Link to="/account">Account</Link> tab and I
+      will turn it back on.
     </div>
   );
 }
 
-function RenewWall({ label }: { label: string }) {
+function LapsedWall() {
   return (
     <div className="app">
       <div className="screen stack" style={{ maxWidth: 460, margin: "0 auto", paddingTop: "10vh" }}>
         <div className="card stack center">
-          <h2 className="serif" style={{ margin: 0 }}>Renew to continue</h2>
-          <p className="muted">Your {label} plan has ended. Renew it to create new reflections and reports. Everything you have already saved is still here to read.</p>
+          <h2 className="serif" style={{ margin: 0 }}>Your access has ended</h2>
+          <p className="muted">
+            Everything you have already written is still here, and you can read
+            and export all of it. Starting something new is off for the moment.
+          </p>
+          <p className="muted">
+            Nothing is being charged while the app is in beta. If you would like
+            to carry on, say so on the Account tab and I will switch it back on.
+          </p>
+          <Link className="btn block" to="/account">Go to Account</Link>
         </div>
       </div>
     </div>
@@ -157,7 +178,7 @@ export default function App() {
 
   return (
     <>
-      {readOnly && <RenewBanner label="coach" />}
+      {readOnly && <LapsedBanner />}
       <Routes>
         <Route path="/" element={<Home />} />
         {/* The home screen shortcut lands here. Same screen, but the thought
@@ -166,7 +187,7 @@ export default function App() {
         <Route path="/capture" element={<Home capture />} />
         <Route path="/teams" element={<Teams />} />
         <Route path="/teams/:teamId" element={<TeamDetail />} />
-        <Route path="/new" element={readOnly ? <RenewWall label="coach" /> : <NewEvent />} />
+        <Route path="/new" element={readOnly ? <LapsedWall /> : <NewEvent />} />
         <Route path="/events/:eventId" element={<EventDetail />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/account" element={<Account />} />

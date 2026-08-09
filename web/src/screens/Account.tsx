@@ -57,7 +57,8 @@ function PlanLine() {
     return (
       <div className="muted small">
         Your free access has ended. You can still read and export everything you
-        have written. Choose a plan to add new reflections and reports.
+        have written. Nothing is being charged while the app is in beta, so send
+        me a note below and I will turn it back on.
       </div>
     );
   }
