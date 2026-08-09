@@ -69,6 +69,9 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ ok: true, count: players.length, players });
   } catch (e) {
+    // Logged as well as returned, same as everywhere else: the response body
+    // only helps if the caller reads it, and a fire-and-forget invoke does not.
+    console.error("process-team-sheet failed:", e);
     // Best-effort mark the sheet failed.
     try {
       const body = await req.clone().json().catch(() => ({}));

@@ -95,6 +95,11 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ ok: true, observation_id, ...parsed, player_id });
   } catch (e) {
+    // Logged as well as returned. The response body only helps if the caller
+    // reads it, and a fire-and-forget invoke does not, so a failing function
+    // showed a boot in the dashboard and then nothing at all, which looks
+    // exactly like one that worked.
+    console.error(`clean-observation failed:`, e);
     return jsonResponse({ error: String(e) }, 500);
   }
 });

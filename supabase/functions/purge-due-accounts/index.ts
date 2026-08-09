@@ -61,6 +61,11 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ ok: true, due: due?.length ?? 0, purged, failed: failed.length });
   } catch (e) {
+    // Logged as well as returned. The response body only helps if the caller
+    // reads it, and a fire-and-forget invoke does not, so a failing function
+    // showed a boot in the dashboard and then nothing at all, which looks
+    // exactly like one that worked.
+    console.error(`purge-due-accounts failed:`, e);
     return jsonResponse({ error: String(e) }, 500);
   }
 });

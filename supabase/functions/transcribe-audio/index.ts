@@ -86,6 +86,11 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ ok: true, target, target_id, transcript });
   } catch (e) {
+    // Logged as well as returned. The response body only helps if the caller
+    // reads it, and a fire-and-forget invoke does not, so a failing function
+    // showed a boot in the dashboard and then nothing at all, which looks
+    // exactly like one that worked.
+    console.error(`transcribe-audio failed:`, e);
     return jsonResponse({ error: String(e) }, 500);
   }
 });
