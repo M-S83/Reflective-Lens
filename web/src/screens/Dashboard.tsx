@@ -19,7 +19,7 @@ function Tile({ label, value, sub, warn }: { label: string; value: string; sub?:
   return (
     <div className="card" style={{ padding: "12px 14px", margin: 0 }}>
       <div className="muted small" style={{ textTransform: "uppercase", letterSpacing: ".06em", fontSize: 11 }}>{label}</div>
-      <div className="serif" style={{ fontSize: 24, color: warn ? "#c0492b" : "var(--pitch)", lineHeight: 1.15, marginTop: 4 }}>{value}</div>
+      <div className="serif" style={{ fontSize: 24, color: warn ? "var(--crit)" : "var(--pitch)", lineHeight: 1.15, marginTop: 4 }}>{value}</div>
       {sub && <div className="muted small" style={{ marginTop: 2 }}>{sub}</div>}
     </div>
   );
@@ -85,12 +85,12 @@ export default function Dashboard() {
           </div>
           {feat.length === 0 ? <p className="muted small">No usage recorded yet.</p> : (
             <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
-              <thead><tr style={{ textAlign: "left", color: "#889" }}>
+              <thead><tr style={{ textAlign: "left", color: "var(--muted)" }}>
                 <th style={{ padding: "4px 0" }}>Feature</th><th>Uses</th><th>Users</th><th style={{ textAlign: "right" }}>Cost</th>
               </tr></thead>
               <tbody>
                 {feat.slice(0, 12).map((f) => (
-                  <tr key={f.feature} style={{ borderTop: "1px solid #eee" }}>
+                  <tr key={f.feature} style={{ borderTop: "1px solid var(--hair)" }}>
                     <td style={{ padding: "5px 0" }}>{f.feature}</td>
                     <td>{f.uses}</td><td>{f.users}</td>
                     <td style={{ textAlign: "right" }} className="mono">{gbp(f.cost_usd * USD_TO_GBP)}</td>
@@ -110,7 +110,7 @@ export default function Dashboard() {
                 const max = Math.max(...days.map((x) => x.total_cost_usd), 0.0001);
                 const h = Math.max(3, (d.total_cost_usd / max) * 64);
                 return <div key={d.day} title={`${d.day}: ${gbp(d.total_cost_usd * USD_TO_GBP)}`}
-                  style={{ flex: 1, height: h, background: "#5aa79b", borderRadius: "3px 3px 0 0" }} />;
+                  style={{ flex: 1, height: h, background: "var(--grass)", borderRadius: "3px 3px 0 0" }} />;
               })}
             </div>
           )}
@@ -121,12 +121,12 @@ export default function Dashboard() {
           <strong>Top users by cost this month</strong>
           {topUsers.length === 0 ? <p className="muted small">No user costs yet.</p> : (
             <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
-              <thead><tr style={{ textAlign: "left", color: "#889" }}>
+              <thead><tr style={{ textAlign: "left", color: "var(--muted)" }}>
                 <th style={{ padding: "4px 0" }}>User</th><th>AI calls</th><th>Audio (min)</th><th style={{ textAlign: "right" }}>Cost</th>
               </tr></thead>
               <tbody>
                 {topUsers.map((u) => (
-                  <tr key={u.user_id} style={{ borderTop: "1px solid #eee" }}>
+                  <tr key={u.user_id} style={{ borderTop: "1px solid var(--hair)" }}>
                     <td style={{ padding: "5px 0" }} className="mono">{u.user_id.slice(0, 8)}…</td>
                     <td>{u.ai_calls}</td><td>{u.audio_minutes}</td>
                     <td style={{ textAlign: "right" }} className="mono">{gbp(u.cost_usd * USD_TO_GBP)}</td>
@@ -154,23 +154,23 @@ function BudgetPanel() {
   const over = rows.filter((r) => r.over_budget);
   return (
     <div className="card stack" style={{ gap: 8 }}>
-      <strong>Cost guard {over.length > 0 && <span style={{ color: "#c0492b" }}>· {over.length} over budget</span>}</strong>
+      <strong>Cost guard {over.length > 0 && <span style={{ color: "var(--crit)" }}>· {over.length} over budget</span>}</strong>
       <p className="muted small" style={{ marginTop: -2 }}>Users past their plan's AI budget this month. Their guarded features run on the cheaper model automatically; reports stay on the quality model.</p>
       <ErrorText>{err}</ErrorText>
       {rows.length === 0 ? <p className="muted small">No user spend yet this month.</p> : (
         <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
-          <thead><tr style={{ textAlign: "left", color: "#889" }}>
+          <thead><tr style={{ textAlign: "left", color: "var(--muted)" }}>
             <th style={{ padding: "4px 0" }}>User</th><th>Spent</th><th>Budget</th><th style={{ textAlign: "right" }}>State</th>
           </tr></thead>
           <tbody>
             {rows.slice(0, 10).map((r) => (
-              <tr key={r.user_id} style={{ borderTop: "1px solid #eee" }}>
+              <tr key={r.user_id} style={{ borderTop: "1px solid var(--hair)" }}>
                 <td style={{ padding: "5px 0" }} className="mono">{r.user_id.slice(0, 8)}…</td>
                 <td className="mono">{gbp(r.cost_this_month_usd * USD_TO_GBP)}</td>
                 <td className="mono">{r.budget_usd >= 1e8 ? "none" : gbp(r.budget_usd * USD_TO_GBP)}</td>
                 <td style={{ textAlign: "right" }}>
                   {r.over_budget
-                    ? <span style={{ color: "#c0492b", fontWeight: 600 }}>guarded</span>
+                    ? <span style={{ color: "var(--crit)", fontWeight: 600 }}>guarded</span>
                     : <span className="muted">ok</span>}
                 </td>
               </tr>
@@ -204,7 +204,7 @@ function ModelPanel() {
       <p className="muted small" style={{ marginTop: -2 }}>Set the tier each feature uses. Changes apply within a minute, no redeploy. Reader-facing reports are best left on Sonnet.</p>
       <ErrorText>{err}</ErrorText>
       {rows.map((r) => (
-        <div key={r.feature} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #eee", padding: "6px 0" }}>
+        <div key={r.feature} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--hair)", padding: "6px 0" }}>
           <span className="small">{r.feature}{savingKey === r.feature ? " …" : ""}
             <em className="muted" style={{ fontSize: 11, display: "block", fontStyle: "normal" }}>
               {r.over_budget_model ? "guards to Haiku when over budget" : "protected (never downgraded)"}
@@ -213,7 +213,7 @@ function ModelPanel() {
           <div style={{ display: "flex", gap: 6 }}>
             {MODEL_CHOICES.map((c) => (
               <button key={c.id} onClick={() => change(r.feature, c.id)} className="btn ghost sm"
-                style={r.model === c.id ? { background: "#dff1ee", color: "#2a7d70", borderColor: "#9fd3c9" } : {}}>
+                style={r.model === c.id ? { background: "var(--faint)", color: "var(--grass)", borderColor: "var(--grass)" } : {}}>
                 {c.label}
               </button>
             ))}
@@ -302,11 +302,11 @@ function AccountsPanel() {
 
       <div style={{ display: "flex", gap: 6 }}>
         <button className="btn ghost sm" onClick={() => setPlan(PLAN_BETA)}
-          style={{ flex: 1, ...(plan === PLAN_BETA ? { background: "#dff1ee", color: "#2a7d70", borderColor: "#9fd3c9" } : {}) }}>
+          style={{ flex: 1, ...(plan === PLAN_BETA ? { background: "var(--faint)", color: "var(--grass)", borderColor: "var(--grass)" } : {}) }}>
           Beta, on a timer
         </button>
         <button className="btn ghost sm" onClick={() => setPlan(PLAN_COMP)}
-          style={{ flex: 1, ...(plan === PLAN_COMP ? { background: "#dff1ee", color: "#2a7d70", borderColor: "#9fd3c9" } : {}) }}>
+          style={{ flex: 1, ...(plan === PLAN_COMP ? { background: "var(--faint)", color: "var(--grass)", borderColor: "var(--grass)" } : {}) }}>
           Complimentary, no end
         </button>
       </div>
@@ -315,10 +315,10 @@ function AccountsPanel() {
         <div className="field">
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <span className="small">Days</span>
-            <span className="mono small" style={{ color: "#2a7d70" }}>{days}</span>
+            <span className="mono small" style={{ color: "var(--grass)" }}>{days}</span>
           </div>
           <input type="range" min={7} max={365} step={7} value={days}
-            onChange={(e) => setDays(+e.target.value)} style={{ width: "100%", accentColor: "#2a7d70" }} />
+            onChange={(e) => setDays(+e.target.value)} style={{ width: "100%", accentColor: "var(--grass)" }} />
         </div>
       )}
 
@@ -357,7 +357,7 @@ function AccountsPanel() {
         </div>
         <div className="list">
           {rows.map((r) => (
-            <div key={r.user_id} className="row" style={{ gap: 8, borderTop: "1px solid #eee", padding: "6px 0" }}>
+            <div key={r.user_id} className="row" style={{ gap: 8, borderTop: "1px solid var(--hair)", padding: "6px 0" }}>
               <span className="small" style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
                 <button
                   onClick={() => r.email && copy(r.email, r.user_id)}
@@ -365,7 +365,7 @@ function AccountsPanel() {
                   title="Copy this address"
                   style={{
                     background: "none", border: 0, padding: 0, font: "inherit",
-                    color: copied === r.user_id ? "#2a7d70" : "inherit",
+                    color: copied === r.user_id ? "var(--grass)" : "inherit",
                     cursor: r.email ? "pointer" : "default", textAlign: "left",
                   }}
                 >
@@ -537,10 +537,10 @@ function ClubQuote() {
   }) => (
     <div className="field" style={{ marginBottom: 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <span className="small">{label}</span><span className="mono small" style={{ color: "#2a7d70" }}>{fmt(val)}</span>
+        <span className="small">{label}</span><span className="mono small" style={{ color: "var(--grass)" }}>{fmt(val)}</span>
       </div>
       <input type="range" min={min} max={max} step={step} value={val}
-        onChange={(e) => set(+e.target.value)} style={{ width: "100%", accentColor: "#2a7d70" }} />
+        onChange={(e) => set(+e.target.value)} style={{ width: "100%", accentColor: "var(--grass)" }} />
     </div>
   );
 
@@ -561,23 +561,23 @@ function ClubQuote() {
         {PERIODS.map((m) => (
           <button key={m} onClick={() => setPeriod(m)}
             className={"btn ghost sm"}
-            style={{ flex: 1, ...(period === m ? { background: "#dff1ee", color: "#2a7d70", borderColor: "#9fd3c9" } : {}) }}>
+            style={{ flex: 1, ...(period === m ? { background: "var(--faint)", color: "var(--grass)", borderColor: "var(--grass)" } : {}) }}>
             {m} mo
           </button>
         ))}
       </div>
 
-      <div className="card" style={{ background: "#f4f8f7", margin: 0 }}>
+      <div className="card" style={{ background: "var(--faint)", margin: 0 }}>
         <div className="serif" style={{ fontSize: 26, color: "var(--pitch)" }}>
           {gbp(promo)}<span className="muted" style={{ fontSize: 15 }}> /month</span>
           {disc > 0 && <span className="muted small" style={{ textDecoration: "line-through", marginLeft: 8 }}>{gbp(std)}</span>}
         </div>
-        <div className="small" style={{ color: "#2a7d70" }}>
+        <div className="small" style={{ color: "var(--grass)" }}>
           {gbp(termTotal)} over {period} {period === 1 ? "month" : "months"}{disc > 0 ? ` · saves ${gbp(saving)}` : ""}
         </div>
         <div className="muted small" style={{ marginTop: 6 }}>
           {coaches > 10 ? "Over 10 coaches: enquiry / custom quote · " : ""}
-          margin at promo <b style={{ color: margin < 55 ? "#c0492b" : "#2a7d70" }}>{Math.round(margin)}%</b>
+          margin at promo <b style={{ color: margin < 55 ? "var(--crit)" : "var(--grass)" }}>{Math.round(margin)}%</b>
         </div>
       </div>
     </div>

@@ -14,8 +14,8 @@ export default defineConfig({
         name: "Reflective Lens",
         short_name: "Reflective Lens",
         description: "See your coaching clearly. Reflect, don't judge.",
-        theme_color: "#123a2a",
-        background_color: "#f6f5ef",
+        theme_color: "#22272b",
+        background_color: "#22272b",
         display: "standalone",
         orientation: "portrait",
         icons: [

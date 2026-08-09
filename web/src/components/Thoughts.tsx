@@ -114,7 +114,7 @@ export function Thoughts({ arriving = false }: { arriving?: boolean }) {
                       Remove
                     </button>
                   </div>
-                  <div style={{ marginTop: 4 }}>{o.cleaned_note ?? o.raw_note}</div>
+                  <div className="yours" style={{ marginTop: 4 }}>{o.cleaned_note ?? o.raw_note}</div>
                   {o.tags?.length > 0 && (
                     <div className="tags" style={{ marginTop: 6 }}>
                       {o.tags.map((t) => <span key={t} className="tag">{t}</span>)}

@@ -1,12 +1,14 @@
 # Brand direction: Chalk
 
-**Decided, not built.** Nothing in the app has been changed. This is here so the
-decision survives the conversation it was made in, and so whoever picks it up
-does not start the exploration again from nothing.
+**Built.** Chalk is the app's design, and the offset is its mark. This page is
+the reasoning behind both, kept so nobody has to rediscover it and so the rules
+that hold the design together are written down somewhere other than in CSS
+comments.
 
-Deferred deliberately until the beta has run. Ten coaches are about to say which
-parts of the app they actually use, and a brand is easier to commit to once you
-know that. Revisit after a fortnight of real use.
+It was deferred once, on the argument that the beta would teach us more than a
+rebrand would. That call was reversed deliberately: shipping the old mark to the
+first ten coaches meant handing them a crosshair on an app that promises never
+to score them.
 
 Full exploration and the applied system are in two published pages. If the links
 have gone stale, everything load-bearing is repeated below.
@@ -102,19 +104,29 @@ because rounded cards with soft shadows are exactly what those look like.
 
 ---
 
-## The mark: not settled
+## The mark: the offset
 
-The idea holds. **A thing and its reflection, in two colours: one side the
-coach, one side the app answering.** The drawing does not, yet.
+**Chosen and shipped.** Two circles, slightly out of true. The filled one is the
+coach, the drawn one is what came back, and the overlap is the part that belongs
+to both. It is the only candidate whose meaning fits in one sentence a coach
+would recognise.
 
-**The fold as first drawn is rejected.** Rendered rather than described, its
+```
+coach   <circle cx="15" cy="20" r="11.5" fill="var(--yours)" />
+back    <circle cx="25" cy="20" r="11.5" stroke="var(--ink)" stroke-width="2.6" />
+```
+
+Two circles have nothing to lose at small size, which is why it survives the
+22 pixel test that killed the first attempt.
+
+**The rejected first attempt, kept as a warning.** Rendered rather than described, its
 spine ran past the arcs top and bottom and it read as the Greek letter phi, not
 a folded page. Worse, at 22 pixels it had *less* presence than the target it was
 meant to replace, which is the opposite of the argument for changing it. Recorded
 here because it was written up as good before anyone had looked at it, and that
 is the mistake worth not repeating: draw it, render it at 22 pixels, then decide.
 
-Three candidates survive, none yet chosen:
+The three that were weighed against each other:
 
 | | Reads as | Strength | Weakness |
 | --- | --- | --- | --- |
@@ -122,17 +134,13 @@ Three candidates survive, none yet chosen:
 | **The offset** | Two circles overlapping, out of true | Says "a thing and its reflection" better than anything else | Overlapping circles are Mastercard and Venn diagrams |
 | **The crease** | A page turned back on itself | Perfectly legible at any size | Looks like an interface icon, not a mark |
 
-**The offset is the one to beat.** It is the only candidate whose meaning a coach
-could be told in one sentence, and the overlap doing the work is a genuinely nice
-idea: the part that belongs to both of you.
+The rule that keeps it working is the same as the palette's: **two halves, two
+colours, always.** In one colour the offset is a Venn diagram, and every other
+candidate collapses into a shape you have seen a thousand times.
 
-Whatever is chosen, the rule is the same as the palette's: **two halves, two
-colours, always.** In one colour every one of these collapses into a shape you
-have seen a thousand times.
-
-**The cheapest real fix available:** if nothing else here ever happens, delete the
-crosshair line from the current `Brandmark` in `web/src/components/ui.tsx`. It is
-one line of SVG and it stops the app contradicting itself.
+Lives in `Brandmark` (`web/src/components/ui.tsx`), `web/public/favicon.svg` and
+`web/public/pwa-icon.svg`. The two files are hand-written rather than generated,
+so a change to the mark means editing all three.
 
 ---
 
@@ -167,19 +175,33 @@ redesigned again in a year. Every one of these will occur to somebody.
 
 ---
 
-## The order to build it in
+## What was built, and what was not
 
-1. **The mark.** Pick one of the three candidates first, at 22 pixels, on a real
-   screen. Then it is standalone, self-contained, and it stops the contradiction
-   whatever else happens. Touches `Brandmark`, the PWA icon and the favicon.
-2. **The colour tokens.** `web/src/index.css` is already token driven, so Chalk
-   is a rewrite of roughly twenty custom properties rather than a rebuild.
-   Both themes need doing, and Chalk is dark first, so the light theme is the
-   harder half and should not be an afterthought.
-3. **Yellow for the coach's words.** The change that carries the whole idea. It
-   touches only where notes, reflections and report bullets are rendered.
-4. **Shadows out, rules in.** The largest job, and last, because it is the one no
-   tester will ever ask for.
+All four steps landed together:
 
-Steps 1 and 2 are independent. Step 3 is the one worth doing properly or not at
-all: applied half way, it is just a yellow accent.
+1. **The mark.** `Brandmark`, the favicon and the PWA icon.
+2. **The tokens.** `web/src/index.css`, one theme, no light variant. See below.
+3. **Yellow for the coach's words.** `.yours` on notes and thoughts, and
+   `.md li` in a report, so every restated line is theirs and the frame is not.
+4. **Shadows out, rules in.** `--shadow: none`, corners at 3 to 4px, outlined
+   controls, pills and tags squared off.
+
+**One theme, no light variant.** Chalk is a slate board, so the app is a slate
+board whatever the phone is set to. A light version would be a different idea
+wearing the same name, and half the users would never see the design at all.
+
+The cost is real and should not be argued away: a dark screen is harder in
+direct sunlight, which is exactly when a coach captures a note pitchside. **If a
+tester says it is hard to read outside, that is the signal to build a paper
+variant**, and every rule on this page survives the move, because the system is
+"one colour means the coach", not "yellow means the coach".
+
+The primary button uses `--grass-deep`, a step down from the outline blue.
+Filled at full strength it was the brightest thing on the screen, louder than
+the coach's own words, which inverts the whole point of the palette.
+
+**Type is NOT done.** The Type section above is still an aspiration: headings
+are Georgia and body is the system sans, both of which are defaults rather than
+choices. Licensing and self-hosting two faces is a job of its own, and the
+colour rule carries the idea without it. Do it when there is a reason to, not
+because this page lists it.

@@ -117,6 +117,19 @@ squad, never an account.
   `update` away from being self-granted. `profiles.role` is now only the journey
   (coach or player) and raises if set to `admin`. Grant admin by inserting into
   `user_roles`; check it with `is_admin()` / `has_role()` as before.
+- **Yellow is the coach, and nothing else is ever yellow.** The design is Chalk
+  (a tactics board, not a pitch): one theme, slate, no light variant. `--yours`
+  marks what the coach wrote or said and marks nothing else, so the difference
+  between their words and the app's is visible before a word is read. That is
+  what makes mirror-not-verdict structural rather than a promise, and it is why
+  the answer is no when a button wants that colour. `--grass` is chalk blue and
+  means "you can tap this"; `--muted` is the app talking. No shadows anywhere: a
+  board has no depth, regions are divided by a drawn line, and that one rule is
+  most of what stops Chalk collapsing into an ordinary dark theme. The mark is
+  the offset, two circles out of true, one filled (the coach) and one drawn
+  (what came back). Reasoning, the rejected alternatives and what would ruin it
+  are in `docs/brand-direction.md`. Type is still Georgia and the system sans,
+  deliberately not done yet.
 - **Output language** comes from `profiles.language` (default `en-GB`); more
   languages later = add labels in `_shared/voice.ts` + a picker. UI is English now.
 

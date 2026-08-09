@@ -62,18 +62,18 @@ export function DeleteAccount() {
             {busy ? "Keeping your account…" : "Keep my account"}
           </button>
         </div>
-        {err && <div className="muted small" style={{ color: "#c0492b", marginTop: 6, textAlign: "center" }}>{err}</div>}
+        {err && <div className="muted small" style={{ color: "var(--crit)", marginTop: 6, textAlign: "center" }}>{err}</div>}
       </div>
     );
   }
 
   return (
     <div style={{ marginTop: 28, paddingTop: 14, borderTop: "1px solid var(--faint)", textAlign: "center" }}>
-      <button className="btn ghost sm" style={{ color: "#c0492b" }} onClick={request} disabled={busy}>
+      <button className="btn ghost sm" style={{ color: "var(--crit)" }} onClick={request} disabled={busy}>
         {busy ? "Scheduling…" : "Delete my account and all my data"}
       </button>
       <div className="muted small" style={{ marginTop: 6 }}>You will have 30 days to change your mind.</div>
-      {err && <div className="muted small" style={{ color: "#c0492b", marginTop: 6 }}>{err}</div>}
+      {err && <div className="muted small" style={{ color: "var(--crit)", marginTop: 6 }}>{err}</div>}
     </div>
   );
 }

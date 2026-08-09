@@ -1,12 +1,24 @@
 import { useEffect, useState, type ReactNode } from "react";
 
+// The offset: a thing and its reflection, not quite in line. The filled circle
+// is the coach, the drawn one is what came back, and the overlap is the part
+// that belongs to both.
+//
+// It replaces two concentric circles with a line through them, which is a
+// crosshair. Aiming, hitting, missing, scoring. This app does not score anyone,
+// so the first thing a coach saw contradicted the first thing we told them,
+// every time they opened it.
+//
+// The first replacement drawn for this was worse: a spine running past two
+// arcs, which read as the Greek letter phi and lost all its presence at 22
+// pixels. Two circles have nothing to lose. See docs/brand-direction.md.
+//
+// TWO HALVES, TWO COLOURS, ALWAYS. In one colour this is a Venn diagram.
 export function Brandmark({ size = 26 }: { size?: number }) {
   return (
     <svg className="brandmark" width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true">
-      <circle cx="20" cy="20" r="17" stroke="var(--grass)" strokeWidth="2.6" />
-      <circle cx="20" cy="20" r="8" fill="var(--grass)" fillOpacity="0.18" />
-      <circle cx="20" cy="20" r="8" stroke="var(--grass)" strokeWidth="2.6" />
-      <line x1="20" y1="3" x2="20" y2="37" stroke="var(--grass)" strokeWidth="1.3" strokeOpacity="0.5" />
+      <circle cx="15" cy="20" r="11.5" fill="var(--yours)" />
+      <circle cx="25" cy="20" r="11.5" stroke="var(--ink)" strokeWidth="2.6" />
     </svg>
   );
 }

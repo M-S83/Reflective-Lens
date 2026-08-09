@@ -234,7 +234,9 @@ function Notes({ eventId, teamId, only, intro, placeholder }: {
                 {PHASE_LABELS[o.capture_phase as CapturePhase] ?? o.capture_phase}
                 {o.input_type === "voice_note" ? " · voice" : ""}
               </div>
-              <div>{o.cleaned_note ?? o.raw_note ?? <span className="muted">Transcribing…</span>}</div>
+              {/* Their words, in their colour. "Transcribing" is the app
+                  talking, so it stays grey: nothing is theirs until it is. */}
+              <div className="yours">{o.cleaned_note ?? o.raw_note ?? <span className="muted">Transcribing…</span>}</div>
               {o.tags?.length > 0 && (
                 <div className="tags">{o.tags.map((t, i) => <span key={i} className="tag">{t}</span>)}</div>
               )}

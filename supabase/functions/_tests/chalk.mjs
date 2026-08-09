@@ -1,0 +1,98 @@
+// Chalk: the rules that stop it becoming a dark theme with a yellow accent.
+//
+// A palette is easy to keep. A SYSTEM is easy to lose, one reasonable-sounding
+// exception at a time, and every exception below has already been argued for
+// somewhere by somebody:
+//
+//   "just this one button in yellow, it needs to stand out"
+//   "a subtle shadow would lift the cards"
+//   "the ticks should be green, everyone knows green means done"
+//
+// Each of those is small and each of them dissolves the idea, because the idea
+// is not the colours, it is that every colour has exactly one job. Yellow means
+// the coach said this. The day it also means "tap here", a coach can no longer
+// tell their own words from ours at a glance, and the design has stopped
+// carrying the product's one promise.
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const web = (p) => readFileSync(join(here, "../../../web", p), "utf8");
+const css = web("src/index.css");
+const ui = web("src/components/ui.tsx");
+const evt = web("src/screens/EventDetail.tsx");
+const thoughts = web("src/components/Thoughts.tsx");
+const favicon = web("public/favicon.svg");
+const pwa = web("public/pwa-icon.svg");
+
+let pass = 0, fail = 0;
+const ok = (n, c) => c ? (pass++, console.log(`  ok  ${n}`)) : (fail++, console.log(`  FAIL ${n}`));
+
+// Comments here name the things being banned, so reading them as code would
+// fail every check that says the thing is absent.
+const code = (src) => src.split("\n").filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join("\n");
+const cssCode = css.replace(/\/\*[\s\S]*?\*\//g, "");
+
+console.log("chalk: one job per colour");
+
+// --- the one rule ------------------------------------------------------------
+ok("the coach has a colour of their own", /--yours:\s*#e3c567/i.test(cssCode));
+ok("and a class that applies it", /\.yours \{ color: var\(--yours\); \}/.test(cssCode));
+// The whole system rests on this. A button wearing --yours means a coach can no
+// longer tell their words from the app's, which is the one thing it exists for.
+const buttons = cssCode.split("\n").filter((l) => /^\.btn|^\.chip|^\.pill|^\.tabbar|^\.tag/.test(l.trim()));
+ok("no button, chip, pill or tag is ever --yours",
+  !buttons.some((l) => /var\(--yours\)/.test(l) && !/outline/.test(l)));
+
+// --- where the coach's words actually appear ---------------------------------
+ok("a note in a session is in their colour", /className="yours"/.test(code(evt)));
+ok("so is a thought", /className="yours"/.test(code(thoughts)));
+ok("and every restated line in a report", /\.md li \{[^}]*var\(--yours\)/.test(cssCode));
+// The frame around the quotes is the app talking and must not wear their colour,
+// or the distinction the whole design exists to draw disappears.
+ok("but a report's headings are not", /\.md h2 \{[^}]*var\(--ink\)/.test(cssCode));
+ok("nor is the question it asks at the end", /\.md p\s+\{[^}]*var\(--muted\)/.test(cssCode));
+// "Transcribing..." is the app, not the coach. Nothing is theirs until it is.
+ok("nor is a note that has not arrived yet",
+  /Transcribing…<\/span>/.test(evt) && /<span className="muted">Transcribing/.test(evt));
+
+// --- the record button, where the rule does real work ------------------------
+ok("the recorder is blue until it listens", /\.record \{[^}]*var\(--grass\)/.test(cssCode));
+ok("and turns to the coach's colour once it does", /\.record\.on \{[^}]*var\(--yours\)/.test(cssCode));
+
+// --- lines, not cards --------------------------------------------------------
+// The single restriction that stops this being an ordinary dark interface,
+// because rounded cards floating on soft shadows are exactly what those are.
+ok("shadows are off at the token", /--shadow:\s*none/.test(cssCode));
+ok("and a card does not set one", !/\.card \{[^}]*box-shadow/.test(cssCode));
+ok("nor does the record button", !/\.record \{[^}]*box-shadow/.test(cssCode));
+// The pulse ring is the one exception: it is motion, not depth, and it stops.
+ok("the only box-shadow left is the recording pulse",
+  (cssCode.match(/box-shadow/g) ?? []).length === 2 && /@keyframes pulse/.test(cssCode));
+ok("nothing is a lozenge any more", !/border-radius:\s*999px/.test(cssCode));
+
+// --- green is gone -----------------------------------------------------------
+// Someone will want a green tick. Blue and yellow already carry every state.
+const OLD = ["#2f8a57", "#123a2a", "#1f6b41", "#5cbb84", "#8fd6ac", "#3a9b68", "#e7f0e8", "#f6f5ef"];
+ok("no pitch green anywhere in the stylesheet", !OLD.some((c) => cssCode.toLowerCase().includes(c)));
+ok("nor in the icons", !OLD.some((c) => (favicon + pwa).toLowerCase().includes(c)));
+
+// --- the mark ----------------------------------------------------------------
+ok("the crosshair is gone", !/<line /.test(code(ui)));
+ok("two circles, off centre", /cx="15"[\s\S]{0,120}cx="25"/.test(code(ui)));
+// Two colours is not decoration. In one colour this is a Venn diagram.
+ok("one filled with the coach's colour", /fill="var\(--yours\)"/.test(code(ui)));
+ok("one drawn in chalk", /stroke="var\(--ink\)"/.test(code(ui)));
+ok("the favicon matches", /#e3c567/i.test(favicon) && !/<line/.test(favicon));
+ok("and so does the home screen icon", /#e3c567/i.test(pwa) && !/<line/.test(pwa));
+
+// --- one theme, deliberately -------------------------------------------------
+// Not an oversight. Chalk is a slate board; a light variant is a different idea
+// wearing the same name. Recorded so nobody "fixes" it by adding one quietly.
+ok("there is no second theme", !/prefers-color-scheme/.test(cssCode));
+ok("and the reason is written down", /ONE THEME, ON PURPOSE/.test(css));
+ok("including what would change the decision", /direct\s*\n?\s*sunlight/.test(css));
+
+console.log(`\n${pass} passed, ${fail} failed`);
+process.exit(fail ? 1 : 0);

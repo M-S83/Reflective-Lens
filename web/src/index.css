@@ -1,38 +1,66 @@
-/* Reflective Lens — pitch-green Scandinavian design tokens. Light + dark. */
+/* =============================================================================
+   Reflective Lens — CHALK.
+   The tactics board, not the pitch. See docs/brand-direction.md.
+
+   ONE THEME, ON PURPOSE. Chalk is a slate board, so the app is a slate board,
+   whatever the phone is set to. A light variant would be a different idea
+   wearing the same name, and half the users would never see the design at all.
+   The cost is real and worth stating: a dark screen is harder in direct
+   sunlight, which is exactly when a coach captures a note. If testers say so,
+   a paper variant of this same system is a day's work, and every rule below
+   survives the move.
+
+   THE ONE RULE THAT RUNS EVERYTHING:
+
+       --yours is the coach. Nothing else is ever --yours.
+
+   It marks what the coach wrote or said, and marks nothing else, so the
+   difference between their words and the app's is visible before a word is
+   read. That is what makes "mirror, not verdict" structural instead of a
+   promise. If you ever want it for a button, the answer is no.
+   ========================================================================== */
 :root {
-  --paper: #f6f5ef;
-  --card: #fffffe;
-  --ink: #16201b;
-  --muted: #5c6b60;
-  --faint: #eceade;
-  --hair: #dcdccf;
-  --pitch: #123a2a;
-  --grass: #2f8a57;
-  --grass-ink: #1f6b41;
-  --grass-soft: #e7f0e8;
-  --good: #3a9b68;
-  --warn: #c2892f;
-  --crit: #b5493c;
-  --shadow: 0 1px 2px rgba(18, 58, 42, 0.05), 0 8px 24px rgba(18, 58, 42, 0.06);
-  --radius: 14px;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #0f1a14;
-    --card: #16241c;
-    --ink: #e9ede6;
-    --muted: #93a394;
-    --faint: #1d2c23;
-    --hair: #28362c;
-    --pitch: #d7e6d8;
-    --grass: #5cbb84;
-    --grass-ink: #8fd6ac;
-    --grass-soft: #1b2c22;
-    --good: #5cbb84;
-    --warn: #dfa850;
-    --crit: #dd7367;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.35);
-  }
+  /* The board. Two surface values only, so a screen never becomes a stack of
+     floating panels. */
+  --paper: #22272b;   /* deep: the page itself          */
+  --card:  #2b3136;   /* slate: the working surface     */
+  --faint: #333a40;   /* raised: a well within a surface */
+  --hair:  #3f474d;   /* a chalk line, drawn not dropped */
+
+  /* Voices. */
+  --ink:   #edebe4;   /* chalk: structure and headings   */
+  --muted: #93a3ac;   /* dust: the app talking           */
+  --yours: #e3c567;   /* THE COACH'S OWN WORDS. Only.    */
+  /* Was the deep green used for headings. Kept as an alias because a dozen
+     components reference it inline, and a rebrand that requires editing every
+     file is a rebrand that gets half done. */
+  --pitch: #edebe4;
+
+  /* Anything you can act on. Named --grass for the whole of this app's life,
+     kept so a rebrand is a token change rather than a rewrite of every file.
+     It is chalk blue now, and it means "tap", never "read". */
+  --grass: #8fb3cc;
+  --grass-ink: #a6c6db;
+  --grass-soft: #2f3940;
+  /* The one solid button on a screen. A deeper blue than the outline colour on
+     purpose: filled at full --grass it was the brightest thing on the page,
+     louder than the coach's own words, which inverts the entire point of this
+     palette. Nothing outshouts what they wrote. */
+  --grass-deep: #6d97b0;
+
+  /* Semantic state, separate from the accent. Blue and yellow carry most of
+     it; these two exist for the cases that genuinely need alarm. */
+  --good: #8fb3cc;
+  --warn: #d99a6c;
+  --crit: #d97b6c;
+
+  /* No shadow anywhere. A chalk board has no depth: things are divided by a
+     line drawn across it, not by rectangles hovering above it. This single
+     value is most of what stops Chalk collapsing into an ordinary dark theme,
+     because rounded cards with soft shadows are exactly what those look like.
+     Kept as a token rather than deleted so nothing referencing it breaks. */
+  --shadow: none;
+  --radius: 4px;
 }
 
 * { box-sizing: border-box; }
@@ -79,55 +107,66 @@ a { color: var(--grass-ink); }
 .eyebrow { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 
 /* Cards */
+/* A card is a region of the board, marked out by a line. Not an object
+   floating above it, which is why there is no shadow and the corner is barely
+   rounded. */
 .card {
   background: var(--card); border: 1px solid var(--hair); border-radius: var(--radius);
-  padding: 16px; box-shadow: var(--shadow);
+  padding: 16px;
 }
 .card h2 { font-size: 16px; color: var(--pitch); font-weight: 600; margin-bottom: 4px; }
 .card.tap { cursor: pointer; text-align: left; width: 100%; font: inherit; color: inherit; }
-.card.tap:active { transform: scale(0.995); }
+.card.tap:active { border-color: var(--grass); }
 .list { display: flex; flex-direction: column; gap: 10px; }
 
 .pill {
   display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600;
-  padding: 3px 9px; border-radius: 999px; letter-spacing: 0.02em; text-transform: capitalize;
+  padding: 3px 9px; border-radius: 2px; letter-spacing: 0.02em; text-transform: capitalize;
   background: var(--faint); color: var(--muted);
 }
-.pill.good { background: var(--grass-soft); color: var(--grass-ink); }
-.pill.warn { background: rgba(194, 137, 47, 0.16); color: var(--warn); }
-.pill.crit { background: rgba(181, 73, 60, 0.14); color: var(--crit); }
+.pill.good { background: transparent; border: 1px solid var(--grass); color: var(--grass-ink); }
+.pill.warn { background: transparent; border: 1px solid var(--warn); color: var(--warn); }
+.pill.crit { background: transparent; border: 1px solid var(--crit); color: var(--crit); }
 
 /* Forms */
 label { font-size: 13px; font-weight: 600; color: var(--ink); display: block; margin-bottom: 5px; }
 input, textarea, select {
   width: 100%; font: inherit; color: var(--ink); background: var(--card);
-  border: 1px solid var(--hair); border-radius: 10px; padding: 11px 12px;
+  border: 1px solid var(--hair); border-radius: 3px; padding: 11px 12px;
 }
 textarea { resize: vertical; min-height: 90px; }
-input:focus, textarea:focus, select:focus { outline: 2px solid var(--grass); outline-offset: 1px; border-color: var(--grass); }
+/* Typing is the coach speaking, so the box they are speaking into is theirs. */
+input:focus, textarea:focus, select:focus { outline: 2px solid var(--yours); outline-offset: 1px; border-color: var(--yours); }
 .field { display: flex; flex-direction: column; }
 
 /* Buttons */
+/* One solid button per screen so the main action is never ambiguous, and
+   everything else outlined. Chalk is a line medium. */
 .btn {
-  font: inherit; font-weight: 600; cursor: pointer; border-radius: 999px;
-  padding: 11px 18px; border: 1px solid transparent; background: var(--grass); color: #fff;
+  font: inherit; font-weight: 600; cursor: pointer; border-radius: 3px;
+  padding: 11px 18px; border: 1px solid var(--grass-deep); background: var(--grass-deep); color: var(--paper);
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
 }
 .btn:disabled { opacity: 0.55; cursor: default; }
 .btn.block { width: 100%; }
-.btn.ghost { background: transparent; color: var(--grass-ink); border-color: var(--hair); }
-.btn.subtle { background: var(--faint); color: var(--ink); }
-.btn.danger { background: transparent; color: var(--crit); border-color: var(--hair); }
-.btn:focus-visible { outline: 2px solid var(--grass); outline-offset: 2px; }
+.btn.ghost { background: transparent; color: var(--grass-ink); border-color: var(--grass); }
+.btn.subtle { background: transparent; color: var(--muted); border-color: var(--hair); }
+.btn.danger { background: transparent; color: var(--crit); border-color: var(--crit); }
+.btn:focus-visible { outline: 2px solid var(--yours); outline-offset: 2px; }
 .btn.sm { padding: 7px 12px; font-size: 13px; }
 
 /* Record button */
+/* Drawn, not filled, like everything else. It turns from blue to yellow the
+   moment it starts listening, because from then on what it holds is the
+   coach's. That is the one rule of this palette doing a job rather than
+   decorating one. */
 .record {
-  width: 74px; height: 74px; border-radius: 50%; border: none; cursor: pointer;
-  background: var(--grass); color: #fff; display: grid; place-items: center; box-shadow: var(--shadow);
+  width: 74px; height: 74px; border-radius: 50%; cursor: pointer;
+  background: transparent; border: 2px solid var(--grass); color: var(--grass);
+  display: grid; place-items: center;
 }
-.record.on { background: var(--crit); animation: pulse 1.4s ease-in-out infinite; }
-@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(181,73,60,0.4); } 50% { box-shadow: 0 0 0 12px rgba(181,73,60,0); } }
+.record.on { border-color: var(--yours); color: var(--yours); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(227,197,103,0.35); } 50% { box-shadow: 0 0 0 11px rgba(227,197,103,0); } }
 @media (prefers-reduced-motion: reduce) { .record.on { animation: none; } }
 
 /* Bottom nav */
@@ -141,36 +180,47 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--grass); out
   flex: 1; text-align: center; text-decoration: none; color: var(--muted);
   font-size: 11px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 3px;
 }
-.tabbar a.active { color: var(--grass-ink); }
+.tabbar a.active { color: var(--grass); }
 .tabbar svg { width: 22px; height: 22px; }
 
 /* Notes timeline */
-.note { border-left: 3px solid var(--hair); padding: 2px 0 2px 12px; }
-.note.positive { border-color: var(--good); }
+.note { border-left: 3px solid var(--hair); padding: 2px 0 2px 12px; color: var(--yours); }
+.note.positive { border-color: var(--grass); }
 .note.concern { border-color: var(--crit); }
 .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
-.tag { font-size: 11px; background: var(--faint); color: var(--muted); padding: 2px 8px; border-radius: 999px; }
+.tag { font-size: 11px; background: transparent; border: 1px solid var(--hair); color: var(--muted); padding: 2px 8px; border-radius: 2px; }
 
-/* Report markdown */
-.md h1 { font-size: 20px; }
-.md h2 { font-size: 15px; color: var(--pitch); margin-top: 16px; }
+/* --- The coach's own words ------------------------------------------------
+   The rule made visible. Anything a coach wrote or said is --yours; everything
+   the app says around it stays dust. Read a report with your eyes half shut and
+   the yellow is all you; the grey is all us. */
+.yours { color: var(--yours); }
+
+/* Report markdown. A finished report is mostly the coach quoted back, so the
+   bullets are theirs and the frame around them is not: headings are structure,
+   and a bare paragraph is the app asking something ("What would you do
+   differently?"), which must never wear the coach's colour. */
+.md h1 { font-size: 20px; color: var(--ink); }
+.md h2 { font-size: 15px; color: var(--ink); margin-top: 16px; }
+.md p  { color: var(--muted); }
 .md em { color: var(--muted); font-style: italic; }
 .md ul { padding-left: 18px; }
-.md li { margin: 4px 0; }
+.md li { margin: 4px 0; color: var(--yours); }
 
 /* Banner */
-.banner { background: var(--grass-soft); color: var(--grass-ink); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
-.banner.warn { background: rgba(194,137,47,0.14); color: var(--warn); }
+.banner { background: var(--faint); color: var(--grass-ink); border-left: 3px solid var(--grass); border-radius: 2px; padding: 10px 12px; font-size: 13px; }
+.banner.warn { background: var(--faint); color: var(--warn); border-left-color: var(--warn); }
 .error { color: var(--crit); font-size: 13px; }
 
 .chipset { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
-  font: inherit; font-size: 13px; cursor: pointer; padding: 8px 13px; border-radius: 999px;
-  border: 1px solid var(--hair); background: var(--card); color: var(--ink);
+  font: inherit; font-size: 13px; cursor: pointer; padding: 8px 13px; border-radius: 3px;
+  border: 1px solid var(--hair); background: transparent; color: var(--muted);
 }
-.chip.on { background: var(--grass); color: #fff; border-color: var(--grass); }
+.chip.on { background: transparent; color: var(--grass); border-color: var(--grass); }
 
-.spin { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: rot 0.7s linear infinite; }
+/* currentColor, so it is legible on a filled button and on an outlined one. */
+.spin { width: 18px; height: 18px; border: 2px solid var(--hair); border-top-color: currentColor; border-radius: 50%; animation: rot 0.7s linear infinite; }
 @keyframes rot { to { transform: rotate(360deg); } }
 .center-screen { min-height: 70vh; display: grid; place-items: center; }
 
@@ -185,10 +235,10 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--grass); out
   z-index: 5;
   width: auto;
   padding: 8px 14px;
-  border-radius: 999px;
+  border-radius: 3px;
   font-size: 13px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
-  opacity: 0.94;
+  border: 1px solid var(--grass);
+  opacity: 0.97;
 }
 .feedback-sheet {
   position: fixed;
@@ -201,5 +251,5 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--grass); out
   overflow-y: auto;
   background: var(--paper);
   border-top: 1px solid var(--hair);
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.14);
+
 }
