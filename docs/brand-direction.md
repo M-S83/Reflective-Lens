@@ -148,14 +148,27 @@ so a change to the mark means editing all three.
 
 Two voices, visibly different.
 
-- **The coach:** a warm text serif. Human, unhurried, the thing you read.
-  Freight Text or Lyon Text.
-- **The app:** a condensed grotesque, small, spaced, upper case for labels. It
-  looks written on the board and it never competes. Founders Grotesk Condensed
-  or Roboto Condensed.
+- **The coach:** a serif. Human, unhurried, the thing you read. Set from
+  `"Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia`.
+- **The app:** the system sans, and small spaced capitals for every label it
+  writes: the eyebrow, and the section headings inside a report.
 
-The coach's words are theirs because of the **colour**, not because of a script
-face. A serif respects them; a marker font impersonates them.
+**Nothing is licensed, on purpose.** Freight Text and Founders Grotesk are the
+right answer eventually and the wrong one before a beta. Two families are about
+150KB on a phone at a pitch with one bar, and a web font that has not arrived
+yet renders as invisible text on the exact screen someone opened to capture a
+thought in eight seconds. Iowan Old Style ships on every Mac and iPhone and is
+genuinely good; Palatino Linotype covers Windows; Georgia is the floor and the
+floor is fine.
+
+**Why shape as well as colour.** Colour alone was carrying the entire
+distinction between the coach's words and the app's, and colour is the thing
+that fails first: in bright sun, on a cheap screen, and for the one man in
+twelve who cannot separate these two hues at all. A serif against a sans still
+works for all of them.
+
+The coach's words are theirs because of the colour and the shape, never because
+of a script face. A serif respects them; a marker font impersonates them.
 
 ---
 
@@ -185,6 +198,8 @@ All four steps landed together:
    `.md li` in a report, so every restated line is theirs and the frame is not.
 4. **Shadows out, rules in.** `--shadow: none`, corners at 3 to 4px, outlined
    controls, pills and tags squared off.
+5. **Two voices.** The coach in a serif, the app in a sans, labels in small
+   spaced capitals. No web fonts.
 
 **One theme, no light variant.** Chalk is a slate board, so the app is a slate
 board whatever the phone is set to. A light version would be a different idea
@@ -200,8 +215,8 @@ The primary button uses `--grass-deep`, a step down from the outline blue.
 Filled at full strength it was the brightest thing on the screen, louder than
 the coach's own words, which inverts the whole point of the palette.
 
-**Type is NOT done.** The Type section above is still an aspiration: headings
-are Georgia and body is the system sans, both of which are defaults rather than
-choices. Licensing and self-hosting two faces is a job of its own, and the
-colour rule carries the idea without it. Do it when there is a reason to, not
-because this page lists it.
+**Type is done, without licensing anything.** The coach is set in a serif and
+the app in a sans, so the two voices differ in shape as well as colour. Section
+headings in a report became small spaced capitals in dust, which is the board
+label doing the job it was described as doing. See the Type section above for
+why nothing is licensed yet.

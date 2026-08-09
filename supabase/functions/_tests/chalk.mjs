@@ -38,7 +38,7 @@ console.log("chalk: one job per colour");
 
 // --- the one rule ------------------------------------------------------------
 ok("the coach has a colour of their own", /--yours:\s*#e3c567/i.test(cssCode));
-ok("and a class that applies it", /\.yours \{ color: var\(--yours\); \}/.test(cssCode));
+ok("and a class that applies it", /\.yours \{[^}]*color: var\(--yours\)/.test(cssCode));
 // The whole system rests on this. A button wearing --yours means a coach can no
 // longer tell their words from the app's, which is the one thing it exists for.
 const buttons = cssCode.split("\n").filter((l) => /^\.btn|^\.chip|^\.pill|^\.tabbar|^\.tag/.test(l.trim()));
@@ -51,7 +51,7 @@ ok("so is a thought", /className="yours"/.test(code(thoughts)));
 ok("and every restated line in a report", /\.md li \{[^}]*var\(--yours\)/.test(cssCode));
 // The frame around the quotes is the app talking and must not wear their colour,
 // or the distinction the whole design exists to draw disappears.
-ok("but a report's headings are not", /\.md h2 \{[^}]*var\(--ink\)/.test(cssCode));
+ok("but a report's headings are not", !/\.md h2 \{[^}]*var\(--yours\)/.test(cssCode));
 ok("nor is the question it asks at the end", /\.md p\s+\{[^}]*var\(--muted\)/.test(cssCode));
 // "Transcribing..." is the app, not the coach. Nothing is theirs until it is.
 ok("nor is a note that has not arrived yet",
@@ -86,6 +86,27 @@ ok("one filled with the coach's colour", /fill="var\(--yours\)"/.test(code(ui)))
 ok("one drawn in chalk", /stroke="var\(--ink\)"/.test(code(ui)));
 ok("the favicon matches", /#e3c567/i.test(favicon) && !/<line/.test(favicon));
 ok("and so does the home screen icon", /#e3c567/i.test(pwa) && !/<line/.test(pwa));
+
+// --- two voices --------------------------------------------------------------
+// Colour alone was carrying the whole distinction, and colour is the thing that
+// fails first: on a bright pitch, on a cheap screen, and for the one man in
+// twelve who cannot separate yellow from grey-blue at all. Shape does not fail.
+ok("the coach's words are set in a serif", /\.yours \{[^}]*Iowan Old Style/.test(cssCode));
+ok("and so are the lines quoted back in a report", /\.md li \{[^}]*Iowan Old Style/.test(cssCode));
+// The frame stays in the app's voice, or there are no longer two voices.
+ok("a report's headings are not", !/\.md h2 \{[^}]*Iowan/.test(cssCode));
+ok("nor is the question it ends on", !/\.md p\s+\{[^}]*Iowan/.test(cssCode));
+// Georgia is the floor, not the choice. Iowan is on every Mac and iPhone.
+ok("the serif stack prefers something better than Georgia",
+  /Iowan Old Style[^;]*Palatino[^;]*Georgia/.test(cssCode));
+// Not licensed, on purpose: a font that has not downloaded yet is invisible
+// text on the screen someone opened to capture a thought in eight seconds.
+ok("no web font is fetched", !/@font-face|fonts\.googleapis|fonts\.gstatic/.test(cssCode));
+ok("and the reason is written down", /wrong one this month|invisible text/.test(css));
+// The board label: how the app names things, small and spaced and never louder
+// than what the coach wrote.
+ok("the app labels things in small spaced capitals",
+  /\.eyebrow \{[^}]*text-transform: uppercase/.test(cssCode) && /\.md h2 \{[^}]*text-transform: uppercase/.test(cssCode));
 
 // --- one theme, deliberately -------------------------------------------------
 // Not an oversight. Chalk is a slate board; a light variant is a different idea

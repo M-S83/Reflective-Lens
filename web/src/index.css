@@ -73,8 +73,29 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
-.serif { font-family: Georgia, "Times New Roman", serif; }
+/* =============================================================================
+   TWO VOICES.
+   The coach is set in a serif and the app is set in a sans, so their words and
+   ours differ in SHAPE as well as colour. Colour alone was carrying the whole
+   idea, and colour is the thing that fails first: on a bright pitch, on a
+   cheap screen, and for the one man in twelve who cannot separate these two
+   hues at all. Shape does not fail.
+
+   No licensed faces, deliberately. Freight Text and Founders Grotesk are the
+   right answer eventually and the wrong one this month: two families are
+   150KB-ish on a phone at a pitch with one bar, and a web font that has not
+   arrived yet means invisible text on the exact screen a coach opened to
+   capture a thought in eight seconds. This stack costs nothing and ships now.
+
+   Iowan Old Style is on every Mac and iPhone and is genuinely good. Palatino
+   Linotype covers Windows. Georgia is the floor, and the floor is fine.
+   ========================================================================== */
+.serif {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+}
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+/* Dates, counts and money read as columns wherever they are stacked. */
+.pill, .tag, table { font-variant-numeric: tabular-nums; }
 
 h1, h2, h3 { text-wrap: balance; margin: 0; }
 a { color: var(--grass-ink); }
@@ -102,9 +123,14 @@ a { color: var(--grass-ink); }
   display: flex; align-items: center; gap: 10px;
   padding: 14px 0 12px; border-bottom: 1px solid var(--hair);
 }
-.topbar h1 { font-size: 18px; color: var(--pitch); font-weight: 600; }
+.topbar h1 { font-size: 19px; color: var(--pitch); font-weight: 600; letter-spacing: -0.01em; }
 .brandmark { width: 26px; height: 26px; flex: 0 0 auto; }
-.eyebrow { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+/* The board label: how the app names things. Small, spaced, upper case, dust.
+   It never competes with what the coach wrote, which is the point. */
+.eyebrow {
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--muted); font-weight: 600;
+}
 
 /* Cards */
 /* A card is a region of the board, marked out by a line. Not an object
@@ -194,18 +220,31 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--yours); out
    The rule made visible. Anything a coach wrote or said is --yours; everything
    the app says around it stays dust. Read a report with your eyes half shut and
    the yellow is all you; the grey is all us. */
-.yours { color: var(--yours); }
+.yours {
+  color: var(--yours);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  /* A serif reversed out of a dark ground needs a little more air than it does
+     on paper, or the thin strokes close up. */
+  font-size: 1.02em;
+  line-height: 1.55;
+}
 
 /* Report markdown. A finished report is mostly the coach quoted back, so the
    bullets are theirs and the frame around them is not: headings are structure,
    and a bare paragraph is the app asking something ("What would you do
    differently?"), which must never wear the coach's colour. */
-.md h1 { font-size: 20px; color: var(--ink); }
-.md h2 { font-size: 15px; color: var(--ink); margin-top: 16px; }
-.md p  { color: var(--muted); }
+.md h1 { font-size: 21px; color: var(--ink); letter-spacing: -0.01em; }
+.md h2 { font-size: 13px; color: var(--muted); margin-top: 20px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; }
+.md p  { color: var(--muted); line-height: 1.55; }
 .md em { color: var(--muted); font-style: italic; }
 .md ul { padding-left: 18px; }
-.md li { margin: 4px 0; color: var(--yours); }
+/* The bullets are the coach quoted back, so they take the coach's voice. The
+   headings above them and the question below them are the app, and stay sans. */
+.md li {
+  margin: 6px 0; color: var(--yours);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  font-size: 16px; line-height: 1.55;
+}
 
 /* Banner */
 .banner { background: var(--faint); color: var(--grass-ink); border-left: 3px solid var(--grass); border-radius: 2px; padding: 10px 12px; font-size: 13px; }
