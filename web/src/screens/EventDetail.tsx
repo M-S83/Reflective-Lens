@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   addTextNote, addVoiceNote, answerQuestion, answerQuestionVoice, enrich, generateQuestions, generateReport,
-  getEvent, getReflection, observations, questions, reports, saveTextReflection, saveVoiceReflection,
+  getEvent, getReflection, observations, questions, reports, retryTranscription,
+  saveTextReflection, saveVoiceReflection,
 } from "../lib/db";
 import type { EventRow, FollowupQuestion, Observation, Reflection, Report } from "../lib/types";
 import { PHASES, PHASE_LABELS, type CapturePhase, sessionLabel } from "../lib/types";
@@ -166,6 +167,48 @@ function Notes({ eventId, teamId, only, intro, placeholder }: {
   }, [eventId]);
   useEffect(() => { load(); }, [load]);
 
+  // A voice note whose transcript never arrived. Transcription is fire and
+  // forget, so when the edge function fails nothing records that it failed, and
+  // the note read "Transcribing…" for ever. That is not a slow state, it is a
+  // lie: a coach pressed Refresh, saw the same words, pressed it again, and had
+  // no way of learning that it was never coming.
+  //
+  // Decided on the note's AGE rather than on how long this screen has been
+  // watching, because the truth has to survive a reload. Two minutes is well
+  // past a normal transcription and well short of anyone's patience.
+  const STUCK_AFTER_MS = 2 * 60 * 1000;
+
+  function Pending({ obs, onRetry }: { obs: Observation; onRetry: () => void }) {
+    const [busy, setBusy] = useState(false);
+    const [failed, setFailed] = useState("");
+    const age = Date.now() - new Date(obs.created_at).getTime();
+    if (age < STUCK_AFTER_MS) return <div className="muted">Transcribing…</div>;
+
+    const again = async () => {
+      setBusy(true); setFailed("");
+      try { await retryTranscription(obs); setTimeout(onRetry, 2500); }
+      catch (e) { setFailed((e as Error).message ?? "That did not work."); }
+      finally { setBusy(false); }
+    };
+
+    return (
+      <div className="stack" style={{ gap: 6 }}>
+        {/* Says what happened and what is safe, in that order. The recording
+            itself is in storage either way, which is the part that matters and
+            the part a coach would otherwise assume they had lost. */}
+        <div className="muted">
+          This one did not come back. Your recording is saved, so nothing is lost.
+        </div>
+        <div>
+          <button className="btn ghost sm" onClick={again} disabled={busy}>
+            {busy ? <Spinner /> : "Try again"}
+          </button>
+        </div>
+        {failed && <div className="error">{failed}</div>}
+      </div>
+    );
+  }
+
   // A voice note is uploaded, transcribed and tidied by two edge functions,
   // which takes a few seconds. Until then the row reads "Transcribing…", and
   // the only way to move it on was a Refresh button the coach had to keep
@@ -236,7 +279,9 @@ function Notes({ eventId, teamId, only, intro, placeholder }: {
               </div>
               {/* Their words, in their colour. "Transcribing" is the app
                   talking, so it stays grey: nothing is theirs until it is. */}
-              <div className="yours">{o.cleaned_note ?? o.raw_note ?? <span className="muted">Transcribing…</span>}</div>
+              {o.cleaned_note ?? o.raw_note
+                ? <div className="yours">{o.cleaned_note ?? o.raw_note}</div>
+                : <Pending obs={o} onRetry={load} />}
               {o.tags?.length > 0 && (
                 <div className="tags">{o.tags.map((t, i) => <span key={i} className="tag">{t}</span>)}</div>
               )}

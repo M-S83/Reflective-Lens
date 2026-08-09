@@ -299,6 +299,28 @@ export async function addVoiceNote(
   await supabase.functions.invoke("clean-observation", { body: { observation_id: (obs as any).id } });
 }
 
+// Ask again for a voice note whose transcript never arrived.
+//
+// Transcription is fire and forget: the note row is saved first, the audio is
+// uploaded, and the transcript is written back later by an edge function. When
+// that function fails, nothing anywhere records that it failed, and the note
+// sits reading "Transcribing…" for the rest of its life. The recording itself
+// is safe in storage the whole time, which is what makes asking again a real
+// fix rather than a hopeful button.
+export async function retryTranscription(o: Observation): Promise<void> {
+  if (!o.audio_path) throw new Error("There is no recording saved for this note.");
+  const { error } = await supabase.functions.invoke("transcribe-audio", {
+    body: {
+      bucket: "audio-recordings",
+      audio_path: o.audio_path,
+      target: "observation",
+      target_id: o.id,
+    },
+  });
+  if (error) throw error;
+  await supabase.functions.invoke("clean-observation", { body: { observation_id: o.id } });
+}
+
 // ---- Reflection -------------------------------------------------------------
 export async function getReflection(eventId: string): Promise<Reflection | null> {
   const { data, error } = await supabase
