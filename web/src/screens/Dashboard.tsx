@@ -506,18 +506,30 @@ const PERIODS = [1, 3, 6, 12];
 function ClubQuote() {
   const [coaches, setCoaches] = useState(8);
   const [players, setPlayers] = useState(120);
-  const [adopt, setAdopt] = useState(25);
   const [cbase, setCbase] = useState(29.99);
-  const [prate, setPrate] = useState(1.99);
+  const [prate, setPrate] = useState(0.5);
   const [disc, setDisc] = useState(25);
   const [period, setPeriod] = useState(12);
 
-  const activePlayers = Math.round(players * adopt / 100);
-  const std = cbase + activePlayers * prate;
+  // No take-up percentage. It asked what fraction of a club's players would
+  // sign up, and no player signs up: the player journey was withdrawn in 0021,
+  // and a "player" is now a row on a coach's squad list, not an account. There
+  // is nothing for them to take up, so the slider was quietly modelling a
+  // product that does not exist and every quote built on it was fiction.
+  //
+  // A club is billed for the roster it actually has. That is also the honest
+  // thing to sell: what the club buys is its coaches' reflection, across a
+  // named squad, and the squad size is known on day one rather than guessed.
+  const std = cbase + players * prate;
   const promo = std * (1 - disc / 100);
   const termTotal = promo * period;
   const saving = (std - promo) * period;
-  const cost = coaches * 1.0 + activePlayers * 0.3;
+  // Cost to serve follows COACHES, not players. Every AI call in the app is
+  // made by a coach writing a note or generating a report; a player on a roster
+  // never signs in and never triggers one. The old line charged 30p a head
+  // against players who cost nothing, which made the margin read low and would
+  // have had you turning down business you could afford.
+  const cost = coaches * 1.0;
   const margin = promo > 0 ? (promo - cost) / promo * 100 : 0;
 
   const Range = ({ label, val, set, min, max, step, fmt }: {
@@ -538,9 +550,11 @@ function ClubQuote() {
       <p className="muted small" style={{ marginTop: -2 }}>Flat base for up to 10 coaches, plus players on the roster. Offer a discount over a set term.</p>
       <Range label="Coaches" val={coaches} set={setCoaches} min={1} max={20} step={1} fmt={(n) => String(n)} />
       <Range label="Players (roster)" val={players} set={setPlayers} min={0} max={400} step={10} fmt={(n) => String(n)} />
-      <Range label="Player take-up" val={adopt} set={setAdopt} min={5} max={100} step={5} fmt={(n) => n + "%"} />
       <Range label="Coach base (up to 10)" val={cbase} set={setCbase} min={9.99} max={49.99} step={1} fmt={gbp} />
-      <Range label="Per active player" val={prate} set={setPrate} min={0.99} max={2.99} step={0.1} fmt={gbp} />
+      {/* Starts at 10p, not 99p. The old floor assumed you were only charging
+          for the quarter of players who had signed up; billing the whole roster
+          at the same rate quadruples a club's bill overnight. */}
+      <Range label="Per player on the roster" val={prate} set={setPrate} min={0.1} max={2.99} step={0.05} fmt={gbp} />
       <Range label="Discount" val={disc} set={setDisc} min={0} max={50} step={5} fmt={(n) => n + "%"} />
 
       <div style={{ display: "flex", gap: 6, margin: "2px 0 10px" }}>

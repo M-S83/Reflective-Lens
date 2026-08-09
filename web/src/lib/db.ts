@@ -252,8 +252,14 @@ export async function addTextNote(
     .from("observations")
     .insert({
       event_id: eventId, user_id: me, team_id: teamId, capture_phase: phase,
-      input_type: "text_note", observation_type: "team_observation",
-      subject_type: "team", raw_note: text,
+      input_type: "text_note",
+      // 'unknown', because it is. The coach types a sentence; nothing asks who
+      // it was about and nothing works it out. This said "team" on every note
+      // the app has ever saved, including notes from a 1v1 with one child, and
+      // the report read that label and wrote about a team that did not exist.
+      // A field nothing populates honestly should say so rather than guess, or
+      // the next feature to read it repeats the same bug.
+      subject_type: "unknown", raw_note: text,
     })
     .select("id").single();
   if (error) throw error;
@@ -280,8 +286,9 @@ export async function addVoiceNote(
     .from("observations")
     .insert({
       event_id: eventId, user_id: me, team_id: teamId, capture_phase: phase,
-      input_type: "voice_note", observation_type: "team_observation",
-      subject_type: "team", audio_path: path,
+      input_type: "voice_note",
+      // Same as the typed note above: not known, so not claimed.
+      subject_type: "unknown", audio_path: path,
     })
     .select("id").single();
   if (error) throw error;

@@ -26,6 +26,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const fn = (p) => readFileSync(join(here, "..", p), "utf8");
 const report = fn("generate-report/index.ts");
 const clean = fn("clean-observation/index.ts");
+const db = readFileSync(join(here, "../../../web/src/lib/db.ts"), "utf8");
 
 let pass = 0, fail = 0;
 const ok = (n, c) => c ? (pass++, console.log(`  ok  ${n}`)) : (fail++, console.log(`  FAIL ${n}`));
@@ -79,6 +80,24 @@ ok("but an unfinished sentence is left alone",
 ok("and a missing word is not guessed at", /NOT guess at a word that is missing/.test(code(clean)));
 ok("the coach's own terminology is still protected",
   /KEEP the coach's own words/.test(code(clean)));
+
+// --- the label is not written in the first place -----------------------------
+// Removing it from the payload fixed the report. It did not fix the table: the
+// app was still stamping 'team' on every note it saved, and the next thing to
+// read that column would have made the same mistake somewhere new.
+ok("a note no longer claims it was about the team", !/subject_type: "team"/.test(code(db)));
+ok("it says unknown, which is the truth",
+  (code(db).match(/subject_type: "unknown"/g) ?? []).length === 2);
+ok("and it no longer classifies the note either",
+  !/observation_type: "team_observation"/.test(code(db)));
+
+// --- the session says what it actually was -----------------------------------
+// custom_type held "1 V 1" the whole time, was written since 0018, was read by
+// the period report, and was never sent here. The single-session report saw
+// type: "other" and nothing else.
+ok("an 'other' session sends the coach's own name for it",
+  /event\.custom_type\?\.trim\(\) \|\| "other"/.test(code(report)));
+ok("and whether there is a squad behind it at all", /has_team: !!event\.team_id/.test(code(report)));
 
 // --- house style -------------------------------------------------------------
 ok("no em or en dashes in either", ![report, clean].some((s) => /[—–]/.test(s)));

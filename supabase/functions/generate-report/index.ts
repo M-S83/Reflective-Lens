@@ -75,9 +75,21 @@ Deno.serve(async (req) => {
 
     const payload = JSON.stringify({
       event: {
-        type: event.event_type, title: event.title, date: event.event_date,
+        // custom_type was written by the app since 0018 and read by the period
+        // report, and never once sent here. So a coach's 1v1 arrived as
+        // type: "other", which tells the model nothing at all, and it filled the
+        // gap the way models do. The screen header said "1 V 1" the whole time,
+        // from a column this payload was not passing on.
+        type: event.event_type === "other"
+          ? (event.custom_type?.trim() || "other")
+          : event.event_type,
+        title: event.title, date: event.event_date,
         opposition: event.opposition, focus_area: event.focus_area,
         purpose: event.purpose,
+        // Whether there is a squad behind this at all. A session with no team
+        // is one player or a small group, and the report has no other way to
+        // know that.
+        has_team: !!event.team_id,
       },
       // What the coach hoped to see up front, and how the notes matched it.
       hoping_to_see: event.hoping_to_see ?? [],
