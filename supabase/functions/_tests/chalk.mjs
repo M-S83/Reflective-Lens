@@ -53,9 +53,16 @@ ok("and every restated line in a report", /\.md li \{[^}]*var\(--yours\)/.test(c
 // or the distinction the whole design exists to draw disappears.
 ok("but a report's headings are not", !/\.md h2 \{[^}]*var\(--yours\)/.test(cssCode));
 ok("nor is the question it asks at the end", /\.md p\s+\{[^}]*var\(--muted\)/.test(cssCode));
-// "Transcribing..." is the app, not the coach. Nothing is theirs until it is.
-ok("nor is a note that has not arrived yet",
-  /Transcribing…<\/span>/.test(evt) && /<span className="muted">Transcribing/.test(evt));
+// "Transcribing..." is the app, not the coach. Nothing is theirs until it is,
+// and a note that never arrives must not sit there wearing their colour as if
+// it had. Written against the intent rather than the exact markup: this broke
+// once already when the pending state grew a retry button, which was the test
+// doing its job badly, not the code.
+ok("a note still on its way is the app talking", /className="muted">Transcribing/.test(evt));
+ok("and one that never arrived says so, also in the app's voice",
+  /did not come back/.test(evt) && /Your recording is saved/.test(evt));
+ok("neither is ever in the coach's colour",
+  !/className="yours"[\s\S]{0,40}(Transcribing|did not come back)/.test(evt));
 
 // --- the record button, where the rule does real work ------------------------
 ok("the recorder is blue until it listens", /\.record \{[^}]*var\(--grass\)/.test(cssCode));
