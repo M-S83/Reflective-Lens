@@ -66,7 +66,7 @@ if ($missing.Count -gt 0) {
   Fail "These are missing or empty in .env: $($missing -join ', '). See docs/deploy-windows.md, step 4."
 }
 
-Write-Host "==> Pushing database migrations (0001-0022)" -ForegroundColor Cyan
+Write-Host "==> Pushing database migrations (0001-0023)" -ForegroundColor Cyan
 & supabase db push
 if ($LASTEXITCODE -ne 0) {
   Write-Host ""
@@ -136,6 +136,6 @@ foreach ($fn in @('run-learning','purge-due-accounts','send-trial-reminders','bi
 }
 
 Write-Host ""
-Write-Host "==> Done. 22 migrations and 16 functions are live." -ForegroundColor Green
+Write-Host "==> Done. 23 migrations and 16 functions are live." -ForegroundColor Green
 Write-Host "    Next: sign up once in the app, then run supabase/go-live.sql to make"
 Write-Host "    yourself admin. Then walk through docs/staging-run.md to check the reports."

@@ -170,6 +170,32 @@ ok "an unknown plan is refused clearly" \
 ok "a withdrawn player plan cannot be granted" \
   "$(try "$OWNER" "select public.grant_plan('comp@test','player_monthly',null);")" "blocked"
 
+# --- THE PATH THE APP ACTUALLY USES -----------------------------------------
+# active_roles() is SECURITY DEFINER and runs past RLS, so proving it works
+# proves nothing about the client, which reads the tables directly:
+#
+#   .from("subscriptions").select("status, trial_ends_at, plan:plans(name, features)")
+#
+# 0022 made the granted plans is_active = false so they could not be bought, and
+# the 0004 catalogue policy (is_active or is_admin) then hid them from the people
+# on them. The embedded plan came back null, so no features, so no role, so the
+# subscription was skipped and every beta coach landed in a read-only app on the
+# day they were invited. 0023 is the fix; these are the assertions that would
+# have caught it.
+ok "a beta coach can read the plan they are on" \
+  "$(asu "$BETA" "select p.name from public.subscriptions s join public.plans p on p.id = s.plan_id where s.plan_id = 'coach_beta';")" "Beta"
+ok "and its features, which is where the role lives" \
+  "$(asu "$BETA" "select p.features->>'role' from public.subscriptions s join public.plans p on p.id = s.plan_id where s.plan_id = 'coach_beta';")" "coach"
+ok "so the kind resolves too" \
+  "$(asu "$BETA" "select p.features->>'kind' from public.subscriptions s join public.plans p on p.id = s.plan_id where s.plan_id = 'coach_beta';")" "beta"
+# The catalogue rule still holds: not being able to BUY it is the point.
+ok "but a granted plan is still off the catalogue for everyone else" \
+  "$(asu "$SNEAK" "select count(*) from public.plans where id in ('coach_beta','coach_comp');")" "0"
+ok "and a coach sees only the plan they hold, not both" \
+  "$(asu "$BETA" "select count(*) from public.plans where id in ('coach_beta','coach_comp');")" "1"
+ok "the buyable plans are still public" \
+  "$(asu "$SNEAK" "select count(*) from public.plans where id = 'coach_monthly';")" "1"
+
 # --- the dashboard view ------------------------------------------------------
 ok "an ordinary user sees nobody" "$(asu "$SNEAK" "select count(*) from public.admin_accounts;")" "0"
 ok "the owner sees every account" "$(asu "$OWNER" "select count(*) from public.admin_accounts;")" "5"

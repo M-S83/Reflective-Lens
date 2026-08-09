@@ -23,7 +23,7 @@ squad, never an account.
 
 ## Where things are
 
-- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`-`0022`.
+- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`-`0023`.
   Validated on PostgreSQL 16 (stubbed `auth`/`storage` schemas + a `test.uid` GUC).
 - `supabase/functions/` — Deno/TypeScript edge functions. Shared helpers in
   `_shared/` (`clients.ts` = model tiering + Claude/usage helpers, `voice.ts` =
@@ -74,7 +74,11 @@ squad, never an account.
   is `coach_comp` active with none, and paid is the monthly or annual plan. Both
   granted plans are `is_active = false` (off the catalogue, not buyable) and
   priced at 0 (never revenue); access does not read `is_active`, and
-  `account-kinds-db.sh` proves it. Hand them out with `grant_plan(email, plan,
+  `account-kinds-db.sh` proves it. A granted plan is `is_active = false`, and
+  `0004`'s catalogue policy hid it from the coach on it, so the client's
+  `plan:plans(...)` embed came back null and every beta tester landed read-only.
+  `0023` lets you read a plan you hold. The lesson is in the test now: prove the
+  RLS path the app uses, not only the `SECURITY DEFINER` function. Hand them out with `grant_plan(email, plan,
   days)` / `revoke_plan(email, plan)`, which raise unless `is_admin()`; the Owner
   dashboard drives them. Granting cancels the coach's other trials so there is
   one clock. Never nag a comped coach: the Account copy is per kind, and a test
