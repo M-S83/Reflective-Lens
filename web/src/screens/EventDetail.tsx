@@ -324,7 +324,13 @@ function Reflect({ eventId }: { eventId: string }) {
               {busy === "questions" ? <Spinner /> : qs.length ? "Refresh questions" : "Ask me questions"}
             </button>
           </div>
-          <p className="muted small">Optional, skippable prompts to add a little context where it's thin.
+          {/* Only the first of these is about thinness. One is an open question
+              from the curated bank and one is the same forward question after
+              every session, and both are asked whatever you wrote. Saying
+              "where it's thin" made the other two look like the app had judged
+              your reflection short when it had not. */}
+          <p className="muted small">Optional and skippable, every one of them. Some ask for a bit more
+            where a note was brief, and the last one is asked after every session.
             Answer by voice or text.</p>
           {qs.map((q) => (
             <div key={q.id} className="field">

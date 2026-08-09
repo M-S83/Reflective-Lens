@@ -15,7 +15,11 @@ export type MdBlock =
   | {
     t: "checklist";
     heading: string;
-    items: { mark: string; label: string; suffix?: string; note?: string | null }[];
+    // `mark` is optional. It earned its place when it was a tick, a tilde or a
+    // cross carrying a meaning per item. When every line would carry the SAME
+    // character it carries no information, and the list item already has a
+    // bullet, so printing it renders two.
+    items: { mark?: string; label: string; suffix?: string; note?: string | null }[];
   };
 
 export function renderReport(
@@ -39,7 +43,8 @@ export function renderReport(
     } else if (b.t === "checklist") {
       lines.push(`\n## ${b.heading}`);
       for (const it of b.items) {
-        lines.push(`- ${it.mark} **${it.label}**${it.suffix ?? ""}${it.note ? `: ${it.note}` : ""}`);
+        const mark = it.mark ? `${it.mark} ` : "";
+        lines.push(`- ${mark}**${it.label}**${it.suffix ?? ""}${it.note ? `: ${it.note}` : ""}`);
       }
     }
   }

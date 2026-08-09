@@ -173,8 +173,17 @@ Deno.serve(async (req) => {
         MIRROR_NOT_VERDICT + " " +
         "RESTATE ONLY what the coach actually said: never add a " +
         "characterisation of the game or a person they did not make themselves " +
-        "(e.g. don't call it 'a sharp game' unless they did — 'felt sharp' is " +
+        "(e.g. don't call it 'a sharp game' unless they did, 'felt sharp' is " +
         "about them, not the match). " +
+        // A real report opened "The team observation noted real bravery from the
+        // boys". The payload labels each note with subject_type, and the model
+        // narrated the label instead of the coach. It is a small thing that
+        // makes the whole report sound like a system describing a record rather
+        // than a person reading their own evening back.
+        "NEVER describe the data you were given. Do not write \"the team " +
+        "observation\", \"the note says\", \"the reflection states\", \"per the " +
+        "record\", or name any field you were passed. The coach said it: write " +
+        "\"you said\", \"you noticed\", \"you wrote\", or simply say the thing. " +
         "This is a COACH'S single-session report. Draw ONLY on what the coach " +
             "provided for THIS session: the aims, the notes captured, their " +
             "reflection, and their answers to the reflective questions. If " +
@@ -322,7 +331,9 @@ function coachMarkdown(title: string, c: any): string {
       t: "checklist",
       heading: "What you hoped to see",
       items: c.aims_review.map((a: any) => ({
-        mark: "·",
+        // No mark at all. "·" on every line was the same character each time, so
+        // it distinguished nothing, and the bullet already there rendered it as
+        // a second one: "• · Players that tend to only use their strong foot".
         label: a.aim,
         suffix: ` (${said(a.status)})`,
         note: a.note,
