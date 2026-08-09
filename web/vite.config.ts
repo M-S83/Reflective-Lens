@@ -22,6 +22,25 @@ export default defineConfig({
           { src: "pwa-icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
           { src: "pwa-icon.svg", sizes: "any", type: "image/svg+xml", purpose: "maskable" },
         ],
+        // A long press on the installed icon offers this, so a thought on the
+        // drive home is icon, press, tap, speak. Android honours it; iOS ignores
+        // shortcuts entirely, and the way round there is a second home screen
+        // icon added straight from /capture, or the action button on a 15 Pro
+        // and later. Both are in docs/beta-launch.md.
+        //
+        // No web app can put a record button on a LOCKED phone. Neither platform
+        // will open a microphone from the lock screen for a website, at all, and
+        // that is their decision rather than something to work around. This
+        // removes the steps that were ours to remove.
+        shortcuts: [
+          {
+            name: "Capture a thought",
+            short_name: "Thought",
+            description: "Record something without opening a session",
+            url: "/capture",
+            icons: [{ src: "pwa-icon.svg", sizes: "any", type: "image/svg+xml" }],
+          },
+        ],
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,woff2}"],

@@ -160,6 +160,10 @@ export default function App() {
       {readOnly && <RenewBanner label="coach" />}
       <Routes>
         <Route path="/" element={<Home />} />
+        {/* The home screen shortcut lands here. Same screen, but the thought
+            recorder is already open with the microphone first, so it is one tap
+            from the icon to speaking rather than four. */}
+        <Route path="/capture" element={<Home capture />} />
         <Route path="/teams" element={<Teams />} />
         <Route path="/teams/:teamId" element={<TeamDetail />} />
         <Route path="/new" element={readOnly ? <RenewWall label="coach" /> : <NewEvent />} />

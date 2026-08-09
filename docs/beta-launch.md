@@ -80,6 +80,35 @@ which has no end date and never shows them a countdown.
 
 Full detail in `accounts.md`.
 
+## Getting to the microphone fast
+
+The reason a coach loses a thought is the number of taps between having it and
+recording it. Worth telling your testers, because none of it is discoverable.
+
+**Everyone: add the app to the home screen.** The app offers this on the home
+screen the first few times. On iOS it is Share, then "Add to Home Screen"; on
+Android the browser offers to install it. Until they do this it is a website in
+a tab, and it will get lost among their tabs.
+
+**Android: long press the icon.** A "Capture a thought" shortcut is in the
+manifest, so a long press on the installed icon jumps straight to the recorder
+with the microphone already up. Icon, press, tap, speak.
+
+**iPhone: add a second icon.** iOS ignores manifest shortcuts, so do it by hand.
+Open `reflectivelens.co.uk/capture` in Safari, Share, "Add to Home Screen", and
+name it "Thought". That icon now opens straight into recording. Two icons, one
+for the app and one for the thing they do at the roadside.
+
+**iPhone 15 Pro and later: the action button.** Settings, Action Button, choose
+Shortcut, and pick a shortcut that opens `reflectivelens.co.uk/capture`. That is
+one physical press from a pocket to the microphone, which is as close to the
+lock screen as any web app can get.
+
+**What is not possible, so nobody wastes time looking for it:** a record button
+on the lock screen itself. Neither iOS nor Android will let a website open a
+microphone from a locked phone, and no setting changes that. It needs a native
+app, which is a different build and a different conversation.
+
 ## Before you press send
 
 - Read `/privacy` on the live site while **signed out**. It should load, and it

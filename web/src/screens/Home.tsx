@@ -13,7 +13,7 @@ function fmtDate(d: string | null) {
   catch { return d; }
 }
 
-export default function Home() {
+export default function Home({ capture = false }: { capture?: boolean }) {
   const { signOut } = useAuth();
   const nav = useNavigate();
   const [events, setEvents] = useState<EventRow[] | null>(null);
@@ -49,7 +49,7 @@ export default function Home() {
 
         <button className="btn block" onClick={() => nav("/new")}>+ Start a session or match</button>
 
-        <Thoughts />
+        <Thoughts arriving={capture} />
 
         <div>
           <div className="row" style={{ marginBottom: 8 }}>

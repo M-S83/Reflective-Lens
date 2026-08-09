@@ -17,10 +17,18 @@ import type { Observation } from "../lib/types";
 // So it lives on the home screen now, always available, attached to nothing.
 // Stored with event_id null and capture_phase 'ad_hoc', which the schema has
 // allowed since 0001 and nothing had ever used.
-export function Thoughts() {
+// `arriving` means the coach came here to record and nothing else: from the
+// home screen shortcut, or a phone's action button. The panel opens itself and
+// leads with the microphone, because at that point a textarea is in the way.
+//
+// A locked phone cannot be given a record button by a web app: no browser will
+// open a microphone from the lock screen, on either platform, and that is the
+// platform's decision rather than ours. What IS possible is removing every step
+// between the icon and recording, which is what this does.
+export function Thoughts({ arriving = false }: { arriving?: boolean }) {
   const [items, setItems] = useState<Observation[] | null>(null);
   const [text, setText] = useState("");
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(arriving);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -72,6 +80,11 @@ export function Thoughts() {
             against a game, and nothing is asked of you: write it and leave it.
           </div>
           <ErrorText>{err}</ErrorText>
+          {/* Arriving to record, the microphone comes first and the typing is
+              the alternative. Otherwise the other way round, which is right for
+              someone who opened the app to read and then thought of something. */}
+          {arriving && <RecordButton onComplete={saveVoice} label="Hold to record" />}
+
           <div className="field">
             <textarea
               value={text}
@@ -84,7 +97,7 @@ export function Thoughts() {
           <button className="btn" onClick={save} disabled={busy || !text.trim()}>
             {busy ? "Saving" : "Save thought"}
           </button>
-          <RecordButton onComplete={saveVoice} label="...or say it out loud" />
+          {!arriving && <RecordButton onComplete={saveVoice} label="...or say it out loud" />}
 
           {items === null ? (
             <Loading />
