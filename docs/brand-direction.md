@@ -40,11 +40,8 @@ reads as a record button. It is not a good drawing that means the wrong thing.
 It is an ordinary drawing that means the wrong thing, which makes it cheap to
 lose.
 
-The replacement has a risk of its own, which is worth writing down while we are
-being honest: in a single colour the fold's silhouette is a leaf, which is the
-most tired shape in the category. It earns its place from the two halves being
-different colours (the coach's side and the app's side), not from the outline.
-If that ever gets flattened to one colour, reject it.
+Being equally honest about the replacement: the first attempt at it was worse
+than what it replaced. See the mark section below.
 
 ---
 
@@ -105,20 +102,33 @@ because rounded cards with soft shadows are exactly what those look like.
 
 ---
 
-## The mark: the fold
+## The mark: not settled
 
-A page creased down the middle, each half answering the other. A mirror, which is
-the product, and it reads as an open notebook, which is the feeling.
+The idea holds. **A thing and its reflection, in two colours: one side the
+coach, one side the app answering.** The drawing does not, yet.
 
-Three strokes: a chalk spine, the coach's side in yellow, the app's side in grey.
-One half is what you said, the other is what came back. Two arcs and a line, so
-it survives at 20 pixels.
+**The fold as first drawn is rejected.** Rendered rather than described, its
+spine ran past the arcs top and bottom and it read as the Greek letter phi, not
+a folded page. Worse, at 22 pixels it had *less* presence than the target it was
+meant to replace, which is the opposite of the argument for changing it. Recorded
+here because it was written up as good before anyone had looked at it, and that
+is the mistake worth not repeating: draw it, render it at 22 pixels, then decide.
 
-```
-spine   M20 5v30                                    chalk  #EDEBE4
-right   M20 11c5.4 0 8.6 2.9 8.6 9s-3.2 9-8.6 9     yellow #E3C567
-left    M20 11c-5.4 0-8.6 2.9-8.6 9s3.2 9 8.6 9     dust   #93A3AC
-```
+Three candidates survive, none yet chosen:
+
+| | Reads as | Strength | Weakness |
+| --- | --- | --- | --- |
+| **Half filled** | One side solid, one open | Best at 22px by a distance, unmistakable two halves | Reads as a moon phase |
+| **The offset** | Two circles overlapping, out of true | Says "a thing and its reflection" better than anything else | Overlapping circles are Mastercard and Venn diagrams |
+| **The crease** | A page turned back on itself | Perfectly legible at any size | Looks like an interface icon, not a mark |
+
+**The offset is the one to beat.** It is the only candidate whose meaning a coach
+could be told in one sentence, and the overlap doing the work is a genuinely nice
+idea: the part that belongs to both of you.
+
+Whatever is chosen, the rule is the same as the palette's: **two halves, two
+colours, always.** In one colour every one of these collapses into a shape you
+have seen a thousand times.
 
 **The cheapest real fix available:** if nothing else here ever happens, delete the
 crosshair line from the current `Brandmark` in `web/src/components/ui.tsx`. It is
@@ -159,7 +169,8 @@ redesigned again in a year. Every one of these will occur to somebody.
 
 ## The order to build it in
 
-1. **The mark.** Standalone, self-contained, and it stops the contradiction
+1. **The mark.** Pick one of the three candidates first, at 22 pixels, on a real
+   screen. Then it is standalone, self-contained, and it stops the contradiction
    whatever else happens. Touches `Brandmark`, the PWA icon and the favicon.
 2. **The colour tokens.** `web/src/index.css` is already token driven, so Chalk
    is a rewrite of roughly twenty custom properties rather than a rebuild.
