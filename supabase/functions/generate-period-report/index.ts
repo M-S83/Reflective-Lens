@@ -228,11 +228,21 @@ Deno.serve(async (req) => {
         "session type had few notes, say less about it rather than inferring " +
         "more. " +
         MIRROR_NOT_VERDICT +
+        // "focus_ahead" asked the model what the coach should work on next. Over
+        // a season that is a bigger judgement than the one taken out of the
+        // single-session report this morning, not a smaller one, so the app was
+        // quietly more directive across a month than across an evening.
+        // What replaces it restates only what the COACH said they would do, and
+        // the reflecting is done by a fixed question added in code below.
+        " NOTED FOR NEXT: restate only what the coach themselves wrote that they " +
+        "would look at, try or change. Quote their intention, do not form one. " +
+        "If they did not say, return an empty array: that is a normal outcome " +
+        "and an empty section is better than an invented one. " +
         " Surface the patterns and connections across the notes. Return ONLY JSON with keys: " +
         '"headline" (string), "results_summary" (string), "sections" (array of ' +
         '{heading, points: string[]}), "player_highlights" (string[]), ' +
         '"recurring_themes" (string[]), "training_to_match" (string[]), ' +
-        '"focus_ahead" (string[]).' +
+        '"noted_for_next" (string[]).' +
         voice,
       prompt: `Report type: ${report_type}\n\nData:\n${payload}`,
       maxTokens: 3072,
@@ -259,7 +269,7 @@ Deno.serve(async (req) => {
       (Array.isArray(c.recurring_themes) && c.recurring_themes.length)
     );
     const content_markdown = structured
-      ? toMarkdown(heading, record, content_json)
+      ? toMarkdown(heading, record, content_json, report_type)
       : `# ${heading}\n\n${(raw ?? "").trim() ||
           "_The report came back empty. Please try generating it again._"}`;
     if (!structured) {
@@ -287,7 +297,7 @@ Deno.serve(async (req) => {
   }
 });
 
-function toMarkdown(title: string, record: any, c: any): string {
+function toMarkdown(title: string, record: any, c: any, reportType: string): string {
   const blocks: MdBlock[] = [{
     t: "para",
     text: `**Record:** ${record.wins}W ${record.draws}D ${record.losses}L ` +
@@ -301,6 +311,35 @@ function toMarkdown(title: string, record: any, c: any): string {
   bl("Player highlights", c.player_highlights);
   bl("Recurring themes", c.recurring_themes);
   bl("Training ↔ match", c.training_to_match);
-  bl("Focus ahead", c.focus_ahead);
+  // Their own stated intentions, not the app's advice. Falls back to the old
+  // key so reports generated before this change still render.
+  bl("What you said you would look at", c.noted_for_next ?? c.focus_ahead);
+
+  // The report ends by asking, not by telling.
+  //
+  // A single session has always closed with an open question about doing it
+  // again. A month or a season closed with "Focus ahead", which the model
+  // wrote. So the longer the period, the more the app decided for the coach,
+  // which is exactly the wrong way round: a season is where they most need to
+  // reach their own conclusion.
+  //
+  // Fixed text in code, like the single-session one, for the same reasons. It
+  // cannot drift into a suggestion, it costs nothing, it names no part of their
+  // coaching, and it reads the same after every period, which is what a
+  // reflective habit is made of.
+  blocks.push({ t: "bullets", heading: "Looking back", items: [lookBack(reportType)] });
   return renderReport(title, c.headline, blocks);
+}
+
+// "if anything" is load-bearing. Without it the question presumes the period
+// went badly, which is a verdict with a question mark on it.
+export function lookBack(reportType: string): string {
+  const period = reportType === "weekly"
+    ? "this week"
+    : reportType === "monthly"
+    ? "this month"
+    : reportType === "season"
+    ? "the season"
+    : "this period";
+  return `Looking back over ${period}, what would you do differently, if anything?`;
 }
