@@ -293,10 +293,40 @@ export async function addVoiceNote(
     .select("id").single();
   if (error) throw error;
 
-  await supabase.functions.invoke("transcribe-audio", {
-    body: { bucket: "audio-recordings", audio_path: path, target: "observation", target_id: (obs as any).id },
-  });
-  await supabase.functions.invoke("clean-observation", { body: { observation_id: (obs as any).id } });
+  try {
+    await callFunction("transcribe-audio", {
+      bucket: "audio-recordings", audio_path: path, target: "observation", target_id: (obs as any).id,
+    });
+  } catch {
+    // The note and the recording are both saved by this point, so this is not
+    // a lost thought, it is an unstarted job. Say so rather than leaving them
+    // watching a word that will never change.
+    throw new Error("Your recording is saved, but transcribing it could not start. Open the note and tap Try again.");
+  }
+  // Best effort: tidying and tagging can fail without costing anything, because
+  // the raw transcript is already on screen.
+  supabase.functions.invoke("clean-observation", { body: { observation_id: (obs as any).id } }).catch(() => {});
+}
+
+// Invoking an edge function and NOT looking at the answer.
+//
+// supabase.functions.invoke does not throw. It resolves with { data, error },
+// so `await invoke(...)` on its own line succeeds no matter what happened, and
+// every call below did exactly that. When transcription could not even be
+// STARTED, because of a boot error, an auth problem, or the phone dropping
+// signal between the upload and the call, the note was saved with no words, the
+// app said nothing, and it read "Transcribing…" for the rest of its life.
+//
+// Nothing was logged anywhere either, because the function was never reached.
+// The Supabase dashboard showed zero invocations and zero errors, which is the
+// least helpful pair of numbers in software: it looks like nothing is wrong.
+//
+// So: look at the answer. A voice note is the one thing in this app a coach
+// cannot retype from memory, and silently failing to process it is the worst
+// thing it can do.
+async function callFunction(name: string, body: Record<string, unknown>): Promise<void> {
+  const { error } = await supabase.functions.invoke(name, { body });
+  if (error) throw new Error((error as Error).message ?? `Could not reach ${name}.`);
 }
 
 // Ask again for a voice note whose transcript never arrived.
@@ -309,16 +339,13 @@ export async function addVoiceNote(
 // fix rather than a hopeful button.
 export async function retryTranscription(o: Observation): Promise<void> {
   if (!o.audio_path) throw new Error("There is no recording saved for this note.");
-  const { error } = await supabase.functions.invoke("transcribe-audio", {
-    body: {
-      bucket: "audio-recordings",
-      audio_path: o.audio_path,
-      target: "observation",
-      target_id: o.id,
-    },
+  await callFunction("transcribe-audio", {
+    bucket: "audio-recordings",
+    audio_path: o.audio_path,
+    target: "observation",
+    target_id: o.id,
   });
-  if (error) throw error;
-  await supabase.functions.invoke("clean-observation", { body: { observation_id: o.id } });
+  supabase.functions.invoke("clean-observation", { body: { observation_id: o.id } }).catch(() => {});
 }
 
 // ---- Reflection -------------------------------------------------------------
@@ -369,9 +396,13 @@ export async function saveVoiceReflection(
   } else {
     await supabase.from("reflections").update({ audio_path: path }).eq("id", ref.id);
   }
-  await supabase.functions.invoke("transcribe-audio", {
-    body: { bucket: "audio-recordings", audio_path: path, target: "reflection", target_id: ref.id },
-  });
+  try {
+    await callFunction("transcribe-audio", {
+      bucket: "audio-recordings", audio_path: path, target: "reflection", target_id: ref.id,
+    });
+  } catch {
+    throw new Error("Your reflection is recorded and saved, but transcribing it could not start. Try again in a moment.");
+  }
   return ref;
 }
 
@@ -401,9 +432,13 @@ export async function answerQuestionVoice(questionId: string, blob: Blob): Promi
   const { data, error } = await supabase
     .from("followup_answers").insert({ question_id: questionId, audio_path: path }).select("id").single();
   if (error) throw error;
-  await supabase.functions.invoke("transcribe-audio", {
-    body: { bucket: "audio-recordings", audio_path: path, target: "answer", target_id: (data as { id: string }).id },
-  });
+  try {
+    await callFunction("transcribe-audio", {
+      bucket: "audio-recordings", audio_path: path, target: "answer", target_id: (data as { id: string }).id,
+    });
+  } catch {
+    throw new Error("Your answer is recorded and saved, but transcribing it could not start. Try again in a moment.");
+  }
 }
 
 export async function enrich(reflectionId: string): Promise<void> {
