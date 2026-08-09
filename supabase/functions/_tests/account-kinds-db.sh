@@ -196,6 +196,31 @@ ok "and a coach sees only the plan they hold, not both" \
 ok "the buyable plans are still public" \
   "$(asu "$SNEAK" "select count(*) from public.plans where id = 'coach_monthly';")" "1"
 
+# --- a case-pair is refused, not guessed at ----------------------------------
+# SELECT INTO with two matching rows takes whichever the planner returns first
+# and says nothing, so granting to a coach with a case-pair had even odds of
+# landing on their empty account. They would be told they had access, sign in,
+# and not have it.
+$P >/dev/null <<SQL
+insert into auth.users (id,email,raw_user_meta_data)
+  values ('00000000-0000-0000-0000-0000000000ff','Beta@test','{"role":"coach"}');
+SQL
+ok "two accounts now differ only by capitals" \
+  "$($P -c "select count(*) from public.profiles where lower(email)='beta@test'")" "2"
+ok "granting refuses rather than picking one" \
+  "$(try "$OWNER" "select public.grant_plan('beta@test','coach_comp',null);")" "blocked"
+ok "and so does revoking" \
+  "$(try "$OWNER" "select public.revoke_plan('beta@test','coach_beta');")" "blocked"
+ok "the owner can see the pair" \
+  "$(asu "$OWNER" "select accounts from public.admin_duplicate_emails where email='beta@test';")" "2"
+ok "an ordinary user cannot" \
+  "$(asu "$SNEAK" "select count(*) from public.admin_duplicate_emails;")" "0"
+$P -c "delete from auth.users where id='00000000-0000-0000-0000-0000000000ff'" >/dev/null
+ok "with the duplicate gone, granting works again" \
+  "$(try "$OWNER" "select public.grant_plan('beta@test','coach_beta',60);")" "ok"
+ok "and the list is empty" \
+  "$(asu "$OWNER" "select count(*) from public.admin_duplicate_emails;")" "0"
+
 # --- the dashboard view ------------------------------------------------------
 ok "an ordinary user sees nobody" "$(asu "$SNEAK" "select count(*) from public.admin_accounts;")" "0"
 ok "the owner sees every account" "$(asu "$OWNER" "select count(*) from public.admin_accounts;")" "5"

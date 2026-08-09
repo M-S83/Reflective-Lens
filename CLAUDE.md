@@ -23,7 +23,7 @@ squad, never an account.
 
 ## Where things are
 
-- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`-`0023`.
+- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`-`0024`.
   Validated on PostgreSQL 16 (stubbed `auth`/`storage` schemas + a `test.uid` GUC).
 - `supabase/functions/` — Deno/TypeScript edge functions. Shared helpers in
   `_shared/` (`clients.ts` = model tiering + Claude/usage helpers, `voice.ts` =
@@ -56,6 +56,11 @@ squad, never an account.
   screen), or it becomes an email per visit again. `Account` can set one with no
   email at all, which is the only route in for accounts made before passwords.
   Held by `_tests/sign-in-cost.mjs`.
+- **One account per address.** Two accounts existed for `coachmsmith19@gmail.com`
+  and `Coachmsmith19@gmail.com`: one inbox, two sets of sessions. Every address
+  the app sends is lowercased (`web/src/lib/email.ts`), and `0024` makes
+  `grant_plan` / `revoke_plan` RAISE on a case-pair rather than let `select into`
+  pick a row at random. `admin_duplicate_emails` lists any that exist.
 - **Voice or text everywhere** — notes, reflections, and follow-up answers can all
   be a voice note or typed.
 - **Patterns never cross a session boundary.** A theme belongs to the team AND

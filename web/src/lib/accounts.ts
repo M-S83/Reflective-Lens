@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { normaliseEmail } from "./email";
 
 // Admin: who is on what, and handing out access.
 //
@@ -41,7 +42,7 @@ export async function listAccounts(): Promise<AccountRow[]> {
 // person is easy and silent.
 export async function grantPlan(email: string, plan: string, days: number | null): Promise<string> {
   const { data, error } = await supabase.rpc("grant_plan", {
-    p_email: email.trim(),
+    p_email: normaliseEmail(email),
     p_plan: plan,
     p_days: days,
   });
@@ -51,7 +52,7 @@ export async function grantPlan(email: string, plan: string, days: number | null
 
 export async function revokePlan(email: string, plan: string): Promise<string> {
   const { data, error } = await supabase.rpc("revoke_plan", {
-    p_email: email.trim(),
+    p_email: normaliseEmail(email),
     p_plan: plan,
   });
   if (error) throw error;

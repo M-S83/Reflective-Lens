@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase, isConfigured } from "../lib/supabase";
 import { Brandmark, ErrorText, Spinner } from "../components/ui";
 import { friendlyAuthError } from "../lib/authErrors";
+import { normaliseEmail } from "../lib/email";
 
 // Sign in with a password, so signing in costs no email.
 //
@@ -33,14 +34,14 @@ export default function SignIn() {
     try {
       if (mode === "in") {
         const { error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
+          email: normaliseEmail(email),
           password,
         });
         if (error) throw error;
         // AuthProvider picks up the session and routes onward.
       } else if (mode === "up") {
         const { error } = await supabase.auth.signUp({
-          email: email.trim(),
+          email: normaliseEmail(email),
           password,
           // Land them back wherever the app is actually running, rather than on
           // whichever single Site URL Supabase happens to hold.
@@ -62,7 +63,7 @@ export default function SignIn() {
         // emitted from a setTimeout while the Supabase client initialises, which
         // is at module load, before React has mounted anything to listen with,
         // so it fires into an empty room.
-        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        const { error } = await supabase.auth.resetPasswordForEmail(normaliseEmail(email), {
           redirectTo: `${window.location.origin}/set-password`,
         });
         if (error) throw error;
