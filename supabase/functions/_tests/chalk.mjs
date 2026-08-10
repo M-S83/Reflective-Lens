@@ -95,6 +95,19 @@ ok("one drawn in chalk", /stroke="var\(--ink\)"/.test(code(ui)));
 ok("the favicon matches", /#e3c567/i.test(favicon) && !/<line/.test(favicon));
 ok("and so does the home screen icon", /#e3c567/i.test(pwa) && !/<line/.test(pwa));
 
+// --- an unstyled button is not black -----------------------------------------
+// Browsers set `color: buttontext` on a button, which is black and beats
+// anything the page inherits. Half a dozen buttons in this app are plain
+// tappable rows with no class of their own, so on a slate board the report
+// titles and the "A thought" heading came out black while the muted date beside
+// them looked right, because .muted set a colour explicitly. It reads as a
+// theme that only half applied, and it is invisible in review because the
+// markup says nothing about colour at all.
+ok("a button inherits its colour", /^button \{[^}]*color: inherit/m.test(cssCode));
+ok("and its font", /^button \{[^}]*font: inherit/m.test(cssCode));
+// Element selector on purpose: every class that wants its own colour still wins.
+ok("but the solid button keeps its own", /\.btn \{[^}]*color: var\(--ink\)/.test(cssCode));
+
 // --- nothing on this board is dark text --------------------------------------
 // Everything here is light on dark. One patch of near-black type on a pale fill
 // fights the eye every time it lands there, and the solid button was exactly

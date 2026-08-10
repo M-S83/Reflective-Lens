@@ -9,8 +9,10 @@
   /* Deliberately light on every device, so the brand presentation is consistent. */
   :root{
     color-scheme: light;
-    --bg:#eef0e9; --fg:#16201b; --sub:#5c6b60; --line:#d7dace; --pitch:#123a2a; --grass:#2f8a57;
-    --accent:#2f8a57;
+    /* Chalk. The page the app sends people to has to look like the app, or the
+       first thing it teaches them is that they are in the wrong place. */
+    --bg:#22272b; --fg:#edebe4; --sub:#93a3ac; --line:#3f474d; --pitch:#edebe4; --grass:#8fb3cc;
+    --accent:#8fb3cc; --yours:#e3c567;
   }
   *{ box-sizing:border-box; }
   body{ margin:0; background:var(--bg); color:var(--fg); overflow-x:hidden; -webkit-text-size-adjust:100%;
@@ -43,14 +45,14 @@
   .cap{ font-size:12.5px; color:var(--sub); margin-top:10px; text-align:center; }
 
   /* Phone renders the app in its light theme (a device mockup). */
-  .phone{ --paper:#f6f5ef; --card:#fffffe; --ink:#16201b; --muted:#5c6b60; --faint:#eceade;
-    --hair:#dcdccf; --gpitch:#123a2a; --ggrass:#2f8a57; --ggrassink:#1f6b41; --gsoft:#e7f0e8;
-    --good:#3a9b68; --warn:#c2892f; --crit:#b5493c;
-    width:268px; height:552px; background:#f6f5ef; color:#16201b; color-scheme:light;
-    border:9px solid #141c17; border-radius:34px; overflow:hidden; box-shadow:0 18px 40px rgba(12,26,18,.28);
+  .phone{ --paper:#22272b; --card:#2b3136; --ink:#edebe4; --muted:#93a3ac; --faint:#333a40;
+    --hair:#3f474d; --gpitch:#edebe4; --ggrass:#8fb3cc; --ggrassink:#a6c6db; --gsoft:#2f3940;
+    --good:#8fb3cc; --warn:#d99a6c; --crit:#d97b6c; --yours:#e3c567;
+    width:268px; height:552px; background:#22272b; color:#edebe4; color-scheme:dark;
+    border:9px solid #11161a; border-radius:34px; overflow:hidden; box-shadow:0 18px 40px rgba(12,26,18,.28);
     display:flex; flex-direction:column; position:relative; }
   .phone .notch{ height:22px; display:flex; justify-content:center; align-items:center; }
-  .phone .notch::before{ content:""; width:78px; height:6px; background:#141c17; border-radius:99px; opacity:.85; }
+  .phone .notch::before{ content:""; width:78px; height:6px; background:#11161a; border-radius:99px; opacity:.85; }
   .scr{ flex:1; overflow:hidden; padding:6px 13px 13px; display:flex; flex-direction:column; gap:9px; text-align:left; }
 
   .bar{ display:flex; align-items:center; gap:8px; padding-bottom:9px; border-bottom:1px solid var(--hair); }
@@ -131,7 +133,7 @@
     .step, .sheet{ break-inside:avoid; }
     .foot{ break-inside:avoid; }
   }
-  .sheet{ --ink:#1a2620; --ssub:#5c6b60; --sline:#e2e2d5; --spitch:#123a2a; --sgood:#2f8a57; --swarn:#c2892f; --scrit:#b5493c;
+  .sheet{ --ink:#22272b; --ssub:#5f6b70; --sline:#e2e2d5; --spitch:#22272b; --sgood:#3a6480; --swarn:#9a6428; --scrit:#a6402f;
     background:#fbfbf6; color:var(--ink); border:1px solid #dcdccf; border-radius:16px; padding:24px 26px;
     box-shadow:0 10px 30px rgba(12,26,18,.10); text-align:left; }
   .sheet .kicker{ font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:var(--ssub); }
@@ -156,10 +158,8 @@
 <div class="wrap">
   <header class="top">
     <svg class="lens" width="40" height="40" viewBox="0 0 40 40" fill="none">
-      <circle cx="20" cy="20" r="17" stroke="var(--grass)" stroke-width="2.6"/>
-      <circle cx="20" cy="20" r="8" fill="var(--grass)" fill-opacity="0.18"/>
-      <circle cx="20" cy="20" r="8" stroke="var(--grass)" stroke-width="2.6"/>
-      <line x1="20" y1="3" x2="20" y2="37" stroke="var(--grass)" stroke-width="1.3" stroke-opacity="0.5"/>
+      <circle cx="15" cy="20" r="11.5" fill="var(--yours)"/>
+      <circle cx="25" cy="20" r="11.5" stroke="var(--fg)" stroke-width="2.6"/>
     </svg>
     <div>
       <h1 class="serif">Reflective Lens</h1>
@@ -185,7 +185,7 @@
         <div class="stepnum"><b>01</b><span>Sign in</span></div>
         <div class="phone"><div class="notch"></div><div class="scr">
           <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:12px; text-align:center; align-items:center;">
-            <svg width="46" height="46" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="var(--ggrass)" stroke-width="2.6"/><circle cx="20" cy="20" r="8" fill="var(--ggrass)" fill-opacity="0.18"/><circle cx="20" cy="20" r="8" stroke="var(--ggrass)" stroke-width="2.6"/><line x1="20" y1="3" x2="20" y2="37" stroke="var(--ggrass)" stroke-width="1.3" stroke-opacity="0.5"/></svg>
+            <svg width="46" height="46" viewBox="0 0 40 40" fill="none"><circle cx="15" cy="20" r="11.5" fill="var(--yours)"/><circle cx="25" cy="20" r="11.5" stroke="currentColor" stroke-width="2.6"/></svg>
             <div class="serif" style="font-size:20px; color:var(--gpitch)">Reflective Lens</div>
             <div class="muted s">See your coaching clearly.</div>
             <div class="card" style="width:100%; text-align:left; display:flex; flex-direction:column; gap:8px;">
@@ -205,7 +205,7 @@
       <div class="step">
         <div class="stepnum"><b>02</b><span>Home</span></div>
         <div class="phone"><div class="notch"></div><div class="scr">
-          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="var(--ggrass)" stroke-width="3"/><circle cx="20" cy="20" r="8" stroke="var(--ggrass)" stroke-width="3"/></svg>
+          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="15" cy="20" r="11.5" fill="var(--yours)"/><circle cx="25" cy="20" r="11.5" stroke="var(--ink)" stroke-width="3"/></svg>
             <div><div class="e">Coach</div><div class="t">Reflective Lens</div></div><div class="sp"></div></div>
           <div class="banner">Add Reflective Lens to your home screen for one-tap access.</div>
           <div class="btn block">+ Start a session or match</div>
@@ -221,7 +221,7 @@
       <div class="step">
         <div class="stepnum"><b>03</b><span>Set the intent</span></div>
         <div class="phone"><div class="notch"></div><div class="scr">
-          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="var(--ggrass)" stroke-width="3"/><circle cx="20" cy="20" r="8" stroke="var(--ggrass)" stroke-width="3"/></svg><div><div class="e">Set the intent</div><div class="t">New session</div></div></div>
+          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="15" cy="20" r="11.5" fill="var(--yours)"/><circle cx="25" cy="20" r="11.5" stroke="var(--ink)" stroke-width="3"/></svg><div><div class="e">Set the intent</div><div class="t">New session</div></div></div>
           <div class="card" style="display:flex; flex-direction:column; gap:8px;">
             <div><span class="lab">Type</span><div class="chips"><span class="chip on">Training</span><span class="chip">Match</span><span class="chip">Tournament</span></div></div>
             <div><span class="lab">Team</span><div class="inp">U12 Lions, Riverside FC</div></div>
@@ -242,7 +242,7 @@
       <div class="step">
         <div class="stepnum"><b>04</b><span>Pick the squad</span></div>
         <div class="phone"><div class="notch"></div><div class="scr">
-          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="var(--ggrass)" stroke-width="3"/><circle cx="20" cy="20" r="8" stroke="var(--ggrass)" stroke-width="3"/></svg><div><div class="e">match</div><div class="t">Match vs Ashwood</div></div></div>
+          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="15" cy="20" r="11.5" fill="var(--yours)"/><circle cx="25" cy="20" r="11.5" stroke="var(--ink)" stroke-width="3"/></svg><div><div class="e">match</div><div class="t">Match vs Ashwood</div></div></div>
           <div class="chips"><span class="chip on">Squad</span><span class="chip">Result</span><span class="chip">Notes</span><span class="chip">Reflect</span></div>
           <div class="card row"><span class="muted s">9 of 11 here</span><div class="sp"></div><span class="muted s">8 starters</span></div>
           <div class="card" style="display:flex;flex-direction:column;gap:6px">
@@ -264,7 +264,7 @@
       <div class="step">
         <div class="stepnum"><b>05</b><span>Match result</span></div>
         <div class="phone"><div class="notch"></div><div class="scr">
-          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="var(--ggrass)" stroke-width="3"/><circle cx="20" cy="20" r="8" stroke="var(--ggrass)" stroke-width="3"/></svg><div><div class="e">match</div><div class="t">Match vs Ashwood</div></div></div>
+          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="15" cy="20" r="11.5" fill="var(--yours)"/><circle cx="25" cy="20" r="11.5" stroke="var(--ink)" stroke-width="3"/></svg><div><div class="e">match</div><div class="t">Match vs Ashwood</div></div></div>
           <div class="chips"><span class="chip">Squad</span><span class="chip on">Result</span><span class="chip">Notes</span><span class="chip">Reflect</span></div>
           <div class="card" style="display:flex;flex-direction:column;gap:8px">
             <h3>The score</h3>
@@ -292,7 +292,7 @@
       <div class="step">
         <div class="stepnum"><b>06</b><span>Capture notes</span></div>
         <div class="phone"><div class="notch"></div><div class="scr">
-          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="var(--ggrass)" stroke-width="3"/><circle cx="20" cy="20" r="8" stroke="var(--ggrass)" stroke-width="3"/></svg><div><div class="e">training</div><div class="t">Training session</div></div></div>
+          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="15" cy="20" r="11.5" fill="var(--yours)"/><circle cx="25" cy="20" r="11.5" stroke="var(--ink)" stroke-width="3"/></svg><div><div class="e">training</div><div class="t">Training session</div></div></div>
           <div class="chips"><span class="chip on">Notes</span><span class="chip">Reflect</span><span class="chip">Report</span></div>
           <div class="card" style="display:flex; flex-direction:column; gap:7px;">
             <div class="chips"><span class="chip">Before</span><span class="chip on">Live</span><span class="chip">After</span><span class="chip">Thought</span></div>
@@ -313,7 +313,7 @@
       <div class="step">
         <div class="stepnum"><b>07</b><span>Reflect</span></div>
         <div class="phone"><div class="notch"></div><div class="scr">
-          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="var(--ggrass)" stroke-width="3"/><circle cx="20" cy="20" r="8" stroke="var(--ggrass)" stroke-width="3"/></svg><div><div class="e">training</div><div class="t">Training session</div></div></div>
+          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="15" cy="20" r="11.5" fill="var(--yours)"/><circle cx="25" cy="20" r="11.5" stroke="var(--ink)" stroke-width="3"/></svg><div><div class="e">training</div><div class="t">Training session</div></div></div>
           <div class="chips"><span class="chip">Notes</span><span class="chip on">Reflect</span><span class="chip">Report</span></div>
           <div class="card" style="display:flex; flex-direction:column; gap:6px;">
             <div class="row"><h3>Your reflection</h3><div class="sp"></div>
@@ -339,7 +339,7 @@
       <div class="step">
         <div class="stepnum"><b>08</b><span>Report</span></div>
         <div class="phone"><div class="notch"></div><div class="scr">
-          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="var(--ggrass)" stroke-width="3"/><circle cx="20" cy="20" r="8" stroke="var(--ggrass)" stroke-width="3"/></svg><div><div class="e">training</div><div class="t">Training session</div></div></div>
+          <div class="bar"><svg class="mark" viewBox="0 0 40 40" fill="none"><circle cx="15" cy="20" r="11.5" fill="var(--yours)"/><circle cx="25" cy="20" r="11.5" stroke="var(--ink)" stroke-width="3"/></svg><div><div class="e">training</div><div class="t">Training session</div></div></div>
           <div class="chips"><span class="chip">Notes</span><span class="chip">Reflect</span><span class="chip on">Report</span></div>
           <div class="card md">
             <div class="serif" style="font-size:15px; color:var(--gpitch)">Training report</div>

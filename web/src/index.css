@@ -69,6 +69,16 @@
 }
 
 * { box-sizing: border-box; }
+
+/* A button does NOT inherit its colour. Browsers set `color: buttontext`, which
+   is black, and that beats anything the page inherits. So every button used as
+   a plain tappable row rendered black type on the slate board: the "A thought"
+   heading, and the title of every report in the list, while the muted date
+   beside it looked fine because .muted set a colour explicitly. It reads as a
+   theme that has half applied.
+   Element selector, so any class that wants its own colour still wins: .btn,
+   .chip and .record all set theirs. */
+button { font: inherit; color: inherit; }
 html, body, #root { height: 100%; }
 body {
   margin: 0;

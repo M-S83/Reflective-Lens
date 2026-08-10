@@ -60,6 +60,17 @@ export default function Home({ capture = false }: { capture?: boolean }) {
         <div>
           <div className="row" style={{ marginBottom: 8 }}>
             <h2 className="serif" style={{ fontSize: 16, color: "var(--pitch)" }}>Recent</h2>
+            <div className="spacer" />
+            {/* Findable after the first session, not only before it. This link
+                used to live inside the empty state below, so it vanished the
+                moment a coach created anything, and the questions it answers
+                ("what is it doing with my notes", "what will the report say")
+                are ones nobody has on day one. From then on the only route to it
+                was the Account tab, underneath the button that deletes your
+                account. */}
+            <a className="muted small" href="/walkthrough.html" target="_blank" rel="noreferrer">
+              How it works
+            </a>
           </div>
           <ErrorText>{err}</ErrorText>
           {events === null ? (
