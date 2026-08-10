@@ -16,9 +16,34 @@ feedback is worth more than that in an afternoon.
 
 ---
 
+## The visuals
+
+In `promo/`, with the script that made them (`generate.py`, run from that
+folder). Portrait 1080x1350, which fills more of a chat than a square does, and
+set large enough to survive WhatsApp's compression.
+
+| File | What it is | When |
+| --- | --- | --- |
+| `wa-1-ask.png` | Five coaches wanted, free for life | Send first. It has to work as a thumbnail. |
+| `wa-2-proof.png` | A report, with the coach's words in yellow | Send second. The strongest of the three. |
+| `wa-3-how.png` | The three steps | Optional. Only if the group is a chatty one. |
+| `promo-square.png` | 1080x1080 | Facebook, or anywhere square is wanted. |
+
+**Send two, not three.** A group post that arrives as a wall of images gets
+scrolled past, and the third card says nothing the first two have not.
+
+**The second one is the important one.** It shows a real report with the coach's
+own words in yellow and the app's words in grey, and says so underneath. Every
+competitor can claim it does not judge you. This is the only version of that
+claim that can be checked at a glance, which is why it is the picture rather
+than a bullet point.
+
+---
+
 ## The short post
 
 For WhatsApp groups. Long posts do not get read on a phone between sessions.
+Send this as the caption on the first image, not as a separate message.
 
 > **Five coaches wanted.**
 >
@@ -34,9 +59,20 @@ For WhatsApp groups. Long posts do not get read on a phone between sessions.
 > The five who help us get it **free for life**. All we want back is that you use
 > it for real sessions and tell us when it gets something wrong.
 >
-> Comment or message us and we will send you a link.
+> Reply here or message us and we will send you a link.
 >
 > reflectivelens.co.uk
+
+**Shorter still**, if the group is busy and long posts get lost. Caption on the
+first image, and nothing else:
+
+> Five coaches wanted, free for life.
+>
+> Talk to it for a minute after a session and it gives your own thinking back to
+> you, organised. It never marks you: no scores, no grades, no "you should have".
+>
+> All we want back is that you use it for real and tell us when it gets
+> something wrong. Reply and we will send you a link.
 
 ---
 
