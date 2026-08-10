@@ -56,7 +56,7 @@ function LapsedBanner() {
     <div className="banner warn" style={{ margin: "8px 12px 0" }}>
       Your free access has ended, so nothing new can be added for now. Everything
       you have written is still here to read. Nothing is being charged while the
-      app is in beta, so ask on the <Link to="/account">Account</Link> tab and I
+      app is in beta, so ask on the <Link to="/account">Account</Link> tab and we
       will turn it back on.
     </div>
   );
@@ -74,7 +74,7 @@ function LapsedWall() {
           </p>
           <p className="muted">
             Nothing is being charged while the app is in beta. If you would like
-            to carry on, say so on the Account tab and I will switch it back on.
+            to carry on, say so on the Account tab and we will switch it back on.
           </p>
           <Link className="btn block" to="/account">Go to Account</Link>
         </div>

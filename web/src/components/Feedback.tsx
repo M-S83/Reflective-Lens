@@ -71,7 +71,7 @@ export function FeedbackForm({ onDone }: { onDone?: () => void }) {
         {busy ? "Sending" : "Send"}
       </button>
       <div className="muted small">
-        This goes straight to me. It records which screen you were on so I can
+        This comes straight to us. It records which screen you were on so we can
         find it, and nothing else about what you were writing.
       </div>
     </div>
@@ -100,7 +100,7 @@ export function FeedbackButton() {
     <div className="feedback-sheet" role="dialog" aria-label="Send feedback">
       <div className="card stack">
         <div className="row">
-          <strong>Tell me something</strong>
+          <strong>Tell us something</strong>
           <div className="spacer" />
           <button className="btn small" onClick={() => setOpen(false)} aria-label="Close">Close</button>
         </div>

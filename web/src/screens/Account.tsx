@@ -58,7 +58,7 @@ function PlanLine() {
       <div className="muted small">
         Your free access has ended. You can still read and export everything you
         have written. Nothing is being charged while the app is in beta, so send
-        me a note below and I will turn it back on.
+        us a note below and we will turn it back on.
       </div>
     );
   }
@@ -221,9 +221,9 @@ export default function Account() {
 
         {/* --- Beta feedback ------------------------------------------- */}
         <div className="card stack">
-          <strong>Tell me something</strong>
+          <strong>Tell us something</strong>
           <div className="muted small">
-            This is a beta, so what does not work is as useful to me as what
+            This is a beta, so what does not work is as useful to us as what
             does. Anything at all: a bug, a bit that made no sense, an idea.
           </div>
           <FeedbackForm />

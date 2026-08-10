@@ -15,7 +15,7 @@ and granting beta afterwards replaces that month with the 90 days.
 
 Hello,
 
-I have built something and I would like ten coaches to break it before anyone
+We have built something and we would like ten coaches to break it before anyone
 else sees it. You are one of them.
 
 It is called Reflective Lens. You tell it about a session or a game, in your own
@@ -23,8 +23,8 @@ words, by voice or by typing, and it gives that back to you organised: what you
 said, what keeps coming up, and a few questions worth sitting with.
 
 **It never marks you.** No scores, no grades, no "you should have". If anything
-it writes ever reads like a verdict or a lesson, that is a fault and I want to
-know about it. That is the single most useful thing you can tell me.
+it writes ever reads like a verdict or a lesson, that is a fault and we want to
+know about it. That is the single most useful thing you can tell us.
 
 **Getting started, about two minutes:**
 
@@ -51,16 +51,16 @@ car park and it is gone by the time you are home. So:
 Recording is **one tap to start and one tap to stop**, not press and hold, so you
 can put the phone down and keep talking. A counter runs while it listens.
 
-**What would help me most over the next few weeks:**
+**What would help us most over the next few weeks:**
 
 - Use it after real sessions, not made-up ones. Once or twice a week is plenty.
 - Do a few before you look at any report, because it has more to work with.
-- Tell me anything that felt like being told off, or anything that sounded like
+- Tell us anything that felt like being told off, or anything that sounded like
   it was written by a computer rather than by you.
-- Tell me anything that was confusing, boring or in the way.
+- Tell us anything that was confusing, boring or in the way.
 
-There is a **"Tell me something"** box at the bottom of the Account tab. It comes
-straight to me. A one-line grumble is worth more than a polite paragraph.
+There is a **"Tell us something"** box at the bottom of the Account tab. It comes
+straight to us. A one-line grumble is worth more than a polite paragraph.
 
 Nothing costs anything, nothing is being charged, and nothing you write is shared
 with anyone. It is yours and you can delete the lot from inside the app.
@@ -72,11 +72,11 @@ Michael
 
 ## The short one
 
-> I have built a reflection app for coaches and I want you to break it.
+> We have built a reflection app for coaches and we want you to break it.
 > reflectivelens.co.uk, create an account with your email and a password, then
 > add it to your home screen. Talk to it after a session and it gives your own
 > thinking back to you organised. It never marks you, and if it ever sounds like
-> it is telling you off, tell me, because that is the bug I care about.
+> it is telling you off, tell us, because that is the bug we care about.
 > Add reflectivelens.co.uk/capture to your home screen as a second icon and it
 > opens straight onto the microphone. Feedback box is at the bottom of the
 > Account tab. Free, no catch.
@@ -109,14 +109,14 @@ Hello,
 You are on. Your place runs to [date], and there is nothing to pay, nothing to
 set up and nothing to renew. Just open the app and carry on.
 
-Two things I would ask, and neither takes long:
+Two things we would ask, and neither takes long:
 
 **Use it after real sessions.** Once or twice a week is plenty. It has more to
 work with the more you put in, so the reports get better the longer you go.
 
-**Tell me when it gets it wrong.** Especially if anything it writes ever reads
+**Tell us when it gets it wrong.** Especially if anything it writes ever reads
 like it is marking you, correcting you or telling you what to do. That is the
-one thing it must never do, and you spotting it is worth more to me than
+one thing it must never do, and you spotting it is worth more to us than
 anything else you could send. The box is at the bottom of the Account tab.
 
 Thank you for the time. It matters more than you would think at this stage.
