@@ -25,7 +25,7 @@ set large enough to survive WhatsApp's compression.
 | File | What it is | When |
 | --- | --- | --- |
 | `wa-1-ask.png` | Five coaches wanted, free for life | Send first. It has to work as a thumbnail. |
-| `wa-2-proof.png` | A report, with the coach's words in yellow | Send second. The strongest of the three. |
+| `wa-2-proof.png` | The real report screen, in a phone | Send second. The strongest of the three. |
 | `wa-3-how.png` | The three steps | Optional. Only if the group is a chatty one. |
 | `promo-square.png` | 1080x1080 | Facebook, or anywhere square is wanted. |
 
@@ -38,10 +38,23 @@ it, rather than choosing a size and then breaking the line to fit.
 **Send two, not three.** A group post that arrives as a wall of images gets
 scrolled past, and the third card says nothing the first two have not.
 
-**The second one is the important one.** It shows a real report with the coach's
-own words in yellow and the app's words in grey, and says so underneath. Every
-competitor can claim it does not judge you. This is the only version of that
-claim that can be checked at a glance, which is why it is the picture rather
+**The second one is the important one, and it is not a mockup.** The phone on
+that card is the app's own compiled stylesheet (`app.css`, copied from a build)
+laid out at a real phone's width and scaled up, so the type, the spacing and
+every colour are the app's rather than an impression of one. The words in it are
+an example session, which is the ordinary way app pictures are made, but nothing
+about how it looks is invented.
+
+Regenerate it with `generate-proof.py`, and refresh `app.css` from
+`web/dist/assets/` first if the design has moved on, or the picture will quietly
+be advertising last month's app.
+
+**If you would rather use a real session of your own**, send a screenshot and it
+can be dropped into the same frame. That is better again, because the words are
+yours, though it does mean a real team's name is in a public post.
+
+Every competitor can claim it does not judge you. This is the only version of
+that claim a coach can check at a glance, which is why it is the picture rather
 than a bullet point.
 
 ---
