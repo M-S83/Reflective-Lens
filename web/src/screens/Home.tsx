@@ -42,7 +42,15 @@ export default function Home({ capture = false }: { capture?: boolean }) {
             the card that offers it was two taps down a settings screen nobody
             opens. It hides itself once installed, and stays hidden once
             dismissed. */}
-        {!isStandalone() && <QuickCapture onCapturePage={capture} />}
+        {/* On /capture it stays in the page, because that screen exists to be
+            read and the Safari steps need room. Everywhere else it floats: it
+            arrives above the tab bar rather than waiting to be scrolled past,
+            which is what a coach remembers from other apps and is the whole
+            reason this was not landing. It only appears when there is something
+            to press. */}
+        {!isStandalone() && (
+          capture ? <QuickCapture onCapturePage /> : <QuickCapture floating />
+        )}
 
         <Thoughts arriving={capture} />
 

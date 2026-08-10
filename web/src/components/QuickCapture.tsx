@@ -28,7 +28,14 @@ import { isIOS, isStandalone, useInstallPrompt } from "./ui";
 // again on their tablet, where they have not done it.
 const HIDDEN = "rl.hideInstallCard";
 
-export function QuickCapture({ onCapturePage = false }: { onCapturePage?: boolean }) {
+// `floating` is the version that comes to the coach: a sheet above the tab bar
+// on the home screen, rather than a card they have to notice while scrolling.
+// It only ever appears when there is something to actually DO, which on Android
+// means the browser has made its offer and on iPhone means they are in Safari
+// where the Share menu exists. Anywhere else it would be a nag with no button.
+export function QuickCapture(
+  { onCapturePage = false, floating = false }: { onCapturePage?: boolean; floating?: boolean },
+) {
   const [dismissed, setDismissed] = useState(() => {
     try { return localStorage.getItem(HIDDEN) === "1"; } catch { return false; }
   });
@@ -41,10 +48,14 @@ export function QuickCapture({ onCapturePage = false }: { onCapturePage?: boolea
   const url = `${window.location.origin}/capture`;
   const [copied, setCopied] = useState(false);
 
-  if (dismissed) return null;
-
   const ios = isIOS();
   const installed = isStandalone();
+
+  if (dismissed) return null;
+  // Nothing to offer, so nothing to interrupt anyone with. On Android that
+  // means the browser has not made its offer (already installed, or declined
+  // recently); on an installed iPhone the Share menu does not exist in here.
+  if (floating && !(canInstall || (ios && !installed))) return null;
 
   const copy = async () => {
     try {
@@ -54,7 +65,7 @@ export function QuickCapture({ onCapturePage = false }: { onCapturePage?: boolea
     } catch { /* a phone that refuses the clipboard still shows the address */ }
   };
 
-  return (
+  const body = (
     <div className="card stack" style={{ gap: 8 }}>
       <div className="row">
         <strong>One tap to record</strong>
@@ -148,4 +159,6 @@ export function QuickCapture({ onCapturePage = false }: { onCapturePage?: boolea
       )}
     </div>
   );
+
+  return floating ? <div className="install-sheet">{body}</div> : body;
 }

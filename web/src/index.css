@@ -294,6 +294,26 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--yours); out
   border: 1px solid var(--grass);
   opacity: 0.97;
 }
+/* --- The install offer, arriving rather than waiting ----------------------
+   A card in the page flow is something you have to notice. This is the thing a
+   coach remembers from other apps: it comes to them. Chrome's own banner would
+   do the same job, but taking the event over is the only way to say WHY the
+   icon matters, and to put the ask somewhere it is not competing with a page
+   the coach opened for another reason.
+   Above the tab bar, never over it, and it slides rather than appears so it
+   reads as arriving instead of as something that was always there and missed. */
+.install-sheet {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: calc(58px + env(safe-area-inset-bottom));
+  z-index: 7;
+  padding: 0 12px;
+  animation: rise .28s ease-out;
+}
+@keyframes rise { from { transform: translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .install-sheet { animation: none; } }
+.install-sheet .card { border-color: var(--grass); }
+
 .feedback-sheet {
   position: fixed;
   left: 0;
