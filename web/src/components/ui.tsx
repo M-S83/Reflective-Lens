@@ -1,4 +1,5 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
+import { canInstall as installAvailable, promptInstall, subscribeToInstall } from "../lib/install";
 
 // The offset: a thing and its reflection, not quite in line. The filled circle
 // is the coach, the drawn one is what came back, and the overlap is the part
@@ -89,22 +90,16 @@ export function Markdown({ text }: { text: string }) {
   return <div className="md">{out}</div>;
 }
 
-// beforeinstallprompt → an "Add to home screen" affordance (Android/desktop).
-// iOS has no event; the UI shows a Share→Add hint there instead.
-interface BIPEvent extends Event { prompt: () => Promise<void>; }
+// beforeinstallprompt gives an "Add to home screen" button on Android and
+// desktop. iOS has no such event at all, so there the UI shows the Share then
+// Add steps instead, which is the only route Apple offers.
 export function useInstallPrompt() {
-  const [evt, setEvt] = useState<BIPEvent | null>(null);
-  useEffect(() => {
-    const h = (e: Event) => { e.preventDefault(); setEvt(e as BIPEvent); };
-    window.addEventListener("beforeinstallprompt", h);
-    return () => window.removeEventListener("beforeinstallprompt", h);
-  }, []);
-  const promptInstall = async () => {
-    if (!evt) return;
-    await evt.prompt();
-    setEvt(null);
-  };
-  return { canInstall: !!evt, promptInstall };
+  // Subscribes to the module that has been listening since load, rather than
+  // adding a listener now: `beforeinstallprompt` fires once, seconds after the
+  // page opens, and a hook that starts listening when a card mounts has already
+  // missed it. See lib/install.ts.
+  const canInstall = useSyncExternalStore(subscribeToInstall, installAvailable, () => false);
+  return { canInstall, promptInstall };
 }
 
 // Already added to the home screen and opened from it. Matters because the two

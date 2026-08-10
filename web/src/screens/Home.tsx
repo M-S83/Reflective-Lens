@@ -5,7 +5,7 @@ import type { EventRow } from "../lib/types";
 import { sessionLabel } from "../lib/types";
 import { Thoughts } from "../components/Thoughts";
 import { useAuth } from "../auth/AuthProvider";
-import { ErrorText, Loading, TopBar, isIOS, isStandalone, useInstallPrompt } from "../components/ui";
+import { ErrorText, Loading, TopBar, isStandalone } from "../components/ui";
 import { QuickCapture } from "../components/QuickCapture";
 
 function fmtDate(d: string | null) {
@@ -19,8 +19,6 @@ export default function Home({ capture = false }: { capture?: boolean }) {
   const nav = useNavigate();
   const [events, setEvents] = useState<EventRow[] | null>(null);
   const [err, setErr] = useState("");
-  const { canInstall, promptInstall } = useInstallPrompt();
-  const [dismissInstall, setDismissInstall] = useState(false);
 
   useEffect(() => {
     recentEvents().then(setEvents).catch((e) => setErr((e as Error).message));
@@ -34,26 +32,17 @@ export default function Home({ capture = false }: { capture?: boolean }) {
         right={<button className="btn ghost sm" onClick={() => signOut()}>Sign out</button>}
       />
       <div className="screen stack">
-        {(canInstall || isIOS()) && !dismissInstall && (
-          <div className="banner row" style={{ justifyContent: "space-between" }}>
-            <span>
-              {canInstall
-                ? "Add Reflective Lens to your home screen for one-tap access."
-                : "Add to your iPad/iPhone: tap Share, then “Add to Home Screen”."}
-            </span>
-            <span className="row" style={{ gap: 6 }}>
-              {canInstall && <button className="btn sm" onClick={promptInstall}>Add</button>}
-              <button className="btn ghost sm" onClick={() => setDismissInstall(true)}>Dismiss</button>
-            </span>
-          </div>
-        )}
-
         <button className="btn block" onClick={() => nav("/new")}>+ Start a session or match</button>
 
-        {/* Shown on /capture when they are still in a browser, because Safari
-            can only add a home screen icon for the page it is looking at. Put
-            anywhere else, the instruction is one nobody can follow. */}
-        {capture && !isStandalone() && <QuickCapture onCapturePage />}
+        {/* On /capture it is the page-specific version, because Safari can only
+            add an icon for the page it is looking at.
+            Everywhere else on Home it is the ordinary offer, and it belongs here
+            rather than only on the Account tab. Getting the app onto the home
+            screen is the single biggest thing between a coach and using it, and
+            the card that offers it was two taps down a settings screen nobody
+            opens. It hides itself once installed, and stays hidden once
+            dismissed. */}
+        {!isStandalone() && <QuickCapture onCapturePage={capture} />}
 
         <Thoughts arriving={capture} />
 

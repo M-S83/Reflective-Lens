@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import { EntitlementProvider } from "./lib/entitlements";
 import App from "./App";
+import { watchForInstallPrompt } from "./lib/install";
 import "./index.css";
 
 // Take an update the moment it is ready, rather than on the visit after next.
@@ -23,6 +24,10 @@ import "./index.css";
 // controllerchange fires when a new worker takes over. It also fires on the very
 // first registration, when there is nothing to replace, so that case is skipped:
 // reloading a page that has only just loaded looks like a fault.
+// Before React renders. Chrome fires the install offer about a second after
+// load, and a listener added later has already missed it.
+watchForInstallPrompt();
+
 if ("serviceWorker" in navigator) {
   const hadController = !!navigator.serviceWorker.controller;
   let reloaded = false;

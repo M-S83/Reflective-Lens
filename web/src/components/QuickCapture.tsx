@@ -21,8 +21,22 @@ import { isIOS, isStandalone, useInstallPrompt } from "./ui";
 //
 // Written to be dismissible and quiet. A coach who does not want a second icon
 // should not be asked twice.
+// "Not now" has to mean not now, not "until you reload". It was component
+// state, so a coach who dismissed it was asked again on the next visit, and the
+// one after that. localStorage is the right store for this: adding an icon is a
+// per-device act, and syncing the preference to the account would nag them
+// again on their tablet, where they have not done it.
+const HIDDEN = "rl.hideInstallCard";
+
 export function QuickCapture({ onCapturePage = false }: { onCapturePage?: boolean }) {
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    try { return localStorage.getItem(HIDDEN) === "1"; } catch { return false; }
+  });
+  const hide = () => {
+    try { localStorage.setItem(HIDDEN, "1"); } catch { /* private mode: this visit only */ }
+    setDismissed(true);
+  };
+  const [added, setAdded] = useState(false);
   const { canInstall, promptInstall } = useInstallPrompt();
   const url = `${window.location.origin}/capture`;
   const [copied, setCopied] = useState(false);
@@ -45,7 +59,7 @@ export function QuickCapture({ onCapturePage = false }: { onCapturePage?: boolea
       <div className="row">
         <strong>One tap to record</strong>
         <div className="spacer" />
-        <button className="btn ghost sm" onClick={() => setDismissed(true)}>Not now</button>
+        <button className="btn ghost sm" onClick={hide}>Not now</button>
       </div>
 
       {ios && !installed && (
@@ -105,11 +119,31 @@ export function QuickCapture({ onCapturePage = false }: { onCapturePage?: boolea
       {!ios && !installed && (
         <>
           <div className="muted small">
-            Add Reflective Lens to your home screen first, then add
-            <strong> {url}</strong> as a second icon called Thought.
-            That one opens straight into recording.
+            Until it is on your home screen it is a tab among fifty tabs, and a
+            thought in a car park does not survive being looked for.
           </div>
-          {canInstall && <button className="btn block" onClick={promptInstall}>Add to home screen</button>}
+          {canInstall ? (
+            <button
+              className="btn block"
+              onClick={async () => { if (await promptInstall()) setAdded(true); }}
+            >
+              Add Reflective Lens to my home screen
+            </button>
+          ) : (
+            // No offer from the browser: already installed, declined recently,
+            // or a browser that does not do this. Saying where to look beats a
+            // button that would do nothing when pressed.
+            <div className="muted small">
+              Open your browser menu and choose <strong>Install app</strong> or
+              <strong> Add to Home screen</strong>.
+            </div>
+          )}
+          {added && (
+            <div className="banner">
+              Added. Now add <strong>{url}</strong> as a second icon called
+              Thought, and that one opens straight into recording.
+            </div>
+          )}
         </>
       )}
     </div>
