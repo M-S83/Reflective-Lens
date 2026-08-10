@@ -29,6 +29,12 @@ set large enough to survive WhatsApp's compression.
 | `wa-3-how.png` | The three steps | Optional. Only if the group is a chatty one. |
 | `promo-square.png` | 1080x1080 | Facebook, or anywhere square is wanted. |
 
+**Set the type to the measure.** The first pass broke every headline by hand and
+capped the body at 22 characters a line, so all three cards had their words
+stacked down the left and half the picture empty. A poster is read at arm's
+length on a phone: let the line run to the margin and choose a size that fills
+it, rather than choosing a size and then breaking the line to fit.
+
 **Send two, not three.** A group post that arrives as a wall of images gets
 scrolled past, and the third card says nothing the first two have not.
 

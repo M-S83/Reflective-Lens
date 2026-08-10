@@ -41,23 +41,21 @@ foot = ('<div><div class="rule" style="margin-bottom:28px"></div>'
 page(f'''
   <div>
     {head}
-    <h1 class="serif" style="font-size:104px;line-height:1.0;margin-top:96px">
-      Five<br>coaches<br>wanted.
+    <h1 class="serif" style="font-size:132px;line-height:.98;margin-top:88px">
+      Five coaches wanted.
     </h1>
-    <div style="font-size:38px;line-height:1.45;color:#93a3ac;margin-top:44px;max-width:22ch">
+    <div style="font-size:40px;line-height:1.4;color:#93a3ac;margin-top:48px">
       We have built a reflection app for grassroots coaches, and we need five
       people to use it properly and tell us where it falls over.
     </div>
   </div>
   <div>
-    <div class="rule" style="margin-bottom:34px"></div>
-    <div style="font-size:44px;line-height:1.25">
-      <span class="b" style="font-weight:600">Free for life</span>
-      <span class="d" style="font-size:34px;display:block;margin-top:12px">
-        for the five who help us build it
-      </span>
+    <div class="rule" style="margin-bottom:40px"></div>
+    <div class="serif b" style="font-size:92px;line-height:1;font-weight:600">Free for life</div>
+    <div class="d" style="font-size:38px;line-height:1.35;margin-top:20px">
+      for the five who help us build it
     </div>
-    <div class="rule" style="margin:34px 0 28px"></div>
+    <div class="rule" style="margin:44px 0 28px"></div>
     <div class="foot"><span>It never marks you.</span>
       <span class="u">reflectivelens.co.uk</span></div>
   </div>
@@ -67,8 +65,8 @@ page(f'''
 page(f'''
   <div>
     {head}
-    <h1 class="serif" style="font-size:76px;line-height:1.06;margin-top:70px">
-      Your own words,<br>given back<br><span class="y">organised</span>.
+    <h1 class="serif" style="font-size:96px;line-height:1.02;margin-top:64px">
+      Your own words, given back <span class="y">organised</span>.
     </h1>
   </div>
   <div style="background:#2b3136;border:1px solid #3f474d;border-radius:6px;padding:44px 42px;margin:44px 0">
@@ -98,8 +96,8 @@ page(f'''
 page(f'''
   <div>
     {head}
-    <h1 class="serif" style="font-size:80px;line-height:1.05;margin-top:80px">
-      A minute<br>after training.
+    <h1 class="serif" style="font-size:112px;line-height:1.0;margin-top:76px">
+      A minute after training.
     </h1>
   </div>
   <div style="display:flex;flex-direction:column;gap:40px;margin:30px 0">
