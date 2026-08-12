@@ -18,9 +18,14 @@ verification test suite.
 runs this code. See section 7 for the deploy steps and section 9 for the parts
 that are deliberately unfinished.
 
-Scope of this session = **coach subsystem**. The player subsystem
-(`generate-player-summary`, the `player_report` branch of `generate-report`) was
-deliberately left byte-identical and is NOT finished — see section 9.
+> **Out of date from here on, in one important way.** This document was written
+> before migration `0021`, and it describes the player subsystem as live and
+> unfinished. It is neither: commit `1c5cc2c` withdrew the player journey, and
+> the screens, the role chooser, the mode switch, `generate-player-summary` and
+> the `player_report` branch of `generate-report` are all gone. What is left is
+> dormant tables and enum values, kept because dropping them is irreversible.
+> `CLAUDE.md` carries the current statement. Read that first, and read the
+> counts below as historical: this file says 16 tests, and there are 37.
 
 ---
 

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { addPlayer, players } from "../lib/db";
+import { addPlayer, getTeam, players, setTeamAgeGroup } from "../lib/db";
 import type { Player } from "../lib/types";
+import { AGE_GROUPS, ADULT_AGE_GROUP } from "../lib/types";
 import { ErrorText, Loading, Spinner, TopBar } from "../components/ui";
 
 export default function TeamDetail() {
@@ -13,9 +14,20 @@ export default function TeamDetail() {
   const [shirt, setShirt] = useState("");
   const [pos, setPos] = useState("");
   const [busy, setBusy] = useState(false);
+  const [age, setAge] = useState<string | null>(null);
 
   const load = () => players(teamId!).then(setList).catch((e) => setErr((e as Error).message));
   useEffect(() => { if (teamId) load(); /* eslint-disable-next-line */ }, [teamId]);
+  useEffect(() => {
+    if (teamId) getTeam(teamId).then((t) => setAge(t.age_group ?? "")).catch(() => setAge(""));
+  }, [teamId]);
+
+  const saveAge = async (next: string) => {
+    setAge(next);
+    setErr("");
+    try { await setTeamAgeGroup(teamId!, next); }
+    catch (e) { setErr((e as Error).message); }
+  };
 
   const add = async () => {
     if (!name.trim()) return;
@@ -33,6 +45,27 @@ export default function TeamDetail() {
       <TopBar title="Squad" eyebrow="Players"
         right={<button className="btn ghost sm" onClick={() => nav("/teams")}>Back</button>} />
       <div className="screen stack">
+        {/* The age group decides whether this squad's surnames are allowed to
+            leave the app, so it has to be changeable and it has to say what it
+            does. Anything the app does not recognise, including the free text
+            typed before this was a chooser, counts as under-18. */}
+        <div className="card stack">
+          <strong>Age group</strong>
+          {age === null ? <Loading /> : (
+            <>
+              <select value={AGE_GROUPS.includes(age) ? age : ""} onChange={(e) => saveAge(e.target.value)}>
+                <option value="" disabled>{age ? `${age} (not recognised)` : "Choose one"}</option>
+                {AGE_GROUPS.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
+              <div className="muted small">
+                {age === ADULT_AGE_GROUP
+                  ? "An adult squad, so players are named in full in your reports."
+                  : "Under 18, so players appear by first name only, and surnames are removed from what you say before anything is written."}
+              </div>
+            </>
+          )}
+        </div>
+
         <div className="card stack">
           <h2 className="serif">Add a player</h2>
           <div className="field"><label>Name</label>

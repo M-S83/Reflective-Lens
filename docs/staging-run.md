@@ -20,7 +20,7 @@ filled from `.env.example` (at minimum `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
 ```bash
 supabase link --project-ref <STAGING_REF>
 
-# a) schema: applies migrations 0001–0015
+# a) schema: applies every migration in supabase/migrations (0001 upwards)
 supabase db push
 
 # b) secrets + c) all edge functions (JWT-protected loop, then the cron/webhook
@@ -158,7 +158,10 @@ order by created_at desc limit 12;
 ## Sign-off
 
 These items being clean signs off the prompt/token changes (F14, F24, F25, F26)
-that the node checks could only prove structurally. After this run and the F7
-decision, the coach subsystem is dispatch-ready for a pilot. Remaining scoped
-work: the player subsystem, and the linked-questions rebuild (the disabled
-insights feature).
+that the node checks could only prove structurally. After this run the coach
+subsystem is dispatch-ready for a pilot.
+
+F7 is no longer outstanding: "phase" means `phase_of_play`, decided and shipped
+in `2ec7e8a` and held by `_tests/f7-phase.mjs`. Neither is the player subsystem,
+which was withdrawn in `1c5cc2c` (migration `0021`). The remaining scoped work is
+the linked-questions rebuild (the disabled insights feature).

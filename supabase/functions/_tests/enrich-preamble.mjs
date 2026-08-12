@@ -86,5 +86,41 @@ eq("a preamble with nothing after it is left alone (nothing to keep)",
 // --- it is actually wired in --------------------------------------------------
 ok("the stored summary goes through it", /stripPreamble\(raw\.trim\(\)\)/.test(src));
 
+// --- a voice reflection has no summary, only a transcript ---------------------
+// transcribe-audio writes ONLY raw_transcript for a spoken reflection, so
+// summary is null. This function sent ref.summary with no fallback, which meant
+// the enriched text was woven from the follow-up answers alone with the coach's
+// actual reflection missing. Voice is the main way in, so it was the common
+// case that broke, and it broke silently because there was still an output.
+//
+// Every function that reads a reflection's text is checked, not just this one,
+// because the fix is only worth anything if the next reader cannot repeat it.
+{
+  const dir = dirname(fileURLToPath(import.meta.url));
+  const readers = [
+    ["enrich-reflection", src],
+    ["generate-reflection-questions", readFileSync(join(dir, "../generate-reflection-questions/index.ts"), "utf8")],
+    ["generate-report", readFileSync(join(dir, "../generate-report/index.ts"), "utf8")],
+  ];
+  for (const [name, code] of readers) {
+    // Wherever a reflection's summary is read, raw_transcript has to be part of
+    // the same expression. Checked on whitespace-collapsed source within a
+    // window rather than per line, because the real fallback chains wrap across
+    // lines and one of them puts raw_transcript first.
+    const flat = code.replace(/\s+/g, " ");
+    const bare = [];
+    for (const m of flat.matchAll(/\.summary\b/g)) {
+      const near = flat.slice(Math.max(0, m.index - 120), m.index + 120);
+      if (!near.includes("raw_transcript")) bare.push(near.trim());
+    }
+    ok(`${name}: every read of .summary sits beside raw_transcript${bare.length ? `\n       bare: ${bare.join("\n       ")}` : ""}`,
+      bare.length === 0);
+  }
+  // And the guard is real: it must find summary reads at all, or it is asserting
+  // nothing about three files.
+  ok("the check actually found reflection reads",
+    readers.every(([, code]) => /\.summary\b/.test(code)));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

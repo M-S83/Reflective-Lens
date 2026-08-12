@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
 import type {
-  AttendanceStatus, Club, EventRow, EventType, FollowupQuestion, HomeAway, MatchDetails, MatchStat,
-  Observation, Player, PlayerGameLog, PlayerMatchRole, Reflection, Report, SquadSelection,
+  AttendanceStatus, Club, EventRow, EventType, FollowupQuestion, MatchDetails, MatchStat,
+  Observation, Player, Reflection, Report, SquadSelection,
   TeamFormat, CapturePhase,
 } from "./types";
 
@@ -95,6 +95,14 @@ export async function getTeam(teamId: string): Promise<TeamInfo> {
 }
 export async function renameTeam(teamId: string, name: string): Promise<void> {
   const { error } = await supabase.from("teams").update({ name }).eq("id", teamId);
+  if (error) throw error;
+}
+// Teams made before the age group became a picker hold whatever was typed, and
+// anything unrecognised is treated as under-18. That is the right way to fail,
+// but without this there is no way out of it: an adult team would be stuck on
+// first names only with nothing on any screen to change.
+export async function setTeamAgeGroup(teamId: string, ageGroup: string): Promise<void> {
+  const { error } = await supabase.from("teams").update({ age_group: ageGroup }).eq("id", teamId);
   if (error) throw error;
 }
 
@@ -465,68 +473,13 @@ export async function generateReport(eventId: string, eventType: EventType): Pro
   return (data?.report as Report) ?? null;
 }
 
-// =============================================================================
-// PLAYER MODE — a private, self-owned reflection space (independent of coaches).
-// =============================================================================
-export interface PlayerGameRow extends PlayerGameLog {
-  events: { id: string; title: string; event_type: EventType; event_date: string | null } | null;
-}
-
-export async function playerGames(): Promise<PlayerGameRow[]> {
-  const me = await uid();
-  const { data, error } = await supabase
-    .from("player_game_log")
-    .select("*, events(id, title, event_type, event_date)")
-    .eq("user_id", me)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as unknown as PlayerGameRow[];
-}
-
-export async function createPlayerGame(input: {
-  is_match: boolean; title: string; event_date: string; opposition: string;
-  home_away: HomeAway | null; positions: string[]; role: PlayerMatchRole | null;
-  goals_for: number | null; goals_against: number | null; minutes: number | null;
-  my_goals: number; my_assists: number;
-}): Promise<string> {
-  const me = await uid();
-  const { data: ev, error: e1 } = await supabase
-    .from("events")
-    .insert({
-      user_id: me, team_id: null, club_id: null,
-      event_type: input.is_match ? "match" : "training_session",
-      title: input.title, event_date: input.event_date || null,
-      opposition: input.opposition || null, status: "completed",
-    })
-    .select("id").single();
-  if (e1) throw e1;
-  const eventId = (ev as { id: string }).id;
-
-  const { error: e2 } = await supabase.from("player_game_log").insert({
-    event_id: eventId, user_id: me, positions: input.positions,
-    role: input.role, home_away: input.home_away, opposition: input.opposition || null,
-    goals_for: input.goals_for, goals_against: input.goals_against,
-    minutes_played: input.minutes, my_goals: input.my_goals, my_assists: input.my_assists,
-  });
-  if (e2) throw e2;
-  return eventId;
-}
-
-export async function getPlayerGame(eventId: string): Promise<PlayerGameLog | null> {
-  const { data, error } = await supabase
-    .from("player_game_log").select("*").eq("event_id", eventId).maybeSingle();
-  if (error) throw error;
-  return (data as PlayerGameLog) ?? null;
-}
-
-export async function generatePlayerReport(eventId: string): Promise<Report | null> {
-  const { data, error } = await supabase.functions.invoke("generate-report", {
-    body: { event_id: eventId, report_type: "player_report" },
-  });
-  if (error) throw error;
-  return (data?.report as Report) ?? null;
-}
-
+// The player-mode helpers that used to sit here are gone. The journey was
+// withdrawn in 0021 and nothing had called them since, but they were not inert:
+// generatePlayerReport asked generate-report for a "player_report", and once
+// that function stopped branching on the type it would have written a COACH
+// report under a player label. createPlayerGame would still have written to
+// player_game_log too, because the table's own policy is open. Dead code that
+// still works is worse than dead code.
 
 // ---- Period reports --------------------------------------------------------
 // The weekly, monthly or season picture for one team. generate-period-report has

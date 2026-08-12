@@ -79,7 +79,13 @@ Deno.serve(async (req) => {
         "reflection." +
         voice,
       prompt: JSON.stringify({
-        original_summary: ref.summary,
+        // A voice reflection has NO summary: transcribe-audio writes only
+        // raw_transcript. Without the fallback this sent null, so the enriched
+        // text was woven from the follow-up answers alone with the coach's
+        // actual reflection missing, and that is the app's main way in.
+        // generate-reflection-questions and generate-report both already read
+        // it this way round.
+        original_summary: ref.summary ?? ref.raw_transcript ?? "",
         what_went_well: ref.what_went_well,
         what_did_not_work: ref.what_did_not_work,
         added_context: answered,

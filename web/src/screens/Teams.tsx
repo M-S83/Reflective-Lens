@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createClubAndTeam, myTeams, type TeamWithClub } from "../lib/db";
-import { FORMATS, type TeamFormat } from "../lib/types";
+import { AGE_GROUPS, FORMATS, type TeamFormat } from "../lib/types";
 import { ErrorText, Loading, Spinner, TopBar } from "../components/ui";
 
 export default function Teams() {
@@ -61,8 +61,15 @@ export default function Teams() {
             <div className="field"><label>Team name</label>
               <input value={team} onChange={(e) => setTeam(e.target.value)} placeholder="e.g. U12 Lions" /></div>
             <div className="row" style={{ gap: 10 }}>
+              {/* Chosen, not typed. What goes in here decides whether the app
+                  sends a child's surname to the services that transcribe and
+                  write, so it must not be possible to put something in that
+                  nothing recognises. */}
               <div className="field" style={{ flex: 1 }}><label>Age group</label>
-                <input value={age} onChange={(e) => setAge(e.target.value)} placeholder="U12" /></div>
+                <select value={age} onChange={(e) => setAge(e.target.value)}>
+                  <option value="" disabled>Choose one</option>
+                  {AGE_GROUPS.map((a) => <option key={a} value={a}>{a}</option>)}
+                </select></div>
               <div className="field" style={{ flex: 1 }}><label>Format</label>
                 <select value={format} onChange={(e) => setFormat(e.target.value as TeamFormat)}>
                   {FORMATS.map((f) => <option key={f} value={f}>{f}</option>)}
@@ -70,7 +77,10 @@ export default function Teams() {
             </div>
             <ErrorText>{err}</ErrorText>
             <div className="row">
-              <button className="btn" onClick={create} disabled={busy || !club || !team}>
+              {/* Age group is required, unlike the rest. Left unset it defaults
+                  to protected, which is right, but an adult team would then be
+                  stuck with first names only and no obvious reason why. */}
+              <button className="btn" onClick={create} disabled={busy || !club || !team || !age}>
                 {busy ? <Spinner /> : "Create team"}
               </button>
               <button className="btn ghost" onClick={() => setAdding(false)}>Cancel</button>

@@ -6,6 +6,15 @@ function and helper, schema cross-check on PG16 column definitions, two parallel
 read-only sweeps (storage/data-flow map; PII + prompt duplication), plus targeted
 greps to confirm each headline claim first-hand.
 
+> **Historical. Read `CLAUDE.md` for the current shape.** This audit is a
+> snapshot from 24 July 2026 and it describes the player subsystem as live: the
+> data-flow diagram, the function list and the findings all predate migration
+> `0021`, which withdrew the player journey in commit `1c5cc2c`. There is no
+> player journey, no `generate-player-summary` and no `player_report` branch any
+> more, only dormant tables and enum values. The counts are also historical: it
+> says 12 migrations and there are 28. Findings about the coach pipeline still
+> read true; anything player-side is closed as obsolete.
+
 **This is an audit only. No code was changed to produce it.** Findings carry a
 severity and a *how-to-confirm-at-runtime* note. Per the rule "nothing marked
 fixed on inspection alone", every fix in the phase-2 plan lists a runnable check.

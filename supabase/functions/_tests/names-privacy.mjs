@@ -5,7 +5,11 @@
 let pass = 0, fail = 0;
 const ok = (n, c) => { if (c) pass++; else { fail++; console.error("FAIL:", n); } };
 
-const isUnder18 = (ag) => { if (!ag) return true; const m = String(ag).match(/(\d{1,2})/); if (!m) return true; return parseInt(m[1], 10) <= 18; };
+// isUnder18 is NOT mirrored here any more, and its cases have moved to
+// age-groups.mjs, which reads the real function out of _shared/names.ts. The
+// copy that used to sit on this line went on passing after the real function
+// changed, which is the whole failure mode of a test that reimplements what it
+// is checking.
 const parts = (p) => {
   let first = (p.first_name ?? "").trim(); let last = (p.last_name ?? "").trim();
   if (!first && p.display_name) { const t = String(p.display_name).trim().split(/\s+/); first = t[0] ?? ""; if (!last && t.length > 1) last = t[t.length - 1]; }
@@ -23,15 +27,6 @@ const stripSurnames = (text, players) => {
   let out = text; for (const x of s) { const e = x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); out = out.replace(new RegExp(`\\s*\\b${e}\\b`, "gi"), ""); }
   return out.replace(/\s{2,}/g, " ").trim();
 };
-
-// isUnder18
-ok("U12 -> under 18", isUnder18("U12") === true);
-ok("U18 -> under 18 (age group of minors)", isUnder18("U18") === true);
-ok("U16 -> under 18", isUnder18("U16") === true);
-ok("U21 -> adult group", isUnder18("U21") === false);
-ok("Open -> non-numeric -> protective", isUnder18("Open") === true);
-ok("null age -> protective (under 18)", isUnder18(null) === true);
-ok("Adults 21s -> not under 18", isUnder18("21s") === false);
 
 // first-name-only, disambiguation
 {

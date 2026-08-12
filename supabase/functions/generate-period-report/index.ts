@@ -333,12 +333,19 @@ function toMarkdown(title: string, record: any, c: any, reportType: string): str
 
 // "if anything" is load-bearing. Without it the question presumes the period
 // went badly, which is a verdict with a question mark on it.
+// Match on the values this is actually CALLED with. It compared "weekly" while
+// every caller passes "weekly_report" (see the report_type note at the top of
+// this file), so no branch had ever matched and every period report ever
+// generated closed with the generic fallback. A season never once said "the
+// season". Trimming the suffix once here means a new period type cannot
+// reintroduce it.
 export function lookBack(reportType: string): string {
-  const period = reportType === "weekly"
+  const key = String(reportType ?? "").replace(/_report$/, "");
+  const period = key === "weekly"
     ? "this week"
-    : reportType === "monthly"
+    : key === "monthly"
     ? "this month"
-    : reportType === "season"
+    : key === "season"
     ? "the season"
     : "this period";
   return `Looking back over ${period}, what would you do differently, if anything?`;

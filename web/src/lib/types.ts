@@ -69,33 +69,14 @@ export interface Report {
   content_markdown: string | null; created_at: string;
 }
 
-// ---- Player Mode ------------------------------------------------------------
-export type PlayerMatchRole = "started" | "substitute" | "game_changer";
+// ---- Match result ------------------------------------------------------------
+// Coach-side, for the result a coach enters against a match. The player-journey
+// types that used to share this section (PlayerMatchRole, PlayerGameLog and its
+// own ROLES list) went with 0021. The "Game changer" wording they carried lives
+// on where it is actually used, in ATTENDANCE above.
 export type HomeAway = "home" | "away" | "neutral";
 export type MatchResult = "win" | "draw" | "loss";
 
-export interface PlayerGameLog {
-  id: string;
-  event_id: string;
-  positions: string[];
-  role: PlayerMatchRole | null;
-  home_away: HomeAway | null;
-  opposition: string | null;
-  goals_for: number | null;
-  goals_against: number | null;
-  result: MatchResult | null; // generated from the score
-  minutes_played: number | null;
-  my_goals: number;
-  my_assists: number;
-  created_at: string;
-}
-
-// A player either started or came off the bench. "Game changer" is the positive
-// framing for the latter (used instead of "sub" / "came on").
-export const ROLES: { value: PlayerMatchRole; label: string }[] = [
-  { value: "started", label: "Started" },
-  { value: "game_changer", label: "Game changer" },
-];
 export const HOME_AWAY: { value: HomeAway; label: string }[] = [
   { value: "home", label: "Home" },
   { value: "away", label: "Away" },
@@ -103,6 +84,23 @@ export const HOME_AWAY: { value: HomeAway; label: string }[] = [
 ];
 
 export const FORMATS: TeamFormat[] = ["3v3", "5v5", "6v6", "7v7", "9v9", "11v11"];
+
+// A chooser, not a text box. This was a free-text field whose only guidance was
+// a "U12" placeholder, and the under-18 name protection was decided by reading
+// the first digits out of whatever went in. "U19" and "2013s" both came back as
+// an adult squad, which quietly sent children's surnames out to the
+// transcription and writing services.
+//
+// So the age group is a stored fact now rather than something parsed. Only the
+// last entry counts as adult, and it has to match ADULT_AGE_GROUP in
+// supabase/functions/_shared/names.ts exactly. They cannot import each other,
+// so _tests/age-groups.mjs holds them together.
+export const ADULT_AGE_GROUP = "Adult / open age";
+export const AGE_GROUPS: string[] = [
+  "U6", "U7", "U8", "U9", "U10", "U11", "U12",
+  "U13", "U14", "U15", "U16", "U17", "U18",
+  ADULT_AGE_GROUP,
+];
 export const EVENT_TYPES: { value: EventType; label: string }[] = [
   { value: "training_session", label: "Training" },
   { value: "match", label: "Match" },

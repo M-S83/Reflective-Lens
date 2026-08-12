@@ -49,6 +49,17 @@ ok("it suggests nothing", !/\b(try|should|could|consider|recommend|maybe|improve
 ok("no em or en dashes", !/[—–]/.test(month));
 
 // --- it says which period, in words a coach would use ------------------------
+// The values the function is REALLY called with. It used to be checked only
+// against "weekly" / "monthly" / "season", while every caller passes
+// "weekly_report" and friends, so no branch had ever matched in production and
+// every period report ever generated closed with the generic fallback. A season
+// never once said "the season", and the test said it did.
+ok("weekly_report says the week", /this week/.test(lookBack("weekly_report")));
+ok("monthly_report says the month", /this month/.test(lookBack("monthly_report")));
+ok("season_report says the season", /the season/.test(lookBack("season_report")));
+ok("none of them fall through to the generic line",
+  ["weekly_report", "monthly_report", "season_report"].every((t) => !/this period/.test(lookBack(t))));
+// The bare forms still work, so an internal caller passing either shape is fine.
 ok("weekly says the week", /this week/.test(lookBack("weekly")));
 ok("monthly says the month", /this month/.test(lookBack("monthly")));
 ok("season says the season", /the season/.test(lookBack("season")));

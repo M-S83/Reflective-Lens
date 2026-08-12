@@ -6,13 +6,30 @@
 // Unknown / non-numeric age group is treated as under-18 (protective default).
 // =============================================================================
 
+// The ONLY age group treated as adult. Everything else is protected, including
+// anything unrecognised.
+//
+// This used to read the first one or two digits out of whatever was typed, and
+// the field it read is free text. Two ways that silently switched protection
+// off, both of them ordinary:
+//
+//   "U19"    -> 19 -> adult. A U19 squad routinely contains 17-year-olds.
+//   "2013s"  -> 20 -> adult. Birth-year naming is how a lot of grassroots
+//               teams are known, and the regex takes the "20" off the front.
+//
+// When it misfires, `safeNameMap` and `stripSurnames` both stand down and
+// children's full surnames go out to two third-party processors in the
+// transcript. So the rule is inverted: name the adult case, protect everything
+// else, and never infer an age from a number someone typed.
+//
+// Must stay in step with AGE_GROUPS in web/src/lib/types.ts, which is the
+// picker a coach actually chooses from. The two cannot import each other (one
+// is Deno, one is the bundle), so _tests/age-groups.mjs asserts they agree.
+export const ADULT_AGE_GROUP = "Adult / open age";
+
 export function isUnder18(ageGroup: string | null | undefined): boolean {
   if (!ageGroup) return true; // unknown -> protective
-  const m = String(ageGroup).match(/(\d{1,2})/);
-  if (!m) return true; // e.g. "Youth", "Juniors" -> protective
-  // "U18" denotes an under-18 age group (players are minors), so <= 18 is
-  // protected; U19/U21/U23 and Open are adult groups.
-  return parseInt(m[1], 10) <= 18;
+  return ageGroup.trim().toLowerCase() !== ADULT_AGE_GROUP.toLowerCase();
 }
 
 export interface PlayerRec {
