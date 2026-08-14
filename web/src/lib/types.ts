@@ -10,7 +10,12 @@ export interface Team {
 }
 export interface Player {
   id: string; team_id: string | null; display_name: string | null;
-  first_name: string | null; last_name: string | null; shirt_number: number | null; position: string | null;
+  first_name: string | null; last_name: string | null; shirt_number: number | null;
+  // Several, because a grassroots player covers more than one (0029). The old
+  // single `position` column is still on the table and is deliberately not
+  // here: reading it would give you a value that goes stale the moment a coach
+  // edits anyone.
+  positions: string[];
 }
 export type AttendanceStatus = "present" | "absent" | "injured" | "unavailable";
 export type SquadSelection = "starter" | "substitute" | "unused_substitute";

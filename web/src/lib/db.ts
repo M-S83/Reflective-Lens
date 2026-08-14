@@ -56,26 +56,41 @@ export async function addTeamToClub(
 
 export async function players(teamId: string): Promise<Player[]> {
   const { data, error } = await supabase
-    .from("players").select("*").eq("team_id", teamId)
+    // Named columns, not "*". The superseded `position` is still on the table
+    // and a screen that receives it is one interpolation away from showing a
+    // coach a value that stopped being updated (0029).
+    .from("players")
+    .select("id, team_id, display_name, first_name, last_name, shirt_number, positions")
+    .eq("team_id", teamId)
     .order("shirt_number", { ascending: true, nullsFirst: false });
   if (error) throw error;
   return (data ?? []) as Player[];
 }
 
+// A player can play more than one position (0029). Kept as the coach's own
+// words in their own order: someone who says "left eight" means something by it
+// and the app is not here to swap in a textbook term.
+export function parsePositions(text: string): string[] {
+  return text
+    .split(/[,/]/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
+
 export async function addPlayer(
-  teamId: string, displayName: string, shirt: number | null, position: string,
+  teamId: string, displayName: string, shirt: number | null, positions: string[],
 ): Promise<void> {
   const me = await uid();
   const { error } = await supabase.from("players").insert({
     team_id: teamId, display_name: displayName, shirt_number: shirt,
-    position: position || null, created_by: me,
+    positions, created_by: me,
   });
   if (error) throw error;
 }
 
 export async function updatePlayer(
   playerId: string,
-  patch: { display_name?: string; shirt_number?: number | null; position?: string | null },
+  patch: { display_name?: string; shirt_number?: number | null; positions?: string[] },
 ): Promise<void> {
   const { error } = await supabase.from("players").update(patch).eq("id", playerId);
   if (error) throw error;
@@ -107,10 +122,51 @@ export async function setTeamAgeGroup(teamId: string, ageGroup: string): Promise
 }
 
 // Deletes — an owner can remove their own data. Deleting an event cascades to its
-// notes, reflection, squad, result and reports. (Player games are events too.)
+// notes, reflection, follow-up questions and answers, squad, result and reports.
+//
+// The cascade is rows only. The recordings live in the audio-recordings bucket
+// and nothing in Postgres knows about them, so without this a coach who deleted
+// a session because of what they said in it would have deleted the transcript
+// and kept the voice note. Account deletion already sweeps the bucket
+// (purge-due-accounts); this does the same job for one session.
+//
+// Paths are gathered BEFORE the delete, because the rows that name them are
+// about to go. Removing the files is best-effort and last: if it fails, the
+// session is still gone, which is what was asked for, and the leftovers are no
+// worse than what happened before this existed.
 export async function deleteEvent(id: string): Promise<void> {
+  const paths: string[] = [];
+  const collect = (rows: { audio_path: string | null }[] | null) => {
+    for (const r of rows ?? []) if (r.audio_path) paths.push(r.audio_path);
+  };
+
+  const [obs, refs] = await Promise.all([
+    supabase.from("observations").select("audio_path").eq("event_id", id),
+    supabase.from("reflections").select("id, audio_path").eq("event_id", id),
+  ]);
+  collect(obs.data as { audio_path: string | null }[] | null);
+  collect(refs.data as { audio_path: string | null }[] | null);
+
+  // Answers are not filed under the event (they live in <uid>/answers/), so the
+  // only route to them is through the reflection that owns their question.
+  const reflectionIds = (refs.data ?? []).map((r) => (r as { id: string }).id);
+  if (reflectionIds.length) {
+    const { data: qs } = await supabase
+      .from("followup_questions").select("id").in("reflection_id", reflectionIds);
+    const questionIds = (qs ?? []).map((q) => (q as { id: string }).id);
+    if (questionIds.length) {
+      const { data: answers } = await supabase
+        .from("followup_answers").select("audio_path").in("question_id", questionIds);
+      collect(answers as { audio_path: string | null }[] | null);
+    }
+  }
+
   const { error } = await supabase.from("events").delete().eq("id", id);
   if (error) throw error;
+
+  if (paths.length) {
+    try { await supabase.storage.from("audio-recordings").remove(paths); } catch { /* rows are gone */ }
+  }
 }
 export async function deleteReport(id: string): Promise<void> {
   const { error } = await supabase.from("reports").delete().eq("id", id);

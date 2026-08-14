@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
         supa.from("reflections").select("*").eq("event_id", event_id),
         // Canonical squad: event_attendance joined to players (not team_sheets).
         supa.from("event_attendance")
-          .select("status, selection, players(id, first_name, last_name, display_name, shirt_number, position)")
+          .select("status, selection, players(id, first_name, last_name, display_name, shirt_number, positions)")
           .eq("event_id", event_id),
         supa.from("match_details").select("*").eq("event_id", event_id).maybeSingle(),
         supa.from("match_stats").select("*, players(display_name)").eq("event_id", event_id),
@@ -145,7 +145,11 @@ Deno.serve(async (req) => {
       roster: (squad ?? []).map((a: any) => ({
         name: a.players?.id ? nameMap[a.players.id] : safeName(a.players ?? {}, under18),
         shirt: a.players?.shirt_number ?? null,
-        position: a.players?.position ?? null,
+        // Every position they play, in the coach's own words and their own
+        // order (0029). A player who covers right back and plays in midfield is
+        // two entries, not the string "CM, RB", which the model read as one
+        // thing nobody says.
+        positions: a.players?.positions ?? [],
         status: a.status, selection: a.selection,
       })),
     });

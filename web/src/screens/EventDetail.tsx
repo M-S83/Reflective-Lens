@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  addTextNote, addVoiceNote, answerQuestion, answerQuestionVoice, enrich, generateQuestions, generateReport,
-  getEvent, getReflection, observations, questions, reports, retryTranscription,
+  addTextNote, addVoiceNote, answerQuestion, answerQuestionVoice, deleteEvent, enrich, generateQuestions,
+  generateReport, getEvent, getReflection, observations, questions, reports, retryTranscription,
   saveTextReflection, saveVoiceReflection,
 } from "../lib/db";
 import type { EventRow, FollowupQuestion, Observation, Reflection, Report } from "../lib/types";
@@ -136,6 +136,55 @@ export default function EventDetail() {
               <button className="btn" onClick={() => nav("/")}>Done for now</button>
             )}
           </div>
+        </div>
+
+        <DeleteSession ev={ev} />
+      </div>
+    </div>
+  );
+}
+
+// Removing a session. At the very bottom, behind a confirm, and it names what
+// goes with it, because a session is not one thing: the notes, the reflection,
+// the answers, the report and the recordings all go at once and none of it
+// comes back.
+//
+// It has to exist. Sessions get started by accident, tested on, or created for
+// a game that was called off, and until now the only way to remove one was to
+// delete the whole account. There is also a reason a coach might genuinely want
+// a session gone, which is that they said something in it they would rather not
+// keep, and an app that asks people to speak freely has to honour that.
+function DeleteSession({ ev }: { ev: EventRow }) {
+  const nav = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const remove = async () => {
+    const ok = window.confirm(
+      `Delete "${ev.title}"?\n\nThis removes the session and everything in it: your notes, ` +
+      `your reflection, the questions and answers, the report and any recordings. ` +
+      `It cannot be undone.`,
+    );
+    if (!ok) return;
+    setBusy(true); setErr("");
+    try {
+      await deleteEvent(ev.id);
+      nav("/", { replace: true });
+    } catch (e) {
+      setErr((e as Error).message);
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 20, paddingTop: 14, borderTop: "1px solid var(--faint)" }}>
+      <ErrorText>{err}</ErrorText>
+      <div style={{ textAlign: "center" }}>
+        <button className="btn ghost small" onClick={remove} disabled={busy}>
+          {busy ? "Deleting" : "Delete this session"}
+        </button>
+        <div className="muted small" style={{ marginTop: 6 }}>
+          Removes the notes, reflection, report and recordings. There is no undo.
         </div>
       </div>
     </div>
