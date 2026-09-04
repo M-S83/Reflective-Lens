@@ -26,6 +26,31 @@ export function friendlyAuthError(message: string): string {
 
   const m = bare.toLowerCase();
 
+  // --- the request never arrived ---------------------------------------------
+  // When fetch dies before any response, the browser's own words are thrown and
+  // they are written for developers: Safari says "Load failed", Chrome "Failed
+  // to fetch", Firefox "NetworkError when attempting to fetch resource". A
+  // tester met the first of these, verbatim, under the sign-in button.
+  //
+  // The causes are the phone's connection, a network or content blocker that
+  // filters our server, or (rarely) the server being down. All of them look
+  // identical from here, so the message covers the moves that distinguish them:
+  // try again, and swap between wifi and mobile data. What it must NOT do is
+  // read as "wrong password", because nothing was ever checked.
+  if (
+    m.includes("load failed") ||
+    m.includes("failed to fetch") ||
+    m.includes("fetch failed") ||
+    m.includes("networkerror") ||
+    m.includes("network request failed") ||
+    m.includes("network connection was lost") ||
+    m.includes("internet connection appears to be offline") ||
+    m.includes("could not connect to the server") ||
+    m.includes("hostname could not be found")
+  ) {
+    return "We could not reach the server, so your details were never checked. It is usually the connection: try again in a moment, and if it keeps happening, switch between wifi and mobile data and tell us.";
+  }
+
   // --- signing in -----------------------------------------------------------
   if (m.includes("invalid login credentials")) {
     // Also what an account from before passwords existed hits, and there is no

@@ -84,6 +84,33 @@ for (const junk of ["{}", "", "   ", "[object Object]"]) {
 ok("a failed send says whose problem it is",
   /not with your address/.test(f("Error sending recovery email")));
 
+// --- the request never arrived -----------------------------------------------
+// A tester on an iPhone got the literal words "Load failed" under the sign-in
+// button. That is Safari's own phrasing for a fetch that died before any
+// response: nothing about their details was ever checked, and nothing in those
+// two words says what to do. Each browser throws its own wording, so every one
+// of them has to land on the same sentence.
+{
+  const networkStrings = [
+    "Load failed", // Safari, the one from the field
+    "Failed to fetch", // Chrome
+    "NetworkError when attempting to fetch resource.", // Firefox
+    "Network request failed",
+    "The network connection was lost.",
+    "The Internet connection appears to be offline.",
+  ];
+  for (const s of networkStrings) {
+    const out = f(s);
+    ok(`${JSON.stringify(s)} becomes something a coach can act on`,
+      /could not reach the server/i.test(out) && /wifi|connection/i.test(out));
+  }
+  // Nothing was checked, so it must never read as a rejected password, and the
+  // browser's own words must not leak through.
+  ok("a network failure does not blame their details",
+    !/password|wrong|invalid/i.test(f("Load failed")));
+  ok("the browser's wording is gone", !/load failed|fetch/i.test(f("Load failed")));
+}
+
 // --- anything unrecognised is passed through, not swallowed ------------------
 // A message nobody has seen before is more use raw than replaced by a guess.
 ok("an unknown error survives intact", f("Some new thing went wrong") === "Some new thing went wrong");
