@@ -14,6 +14,12 @@ month, so five of them free for life is about £60 a year, forever. Worth
 knowing it is a small number rather than an open cheque, because the honest
 feedback is worth more than that in an afternoon.
 
+The bigger line is hosting. Free-tier Supabase pauses the project after a
+quiet week, and it has already done it once, to a tester, mid sign-in. The
+site loads and the app looks dead, which to a stranger is not a pause, it is a
+verdict. Once these posts go out, the Pro plan ($25 a month, never pauses) is
+part of what the beta costs, not an optional extra. See `deploy.md`.
+
 ---
 
 ## The visuals

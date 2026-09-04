@@ -86,6 +86,24 @@ and re-run `./scripts/deploy.sh`. See `docs/analytics.md`.
 
 ---
 
+## When sign-in suddenly fails for everyone
+
+On the free tier, Supabase **pauses a project after about a week it judges
+quiet**. The symptom is distinctive and has happened to us once already (4 Sep
+2026, and it caught a tester before it caught us): the site still loads,
+because Vercel serves that, but every sign-in dies with a network-style error
+(Safari shows "Load failed"; the app now translates it). Nothing is lost.
+
+Fix: supabase.com/dashboard, open the project, press **Restore project**, wait
+a few minutes.
+
+Prevention: the Pro plan does not pause. The day outside testers exist, a
+paused project reads as a dead product to a stranger who will not ask twice,
+so treat Pro as part of the cost of having testers rather than an upgrade to
+defer.
+
+---
+
 Once this is up you have a live API: Auth, Postgres with RLS, Storage, and all the
 edge functions. The frontend (see `docs/lovable-prompt.md`) points at
 `https://<ref>.supabase.co` with the project's anon key and it's a working app.
