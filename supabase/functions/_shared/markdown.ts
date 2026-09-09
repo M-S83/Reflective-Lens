@@ -10,7 +10,12 @@
 
 export type MdBlock =
   | { t: "para"; text: string }
-  | { t: "bullets"; heading: string; items: string[] }
+  // `empty` is what to say when there are no items. Most sections are simply
+  // omitted when empty; a section that carries it appears either way, on the
+  // same honesty rule as the hoped-to-see checklist: saying "you didn't say
+  // anything about this" is information, and quietly dropping the heading
+  // would hide that the section exists at all.
+  | { t: "bullets"; heading: string; items: string[]; empty?: string }
   | { t: "sections"; sections: { heading: string; points?: string[] }[] }
   | {
     t: "checklist";
@@ -34,6 +39,7 @@ export function renderReport(
       lines.push(`\n${b.text}`);
     } else if (b.t === "bullets") {
       lines.push(`\n## ${b.heading}`);
+      if (b.items.length === 0 && b.empty) lines.push(`_${b.empty}_`);
       for (const p of b.items) lines.push(`- ${p}`);
     } else if (b.t === "sections") {
       for (const s of b.sections) {

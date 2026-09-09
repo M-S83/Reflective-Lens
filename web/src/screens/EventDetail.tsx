@@ -30,6 +30,7 @@ export default function EventDetail() {
   if (!ev) return <Loading />;
 
   const isMatch = ev.event_type === "match" || ev.event_type === "tournament";
+  const isSelf = ev.event_type === "self_reflection";
 
   // The tabs run in the order the session actually happens, not the order the
   // data model happens to be in. "Before" comes first because the thought you
@@ -39,18 +40,29 @@ export default function EventDetail() {
   // Squad and Result only exist when there is a squad to speak of: a one-to-one
   // or a goalkeeping block has no team, and a tab that only ever says "no team
   // attached" is worse than no tab.
-  const tabs: { key: Section; label: string; hint: string }[] = [
-    { key: "before", label: "Before", hint: "What are you going in hoping for?" },
-    ...(ev.team_id
-      ? [{ key: "squad" as Section, label: isMatch ? "Squad" : "Attendance", hint: "Who is here?" }]
-      : []),
-    { key: "notes", label: "During", hint: "Capture what you notice, as it happens." },
-    ...(isMatch && ev.team_id
-      ? [{ key: "result" as Section, label: "Result", hint: "How did it finish?" }]
-      : []),
-    { key: "reflect", label: "Reflect", hint: "In your own words, how was it?" },
-    { key: "report", label: "Report", hint: "Read it back." },
-  ];
+  //
+  // A self reflection has no before or during at all: there is no session
+  // running, only the coach and the thought they sat down with. So it is two
+  // steps, the reflection (voice or text, with the same optional questions)
+  // and the report, even when a team is attached: attaching a team says whose
+  // period reports this belongs to, not that a register was taken.
+  const tabs: { key: Section; label: string; hint: string }[] = isSelf
+    ? [
+      { key: "reflect", label: "Reflect", hint: "In your own words." },
+      { key: "report", label: "Report", hint: "Read it back." },
+    ]
+    : [
+      { key: "before", label: "Before", hint: "What are you going in hoping for?" },
+      ...(ev.team_id
+        ? [{ key: "squad" as Section, label: isMatch ? "Squad" : "Attendance", hint: "Who is here?" }]
+        : []),
+      { key: "notes", label: "During", hint: "Capture what you notice, as it happens." },
+      ...(isMatch && ev.team_id
+        ? [{ key: "result" as Section, label: "Result", hint: "How did it finish?" }]
+        : []),
+      { key: "reflect", label: "Reflect", hint: "In your own words, how was it?" },
+      { key: "report", label: "Report", hint: "Read it back." },
+    ];
 
   // The default section is "squad", which no longer exists on a session with no
   // team. Fall back to the first tab that does exist rather than rendering a
@@ -111,7 +123,7 @@ export default function EventDetail() {
             placeholder="Third time they have gone long instead of playing out"
           />
         )}
-        {active === "reflect" && <Reflect eventId={eventId} />}
+        {active === "reflect" && <Reflect eventId={eventId} self={isSelf} />}
         {active === "report" && <ReportSection ev={ev} />}
 
         {/* Where you are, and where you go next. Without this the tabs are just
@@ -138,16 +150,22 @@ export default function EventDetail() {
           </div>
         </div>
 
-        <DeleteSession ev={ev} />
+        {/* Only on the last tab. It used to sit at the bottom of EVERY tab,
+            which put "Delete this session, there is no undo" one thumb-slip
+            away on each of the six screens a coach works through mid-session.
+            One place is enough: the end of the session, where tidying up is a
+            thing someone actually means to do. The confirm below is the second
+            gate. */}
+        {active === "report" && <DeleteSession ev={ev} />}
       </div>
     </div>
   );
 }
 
-// Removing a session. At the very bottom, behind a confirm, and it names what
-// goes with it, because a session is not one thing: the notes, the reflection,
-// the answers, the report and the recordings all go at once and none of it
-// comes back.
+// Removing a session. In one place only (the final tab), behind a confirm, and
+// it names what goes with it, because a session is not one thing: the notes,
+// the reflection, the answers, the report and the recordings all go at once
+// and none of it comes back.
 //
 // It has to exist. Sessions get started by accident, tested on, or created for
 // a game that was called off, and until now the only way to remove one was to
@@ -347,7 +365,7 @@ function Notes({ eventId, teamId, only, intro, placeholder }: {
 }
 
 // ---- Reflect ----------------------------------------------------------------
-function Reflect({ eventId }: { eventId: string }) {
+function Reflect({ eventId, self = false }: { eventId: string; self?: boolean }) {
   const [ref, setRef] = useState<Reflection | null>(null);
   const [text, setText] = useState("");
   const [qs, setQs] = useState<FollowupQuestion[]>([]);
@@ -411,10 +429,13 @@ function Reflect({ eventId }: { eventId: string }) {
     <>
       <div className="card stack">
         <h2 className="serif">Your reflection</h2>
-        <p className="muted small">Write or record what the session was like. Keep it in your own words. This
-          is a mirror, not a mark.</p>
+        <p className="muted small">
+          {self
+            ? "Write or record what's on your mind. Keep it in your own words. This is a mirror, not a mark."
+            : "Write or record what the session was like. Keep it in your own words. This is a mirror, not a mark."}
+        </p>
         <textarea value={text} onChange={(e) => setText(e.target.value)} rows={5}
-          placeholder="How did it go? What stood out?" />
+          placeholder={self ? "What happened, and how were you in it?" : "How did it go? What stood out?"} />
         <div className="row">
           <button className="btn" onClick={save} disabled={busy === "save" || !text.trim()}>
             {busy === "save" ? <Spinner /> : ref ? "Update" : "Save reflection"}
@@ -494,8 +515,11 @@ function ReportSection({ ev }: { ev: EventRow }) {
   return (
     <>
       <div className="card stack">
-        <p className="muted small">A report organises what you and your notes actually said, and never grades
-          you. Generate one once you've captured notes and reflected.</p>
+        <p className="muted small">
+          {ev.event_type === "self_reflection"
+            ? "A report organises what you actually said, and never grades you. Generate one once you've reflected."
+            : "A report organises what you and your notes actually said, and never grades you. Generate one once you've captured notes and reflected."}
+        </p>
         <button className="btn" onClick={gen} disabled={busy}>
           {busy ? <Spinner /> : "Generate report"}
         </button>

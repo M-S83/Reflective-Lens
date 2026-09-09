@@ -327,3 +327,28 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--yours); out
   border-top: 1px solid var(--hair);
 
 }
+
+/* --- The period calendar (Reports) ----------------------------------------- */
+/* One report per week, per month, per season, and this is where the period is
+   picked. Chalk rules hold: lines drawn, nothing floats, --grass means "you
+   can tap this", and the coach's yellow appears nowhere because a calendar is
+   the app talking. The selected period is a band, not a glow. */
+.cal { border: 1px solid var(--hair); border-radius: 3px; padding: 8px; }
+.cal-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.cal-title { flex: 1; text-align: center; font-size: 14px; color: var(--ink); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal-dow-row { border-bottom: 1px solid var(--hair); margin-bottom: 2px; }
+.cal-dow { text-align: center; font-size: 11px; color: var(--muted); padding: 2px 0 4px; }
+.cal-day {
+  font: inherit; font-size: 13px; color: var(--ink); background: transparent;
+  border: 0; padding: 5px 0 3px; cursor: pointer; text-align: center;
+}
+.cal-day.sel { background: var(--grass-soft); }
+.cal-day.out { color: var(--muted); opacity: 0.55; }
+.cal-day.future { opacity: 0.3; cursor: default; }
+.cal-day:disabled { cursor: default; }
+/* The mark for a week that already has its one report. A dot, not a tick:
+   ticks are marks out of ten, and this only says "written". The empty variant
+   keeps every cell the same height, so weeks with and without reports align. */
+.cal-dot { display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--grass); margin: 2px auto 0; }
+.cal-dot.none { background: transparent; }

@@ -4,47 +4,139 @@ import {
   allReports, generatePeriodReport, myTeams,
   type PeriodType, type TeamWithClub,
 } from "../lib/db";
+import { MONTHS, monthGrid, periodLabel, periodRange, todayIso } from "../lib/periods";
 import type { Report } from "../lib/types";
 import { FEATURES, logFeature } from "../lib/features";
 
 // Everything a coach has written up, in one place, plus the only way to ask for
 // a period report.
 //
-// Two gaps this closes. Reports were only ever reachable from the session that
-// produced them, so a coach with a season's work had no way to look back over
-// it. And generate-period-report, which has been deployed from the start, had no
-// caller at all: the weekly, monthly and season picture simply could not be
-// asked for from the app.
+// ONE REPORT PER PERIOD. A period is a calendar period (a Monday-to-Sunday
+// week, a calendar month, an August-to-July season), picked on the calendar
+// below, and each one has exactly one report: asking again for a period whose
+// sessions have not changed hands back the same report, and a period with new
+// sessions is brought up to date in place. The rule is enforced server-side
+// (generate-period-report snaps the dates, migration 0031 holds one row per
+// period); this screen's calendar is how a coach sees and picks the period,
+// and sees which periods already have their report.
+//
+// Before this, "weekly" meant "the last 7 days from whenever you asked", so
+// every tap of the button was a new, overlapping report and a new model call.
 
-// The periods on offer. Ranges are worked out from today rather than asked for,
-// because "which twelve dates do you want" is not a question a coach should have
-// to answer to see their month.
-const PERIODS: { key: PeriodType; label: string; blurb: string }[] = [
-  { key: "weekly_report", label: "This week", blurb: "the last 7 days" },
-  { key: "monthly_report", label: "This month", blurb: "the last 30 days" },
-  { key: "season_report", label: "This season", blurb: "since August" },
+const PERIODS: { key: PeriodType; label: string }[] = [
+  { key: "weekly_report", label: "Week" },
+  { key: "monthly_report", label: "Month" },
+  { key: "season_report", label: "Season" },
 ];
 
-function rangeFor(kind: PeriodType): { start: string; end: string } {
-  const today = new Date();
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
+// ---- The calendar -----------------------------------------------------------
+// Chalk rules apply: drawn lines, no shadows, --grass means "you can tap this"
+// and the coach's yellow appears nowhere here, because a calendar is the app
+// talking. Week mode: tap any day to pick its week. Month mode: the arrows
+// pick the month, the grid is just the month shown. Season mode: arrows only.
+// A small dot marks a week that already has its report. The future is not
+// offered: there is nothing to look back over yet.
+function PeriodCalendar({ kind, anchor, onAnchor, reported }: {
+  kind: PeriodType;
+  anchor: string;
+  onAnchor: (dayIso: string) => void;
+  reported: Set<string>;
+}) {
+  const today = todayIso();
+  const sel = periodRange(kind, anchor);
+  const a = new Date(`${anchor}T00:00:00Z`);
+  // Week mode navigates months without moving the selection, so the view is
+  // its own state; picking a day moves the selection into the viewed month.
+  const [view, setView] = useState({ y: a.getUTCFullYear(), m: a.getUTCMonth() });
+  useEffect(() => {
+    const d = new Date(`${anchor}T00:00:00Z`);
+    setView({ y: d.getUTCFullYear(), m: d.getUTCMonth() });
+  }, [kind]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const now = new Date(`${today}T00:00:00Z`);
+  const atCurrentMonth = (y: number, m: number) =>
+    y > now.getUTCFullYear() || (y === now.getUTCFullYear() && m >= now.getUTCMonth());
+
   if (kind === "season_report") {
-    // Grassroots seasons run August to May, so before August we are still in
-    // the season that started the previous year.
-    const year = today.getMonth() >= 7 ? today.getFullYear() : today.getFullYear() - 1;
-    return { start: `${year}-08-01`, end: iso(today) };
+    const seasonY = Number(sel.start.slice(0, 4));
+    const currentSeasonY = now.getUTCMonth() >= 7 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
+    return (
+      <div className="cal">
+        <div className="cal-head">
+          <button className="btn ghost sm" aria-label="Previous season"
+            onClick={() => onAnchor(`${seasonY - 1}-08-01`)}>‹</button>
+          <div className="cal-title">{periodLabel(kind, sel.start)}</div>
+          <button className="btn ghost sm" aria-label="Next season"
+            disabled={seasonY >= currentSeasonY}
+            onClick={() => onAnchor(`${seasonY + 1}-08-01`)}>›</button>
+        </div>
+        <div className="muted small" style={{ textAlign: "center" }}>
+          1 August {seasonY} to 31 July {seasonY + 1}
+        </div>
+      </div>
+    );
   }
-  const days = kind === "weekly_report" ? 7 : 30;
-  const from = new Date(today);
-  from.setDate(from.getDate() - days);
-  return { start: iso(from), end: iso(today) };
+
+  const monthly = kind === "monthly_report";
+  const y = monthly ? a.getUTCFullYear() : view.y;
+  const m = monthly ? a.getUTCMonth() : view.m;
+  const weeks = monthGrid(y, m);
+  const firstOf = (yy: number, mm: number) =>
+    `${yy}-${String(mm + 1).padStart(2, "0")}-01`;
+  const move = (delta: number) => {
+    const ny = m + delta < 0 ? y - 1 : m + delta > 11 ? y + 1 : y;
+    const nm = (m + delta + 12) % 12;
+    if (monthly) onAnchor(firstOf(ny, nm));
+    else setView({ y: ny, m: nm });
+  };
+
+  return (
+    <div className="cal">
+      <div className="cal-head">
+        <button className="btn ghost sm" aria-label="Previous month" onClick={() => move(-1)}>‹</button>
+        <div className="cal-title">{MONTHS[m]} {y}</div>
+        <button className="btn ghost sm" aria-label="Next month"
+          disabled={atCurrentMonth(y, m)} onClick={() => move(1)}>›</button>
+      </div>
+      <div className="cal-grid cal-dow-row">
+        {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+          <div key={i} className="cal-dow">{d}</div>
+        ))}
+      </div>
+      {weeks.map((week, wi) => (
+        <div key={wi} className="cal-grid">
+          {week.map((day) => {
+            const inMonth = Number(day.slice(5, 7)) - 1 === m;
+            const future = day > today;
+            const selected = day >= sel.start && day <= sel.end;
+            const isMonday = day === periodRange("weekly_report", day).start;
+            const hasReport = kind === "weekly_report" && isMonday &&
+              reported.has(periodRange("weekly_report", day).start);
+            return (
+              <button
+                key={day}
+                className={`cal-day ${selected ? "sel" : ""} ${inMonth ? "" : "out"} ${future ? "future" : ""}`}
+                disabled={future || monthly}
+                onClick={() => onAnchor(day)}
+                aria-label={day}
+              >
+                {Number(day.slice(8, 10))}
+                {hasReport ? <span className="cal-dot" /> : <span className="cal-dot none" />}
+              </button>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function Reports() {
   const [list, setList] = useState<Report[] | null>(null);
   const [teams, setTeams] = useState<TeamWithClub[]>([]);
   const [teamId, setTeamId] = useState("");
-  const [period, setPeriod] = useState<PeriodType>("monthly_report");
+  const [period, setPeriod] = useState<PeriodType>("weekly_report");
+  const [anchor, setAnchor] = useState(todayIso());
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -60,28 +152,6 @@ export default function Reports() {
     myTeams().then((t) => { setTeams(t); if (t[0]) setTeamId(t[0].id); }).catch(() => {});
   }, []);
 
-  const make = async () => {
-    if (!teamId) return;
-    setBusy(true); setErr(""); setNote("");
-    try {
-      const { start, end } = rangeFor(period);
-      const r = await generatePeriodReport(teamId, period, start, end);
-      logFeature(FEATURES.periodReportGenerated, { period });
-      if (!r) {
-        // The function returns null with a reason when the period is empty.
-        // Saying so is better than an empty screen that looks broken.
-        setNote("Nothing to report on for that period yet. Add a session or two first.");
-      } else {
-        setOpen(r.id);
-      }
-      await load();
-    } catch (e) {
-      setErr((e as Error).message ?? "Could not build that report.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   // Period reports have no event; session reports do. Worth separating, because
   // they answer different questions and a coach looking for their month should
   // not have to pick it out of a list of sessions.
@@ -92,6 +162,41 @@ export default function Reports() {
       sessions: all.filter((r) => r.event_id),
     };
   }, [list]);
+
+  // What the calendar marks, and whether the picked period already has its one
+  // report: same list, two questions.
+  const sel = periodRange(period, anchor);
+  const selLabel = periodLabel(period, sel.start);
+  const reported = useMemo(() => new Set(
+    periods
+      .filter((r) => r.team_id === teamId && r.report_type === period && r.period_start)
+      .map((r) => r.period_start as string),
+  ), [periods, teamId, period]);
+  const existing = periods.find((r) =>
+    r.team_id === teamId && r.report_type === period &&
+    r.period_start === sel.start && r.period_end === sel.end);
+
+  const make = async () => {
+    if (!teamId) return;
+    setBusy(true); setErr(""); setNote("");
+    try {
+      const { report: r, unchanged } = await generatePeriodReport(teamId, period, anchor);
+      logFeature(FEATURES.periodReportGenerated, { period });
+      if (!r) {
+        // The function returns null with a reason when the period is empty.
+        // Saying so is better than an empty screen that looks broken.
+        setNote("Nothing to report on for that period yet. Add a session or two first.");
+      } else {
+        if (unchanged) setNote("Nothing has changed since this report was built, so this is the same report.");
+        setOpen(r.id);
+      }
+      await load();
+    } catch (e) {
+      setErr((e as Error).message ?? "Could not build that report.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const fmt = (iso: string) => new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric", month: "short", year: "numeric",
@@ -127,9 +232,9 @@ export default function Reports() {
           <strong>Look back over a period</strong>
           <div className="muted small">
             Gathers a team's sessions into one picture, and compares what you
-            worked on in training against what you noted in matches. Sessions you
-            named yourself are kept separate, so a goalkeeping block does not get
-            read as the team's training.
+            worked on in training against what you noted in matches. One report
+            per week, one per month, one per season: pick the period on the
+            calendar, and a small dot marks a week that already has its report.
           </div>
 
           {teams.length === 0 ? (
@@ -160,12 +265,19 @@ export default function Reports() {
                     </button>
                   ))}
                 </div>
-                <div className="muted small" style={{ marginTop: 4 }}>
-                  {PERIODS.find((p) => p.key === period)?.blurb}
-                </div>
+              </div>
+
+              <PeriodCalendar kind={period} anchor={anchor} onAnchor={setAnchor} reported={reported} />
+
+              <div className="muted small">
+                {existing
+                  ? `${selLabel} already has its report, built ${fmt(existing.created_at)}. ` +
+                    "Building again brings it up to date if the period's sessions changed, " +
+                    "and costs nothing if they did not."
+                  : `This builds ${selLabel}.`}
               </div>
               <button className="btn block" onClick={make} disabled={busy || !teamId}>
-                {busy ? "Reading it back" : "Build the report"}
+                {busy ? "Reading it back" : existing ? "Bring it up to date" : "Build the report"}
               </button>
               {note && <div className="banner">{note}</div>}
             </>

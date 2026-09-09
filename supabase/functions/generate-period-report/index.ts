@@ -7,11 +7,23 @@
 //
 // Principle: "Mirror, not verdict." Summarise and surface patterns; do not grade.
 //
+// ONE REPORT PER PERIOD. Periods are calendar periods: a week is Monday to
+// Sunday, a month is the calendar month, a season runs 1 August to 31 July.
+// Whatever dates the caller sends, the period is snapped to the calendar here
+// (the server owns the rule; the client's calendar is a convenience), and each
+// (team, kind, period) keeps exactly one report row: unchanged sessions return
+// the stored report without a model call, changed sessions regenerate it in
+// place. Migration 0031's unique index holds the same rule in the database.
+//
+// Before this, "weekly" meant "the last 7 days from whenever you asked", so a
+// Tuesday ask and a Thursday ask were two different, overlapping reports, two
+// model calls, and neither of them THE week.
+//
 // Body: {
 //   team_id: string,
 //   report_type: "weekly_report" | "monthly_report" | "season_report",
-//   period_start: "YYYY-MM-DD",
-//   period_end: "YYYY-MM-DD",
+//   period_start: "YYYY-MM-DD",   any date inside the period; snapped here
+//   period_end: "YYYY-MM-DD",     accepted for compatibility, ignored
 //   title?: string
 // }
 // =============================================================================
@@ -22,6 +34,52 @@ import { isUnder18, safeNameMap } from "../_shared/names.ts";
 import { firstJsonObject } from "../_shared/json.ts";
 import { type MdBlock, renderReport } from "../_shared/markdown.ts";
 import { MIRROR_NOT_VERDICT } from "../_shared/principles.ts";
+
+// How a period report is written, as opposed to what it is written from. Part
+// of the change-detection fingerprint, same mechanism as generate-report: bump
+// it whenever the prompt, the payload or the rendering changes, and every
+// stored period report regenerates the next time its period is asked for.
+const PERIOD_LOGIC_VERSION = 1;
+
+// The calendar. Weeks start on Monday (a grassroots week builds through
+// training to the weekend game); a month is the calendar month; a season runs
+// 1 August to 31 July. MIRRORED in web/src/lib/periods.ts, which cannot import
+// this file, so _tests/one-report-per-period.mjs holds the two together.
+function snapPeriod(kind: string, anchorIso: string): { start: string; end: string } {
+  const d = new Date(`${anchorIso}T00:00:00Z`);
+  if (isNaN(d.getTime())) throw new Error(`Bad period date: ${anchorIso}`);
+  const iso = (x: Date) => x.toISOString().slice(0, 10);
+  if (kind === "season_report") {
+    const y = d.getUTCMonth() >= 7 ? d.getUTCFullYear() : d.getUTCFullYear() - 1;
+    return { start: `${y}-08-01`, end: `${y + 1}-07-31` };
+  }
+  if (kind === "monthly_report") {
+    return {
+      start: iso(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1))),
+      end: iso(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0))),
+    };
+  }
+  const monday = new Date(d);
+  monday.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  return { start: iso(monday), end: iso(sunday) };
+}
+
+// What to call the period on the report itself. "Week of Monday's date" rather
+// than a date range, because the range is implied by the rule and a title is
+// read, not parsed. No dashes (house style), so the season is "2026/27".
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July",
+  "August", "September", "October", "November", "December"];
+function periodTitleLabel(kind: string, startIso: string): string {
+  const d = new Date(`${startIso}T00:00:00Z`);
+  if (kind === "season_report") {
+    const y = d.getUTCFullYear();
+    return `${y}/${String((y + 1) % 100).padStart(2, "0")} season`;
+  }
+  if (kind === "monthly_report") return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  return `Week of ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
 
 interface NoteEntry { note: string | null; tags: string[] | null; sentiment: string | null }
 interface ThemeBucket {
@@ -36,6 +94,10 @@ function sessionLabel(e: { event_type: string; custom_type?: string | null }): s
   if (e.event_type === "tournament") return "Tournament";
   if (e.event_type === "match") return "Match";
   if (e.event_type === "training_session") return "Training";
+  // A self reflection the coach attached to this team (0030). It routes into
+  // other_sessions under this label, which is what keeps it a strand of its
+  // own; the prompt below says what the label means.
+  if (e.event_type === "self_reflection") return "Self reflection";
   return e.event_type.replace(/_/g, " ");
 }
 
@@ -64,10 +126,15 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { team_id, report_type, period_start, period_end, title } = await req.json();
-    if (!team_id || !report_type || !period_start || !period_end) {
-      return jsonResponse({ error: "Missing team_id / report_type / period_start / period_end" }, 400);
+    const { team_id, report_type, period_start, title } = await req.json();
+    if (!team_id || !report_type || !period_start) {
+      return jsonResponse({ error: "Missing team_id / report_type / period_start" }, 400);
     }
+    // The calendar decides the range, not the caller: any date inside the
+    // period names the whole period. This is what makes "one report per week"
+    // a fact rather than a convention, because two requests for the same week
+    // can no longer describe two different weeks.
+    const period = snapPeriod(report_type, period_start);
 
     // Caller must be able to see the team (RLS).
     const supa = userClient(req);
@@ -79,7 +146,7 @@ Deno.serve(async (req) => {
     const { data: events } = await supa
       .from("events").select("id, event_type, custom_type, title, event_date, opposition")
       .eq("team_id", team_id)
-      .gte("event_date", period_start).lte("event_date", period_end)
+      .gte("event_date", period.start).lte("event_date", period.end)
       .order("event_date", { ascending: true });
 
     const eventIds = (events ?? []).map((e) => e.id);
@@ -170,7 +237,7 @@ Deno.serve(async (req) => {
 
     const payload = JSON.stringify({
       team: { name: team.name, age_group: team.age_group, format: team.format },
-      period: { start: period_start, end: period_end },
+      period: { start: period.start, end: period.end },
       counts: {
         events: events?.length ?? 0,
         matches: matchIds.length,
@@ -194,6 +261,36 @@ Deno.serve(async (req) => {
       reflection_next_focus: (reflections ?? []).flatMap((r) => r.suggested_next_focus ?? []),
       hoped_to_see_review: (reflections ?? []).flatMap((r) => r.hoped_to_see_review ?? []),
     });
+
+    // Change-detection, same shape as generate-report's: fingerprint what the
+    // COACH supplied for the period (which sessions exist, their notes, the
+    // results, their reflections), never an AI-derived field, plus the logic
+    // version so a prompt fix reaches stored reports. An unchanged period
+    // returns the stored report without a model call, which is what lets "one
+    // report per week" coexist with a coach who taps the button daily.
+    const sourceForHash = JSON.stringify({
+      logic: PERIOD_LOGIC_VERSION,
+      events: (events ?? []).map((e) => [e.id, e.event_date, e.event_type, e.custom_type]),
+      notes: (observations ?? []).map((o) => o.cleaned_note ?? o.raw_note),
+      results: results ?? [],
+      reflections: (reflections ?? []).map((r) => r.summary ?? null),
+    });
+    const fingerprint = await sha256(sourceForHash);
+    // The whole row, not just id + fingerprint: the unchanged path hands it
+    // straight back as the report, so it has to be one the client can render.
+    let prior: { id: string; source_fingerprint: string | null } | null = null;
+    {
+      const { data } = await supa
+        .from("reports").select("*")
+        .eq("team_id", team_id).eq("report_type", report_type)
+        .eq("period_start", period.start).eq("period_end", period.end)
+        .is("event_id", null)
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      prior = (data as typeof prior) ?? null;
+      if (prior && prior.source_fingerprint === fingerprint) {
+        return jsonResponse({ ok: true, report: prior, unchanged: true });
+      }
+    }
 
     const admin = serviceClient();
     const voice = await voiceInstruction(admin, team.created_by);
@@ -227,6 +324,15 @@ Deno.serve(async (req) => {
         "between two contexts unless the coach's own notes say so. Where a " +
         "session type had few notes, say less about it rather than inferring " +
         "more. " +
+        // Self reflections (0030) are the strongest case of the rule above:
+        // they are not even about the team. A coach reflecting on losing their
+        // temper on Saturday has said something about themselves, not about
+        // the squad's development, and folding it into the team picture would
+        // turn their most personal entries into claims about the players.
+        "Anything under the label \"Self reflection\" is the coach reflecting " +
+        "on THEMSELVES, not on the team. Keep it as its own strand, clearly " +
+        "about the coach, and never merge it into the team's training, match " +
+        "or player picture. " +
         MIRROR_NOT_VERDICT +
         // "focus_ahead" asked the model what the coach should work on next. Over
         // a season that is a bigger judgement than the one taken out of the
@@ -252,12 +358,9 @@ Deno.serve(async (req) => {
     });
 
     const content_json = firstJsonObject(raw);
-    const periodLabel = report_type === "season_report"
-      ? "Season"
-      : report_type === "weekly_report"
-      ? "Weekly"
-      : "Monthly";
-    const heading = title ?? `${team.name}: ${periodLabel} Report`;
+    // Named after the calendar period, because there is exactly one report per
+    // period now and "Weekly Report" three times in a list identifies nothing.
+    const heading = title ?? `${team.name}: ${periodTitleLabel(report_type, period.start)}`;
 
     // Never store a blank report. If the model didn't return usable structured
     // JSON, surface its own text so the report is always viewable, and log the
@@ -274,28 +377,50 @@ Deno.serve(async (req) => {
           "_The report came back empty. Please try generating it again._"}`;
     if (!structured) {
       console.error("generate-period-report: unstructured model reply", {
-        team_id, period_start, period_end, length: (raw ?? "").length,
+        team_id, period_start: period.start, period_end: period.end, length: (raw ?? "").length,
       });
     }
 
-    const { data: report, error: insErr } = await admin.from("reports").insert({
+    const row = {
       event_id: null,
       team_id,
       created_by: team.created_by,
       report_type,
       title: heading,
-      period_start,
-      period_end,
+      period_start: period.start,
+      period_end: period.end,
       content_json,
       content_markdown,
-    }).select().single();
-    if (insErr) return jsonResponse({ error: insErr.message }, 500);
+      source_fingerprint: fingerprint,
+    };
+
+    // One row per period: a changed period regenerates in place, a new period
+    // inserts. The unique index (0031) backstops the race this lookup cannot
+    // see, so a double-tap surfaces as an error rather than a second report.
+    let report: unknown;
+    if (prior) {
+      const { data, error: upErr } = await admin.from("reports")
+        .update(row).eq("id", prior.id).select().single();
+      if (upErr) return jsonResponse({ error: upErr.message }, 500);
+      report = data;
+    } else {
+      const { data, error: insErr } = await admin.from("reports")
+        .insert(row).select().single();
+      if (insErr) return jsonResponse({ error: insErr.message }, 500);
+      report = data;
+    }
 
     return jsonResponse({ ok: true, report });
   } catch (e) {
     return jsonResponse({ error: String(e) }, 500);
   }
 });
+
+// Stable content hash of the report's source, used for change-detection.
+async function sha256(s: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 function toMarkdown(title: string, record: any, c: any, reportType: string): string {
   const blocks: MdBlock[] = [{

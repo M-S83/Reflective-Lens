@@ -21,6 +21,8 @@ export type EventType =
   | "match"
   | "tournament"
   | "other"
+  // A stand-alone coach self-reflection with no session behind it (0030).
+  | "self_reflection"
   | "coach_observation"
   | "player_reflection";
 
@@ -82,6 +84,9 @@ export type ReportType =
   | "match_report"
   | "tournament_report"
   | "other_report"
+  // The report a self_reflection event produces: shaped for the coach, no
+  // aims checklist, no squad (0030).
+  | "self_report"
   | "weekly_report"
   | "monthly_report"
   | "season_report"
