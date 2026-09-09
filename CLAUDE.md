@@ -23,7 +23,7 @@ squad, never an account.
 
 ## Where things are
 
-- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`-`0030`.
+- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`-`0031`.
   Validated on PostgreSQL 16 (stubbed `auth`/`storage` schemas + a `test.uid` GUC).
 - `supabase/functions/` — Deno/TypeScript edge functions. Shared helpers in
   `_shared/` (`clients.ts` = model tiering + Claude/usage helpers, `voice.ts` =
@@ -83,6 +83,16 @@ squad, never an account.
   is a session type for reflection with no session behind it: two steps
   (Reflect, Report), a report shaped for the coach, its own strand in period
   reports. Held by `_tests/coach-self.mjs` and `_tests/report-sections.mjs`.
+- **One report per period, on one calendar.** A period is a calendar period
+  (Monday-to-Sunday week, calendar month, 1 August to 31 July season), never
+  "the last 7 days from whenever you asked". `generate-period-report` snaps
+  whatever it is sent, keeps one row per (team, kind, period), returns the
+  stored report untouched when the period's sessions have not changed (no
+  model call), and regenerates it in place when they have; migration `0031`'s
+  unique index holds the rule in the database. The Reports screen carries the
+  calendar the coach picks the period on (`web/src/lib/periods.ts` mirrors the
+  server's snapping; `_tests/one-report-per-period.mjs` holds the two
+  together, and the `-db.sh` twin proves the index).
 - **Views run as their caller** (migration `0025`). Every `analytics_*` and
   `admin_*` view gates itself with `is_admin()` in its body, which worked and was
   the ONLY guard: one view added later without the where clause and there was

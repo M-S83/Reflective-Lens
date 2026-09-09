@@ -547,19 +547,22 @@ export async function generateReport(eventId: string, eventType: EventType): Pro
 
 export type PeriodType = "weekly_report" | "monthly_report" | "season_report";
 
+// One report per period: any date inside the period names it, the function
+// snaps to the calendar (Monday week, calendar month, August-to-July season)
+// and keeps one row per (team, kind, period). `unchanged` means the stored
+// report was returned as-is because the period's sessions have not changed.
 export async function generatePeriodReport(
-  teamId: string, reportType: PeriodType, periodStart: string, periodEnd: string,
-): Promise<Report | null> {
+  teamId: string, reportType: PeriodType, periodStart: string,
+): Promise<{ report: Report | null; unchanged: boolean }> {
   const { data, error } = await supabase.functions.invoke("generate-period-report", {
     body: {
       team_id: teamId,
       report_type: reportType,
       period_start: periodStart,
-      period_end: periodEnd,
     },
   });
   if (error) throw error;
-  return (data?.report as Report) ?? null;
+  return { report: (data?.report as Report) ?? null, unchanged: !!data?.unchanged };
 }
 
 // Every report this coach has, session and period alike, newest first. RLS

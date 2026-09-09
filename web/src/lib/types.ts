@@ -72,6 +72,10 @@ export interface FollowupQuestion {
 export interface Report {
   id: string; event_id: string | null; report_type: string; title: string;
   content_markdown: string | null; created_at: string;
+  // Set on period reports (event_id null): which team and which calendar
+  // period. The Reports calendar reads these to show which weeks and months
+  // already have their one report.
+  team_id: string | null; period_start: string | null; period_end: string | null;
 }
 
 // ---- Match result ------------------------------------------------------------
