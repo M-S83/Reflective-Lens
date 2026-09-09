@@ -23,14 +23,14 @@ squad, never an account.
 
 ## Where things are
 
-- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`-`0029`.
+- `supabase/migrations/` — Postgres schema + RLS, migrations `0001`-`0030`.
   Validated on PostgreSQL 16 (stubbed `auth`/`storage` schemas + a `test.uid` GUC).
 - `supabase/functions/` — Deno/TypeScript edge functions. Shared helpers in
   `_shared/` (`clients.ts` = model tiering + Claude/usage helpers, `voice.ts` =
   house-style + language + coach voice, `knowledge.ts` = FA prompt/tag grounding,
   `principles.ts` = the mirror-not-verdict rule every prompt shares, `names.ts` =
   under-18 name privacy, `email.ts` = transactional email via Resend, `json.ts`,
-  `markdown.ts`, `crypto.ts`).
+  `markdown.ts`, `dedupe.ts` = one point one section in reports, `crypto.ts`).
 - `supabase/functions/_tests/` — the verification suite. `*.mjs` are plain Node
   checks (`node <file>`); `*-db.sh` stand up a throwaway PG16 from
   `_tests/bootstrap.sql` and assert against real migrations + RLS.
@@ -71,6 +71,18 @@ squad, never an account.
   ONE cross-context link that is always legitimate. Anything else must be
   supported by the coach's own notes. This is the rule the insights rebuild has
   to honour (see `_tests/session-scope.mjs`).
+- **The coach appears in their own reports** (the 9 Sep 2026 review). Every
+  session and match report carries "What you said about yourself", sourced only
+  from the reflection and the answers, honest when empty ("You didn't say
+  anything about yourself this time"), never invented. Section names and order
+  are FIXED in `generate-report`'s renderer (prompts change what goes in a
+  section, never what it is called), the same point may not appear in two
+  sections (`_shared/dedupe.ts` enforces it on output), and spelling-only
+  correction of the coach's words is allowed everywhere (never guessing a
+  missing word, never rewording). "Self" (`self_reflection`, migration `0030`)
+  is a session type for reflection with no session behind it: two steps
+  (Reflect, Report), a report shaped for the coach, its own strand in period
+  reports. Held by `_tests/coach-self.mjs` and `_tests/report-sections.mjs`.
 - **Views run as their caller** (migration `0025`). Every `analytics_*` and
   `admin_*` view gates itself with `is_admin()` in its body, which worked and was
   the ONLY guard: one view added later without the where clause and there was

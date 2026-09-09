@@ -1,5 +1,5 @@
 // Frontend view of the backend rows we touch (subset of ../../types/database.ts).
-export type EventType = "training_session" | "match" | "tournament" | "other";
+export type EventType = "training_session" | "match" | "tournament" | "other" | "self_reflection";
 export type TeamFormat = "3v3" | "5v5" | "6v6" | "7v7" | "9v9" | "11v11";
 export type CapturePhase = "pre_event" | "live" | "post_event" | "ad_hoc";
 export type Sentiment = "positive" | "concern" | "neutral";
@@ -110,6 +110,11 @@ export const EVENT_TYPES: { value: EventType; label: string }[] = [
   { value: "training_session", label: "Training" },
   { value: "match", label: "Match" },
   { value: "tournament", label: "Tournament" },
+  // A stand-alone reflection with no session behind it (0030): handling a
+  // parent, losing your temper on Saturday, a values check at the start of a
+  // block. Some reflection has no session to hang on, and without a home it
+  // went in Thoughts and never got reflected on.
+  { value: "self_reflection", label: "Self" },
   { value: "other", label: "Other" },
 ];
 // A label for every phase, INCLUDING ones that can no longer be created, so a
@@ -144,6 +149,9 @@ export const PHASES: { value: CapturePhase; label: string }[] = [
 export const CUSTOM_TYPE_MAX = 60;
 export function sessionLabel(e: { event_type: EventType; custom_type?: string | null }): string {
   if (e.event_type === "other") return e.custom_type?.trim() || "Other session";
+  // Fuller than the "Self" chip: as a heading or a report group, "Self" alone
+  // is too terse to read. Must stay the same string as generate-period-report.
+  if (e.event_type === "self_reflection") return "Self reflection";
   const found = EVENT_TYPES.find((t) => t.value === e.event_type);
   return found?.label ?? e.event_type.replace(/_/g, " ");
 }

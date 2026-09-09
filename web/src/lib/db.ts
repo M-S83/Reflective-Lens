@@ -521,7 +521,8 @@ export async function reports(eventId: string): Promise<Report[]> {
 export async function generateReport(eventId: string, eventType: EventType): Promise<Report | null> {
   const reportType = eventType === "match" ? "match_report"
     : eventType === "tournament" ? "tournament_report"
-    : eventType === "training_session" ? "training_report" : "other_report";
+    : eventType === "training_session" ? "training_report"
+    : eventType === "self_reflection" ? "self_report" : "other_report";
   const { data, error } = await supabase.functions.invoke("generate-report", {
     body: { event_id: eventId, report_type: reportType },
   });

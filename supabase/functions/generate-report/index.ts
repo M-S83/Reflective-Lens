@@ -15,6 +15,7 @@ import { isUnder18, safeName, safeNameMap } from "../_shared/names.ts";
 import { firstJsonObject } from "../_shared/json.ts";
 import { type MdBlock, renderReport } from "../_shared/markdown.ts";
 import { MIRROR_NOT_VERDICT } from "../_shared/principles.ts";
+import { dedupeSections } from "../_shared/dedupe.ts";
 
 // How a report is written, as opposed to what it is written from. Part of the
 // change-detection fingerprint, so bumping it retires every stored report and
@@ -24,7 +25,14 @@ import { MIRROR_NOT_VERDICT } from "../_shared/principles.ts";
 //   2  never invent who the session was about (a 1v1 came back describing "the
 //      team"); an aim with nothing written about it stops saying so twice; the
 //      session sends the coach's own name for it rather than just "other"
-const REPORT_LOGIC_VERSION = 2;
+//   3  the 9 Sep 2026 review: a coach-self section (what the coach said about
+//      themselves, honest when empty); one fixed set of section names in one
+//      fixed order, with Action points folded into Noted for next; a dedup
+//      pass so the same point cannot appear in two sections; Evidence of
+//      learning tightened to actual evidence of learning; spelling-only
+//      correction when restating the coach's words; the self-reflection
+//      report variant
+const REPORT_LOGIC_VERSION = 3;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -215,6 +223,11 @@ Deno.serve(async (req) => {
     const admin = serviceClient();
     const voice = await voiceInstruction(admin, event.user_id);
 
+    // A self reflection is not a session: there is no squad, no aims checklist
+    // and no practice to report on. Its report takes the coach shape below
+    // rather than the session shape.
+    const isSelf = event.event_type === "self_reflection";
+
     const raw = await callClaude({
       system:
         "You produce football reflection reports. " +
@@ -251,7 +264,37 @@ Deno.serve(async (req) => {
         "player as with a squad. If they did not say who, do not decide for " +
         "them: restate what they wrote and leave the subject exactly as vague " +
         "as they left it. " +
-        "This is a COACH'S single-session report. Draw ONLY on what the coach " +
+        // The spelling decision from the 9 Sep review. Faithful mirroring was
+        // passing "alot" and "a bad at school" into finished reports, which
+        // looks careless in front of a county officer. Fixing SPELLING is not a
+        // mirror violation: the word the coach meant is not in doubt, so
+        // nothing of theirs is changed by writing it correctly. Everything past
+        // spelling still is a violation, and the same narrow line as
+        // clean-observation holds: a missing word is a gap the coach left, and
+        // guessing it is the instinct that fills empty sections.
+        "When you restate or quote the coach's words, correct obvious spelling " +
+        "only (alot -> a lot, definately -> definitely). Never reword their " +
+        "phrasing, never guess at a word that is missing, never finish a " +
+        "sentence they left unfinished. " +
+        (isSelf
+          // The self-reflection report: no session behind it, so no aims
+          // checklist, no squad and no session-shaped sections. Its whole
+          // subject is the coach, in their own words.
+          ? "This is a COACH'S SELF-REFLECTION: not a session, a match or a " +
+            "practice, but the coach thinking about themselves (how they " +
+            "handled something, how they behave, what kind of coach they want " +
+            "to be). Draw ONLY on what they wrote or said in this reflection " +
+            "and their answers to the reflective questions. If something was " +
+            "not raised, do NOT mention it; a field with no support MUST be an " +
+            "empty array. " +
+            "EACH POINT APPEARS ONCE, in one section only. Empty is always " +
+            "better than repeated. " +
+            "what_you_said organises the substance of the reflection in their " +
+            "own words. noted_for_next is ONLY what they themselves said they " +
+            "would do, try or watch for: add no recommendations of your own. " +
+            'Return ONLY JSON with keys: "headline" (string), "what_you_said" ' +
+            '(string[]), "noted_for_next" (string[]).'
+          : "This is a COACH'S single-session report. Draw ONLY on what the coach " +
             "provided for THIS session: the aims, the notes captured, their " +
             "reflection, and their answers to the reflective questions. If " +
             "something was not raised, do NOT mention it. Any field with no " +
@@ -262,29 +305,55 @@ Deno.serve(async (req) => {
             "a status: \"recorded\" (a note clearly relates), \"partly\" (only " +
             "loosely), or \"stated_not_recorded\" (no note touches it). Keep EVERY " +
             "aim, including stated_not_recorded; never drop one. For noted_for_next, " +
-            "reflect back only what the coach noted for next time and their own " +
-            "answers: add no recommendations of your own. " +
+            "reflect back only what the coach noted for next time, anything they " +
+            "said they would do or act on, and their own answers: add no " +
+            "recommendations of your own. " +
             // With a handful of notes the model fills every section by
             // rewording the same two observations, which turns a thin session
             // into something that looks like a form being completed. Real output
             // carried one note verbatim in both what_went_well and
-            // learning_evidence, and another in three sections at once.
+            // learning_evidence, and another in three sections at once. The
+            // prompt rule alone did not stop it (the 6 Aug test report repeated
+            // two bullets across sections regardless), so the output is also
+            // deduplicated in code below. The rule stays: fewer repeats in is
+            // still better than repeats caught after.
             "EACH POINT APPEARS ONCE. Every section must earn its content: do NOT " +
             "restate a point that already appears elsewhere, even reworded. A " +
             "short session should produce a short report with several EMPTY " +
             "arrays, and that is the correct outcome, not a failure. Empty is " +
             "always better than repeated. " +
-            "learning_evidence is specifically for a moment where something was " +
-            "understood or taken on: it is not a second home for a difficulty, " +
-            "and a shortcoming never belongs there. session_patterns is only for " +
+            // The 9 Sep review, item 1: the questions ask the coach about
+            // themselves and the report folded those answers into
+            // session-shaped sections, so every report read as being about the
+            // players and the practice. The FA's line between reflecting on
+            // the practices you provide and reflecting on yourself is drawn
+            // here as its own field.
+            "about_you is what the coach said ABOUT THEMSELVES: their choices, " +
+            "when they stepped in and what they said, how they behaved or felt " +
+            "as the coach, what they would do differently as the coach. Source " +
+            "it ONLY from their reflection and their answers to the questions, " +
+            "never from the pitch-side notes, and NEVER invent it: if they said " +
+            "nothing about themselves, return an empty array. A point about " +
+            "players or the practice does not belong there. " +
+            // Tightened after the League test report listed the thing that did
+            // not work ("calls of 'man on' made when the player had more time
+            // than the call suggested") as evidence of learning. A coach
+            // developer reading that catches it at once.
+            "learning_evidence is ONLY for evidence of learning: the coach saw " +
+            "a player do something they could not do before, or do it better " +
+            "than before, and said so. A difficulty, a mistake or a thing that " +
+            "did not work NEVER belongs there, whatever was learned from it. " +
+            "If nothing qualifies, return an empty array rather than moving " +
+            "something in from another section. " +
+            "session_patterns is only for " +
             "something recurring ACROSS several notes in this session; with one " +
             "or two notes it must be empty rather than a summary of what is " +
             "already written above. " +
             'Return ONLY JSON with keys: "headline" (string), "aims_review" (array ' +
             'of {aim, status, note}), "what_went_well" (string[]), ' +
-            '"what_did_not_work" (string[]), "action_points" (string[]), ' +
+            '"what_did_not_work" (string[]), "about_you" (string[]), ' +
             '"noted_for_next" (string[]), "learning_evidence" (string[]), ' +
-            '"session_patterns" (string[], patterns WITHIN this one session only).' +
+            '"session_patterns" (string[], patterns WITHIN this one session only).') +
         voice,
       prompt: `Report type: ${report_type}\n\nData:\n${payload}`,
       maxTokens: 4096,
@@ -297,17 +366,45 @@ Deno.serve(async (req) => {
     const c = content_json as Record<string, unknown>;
     const heading = title ?? `${event.title}: Report`;
 
+    // One point, one section, enforced on the OUTPUT as well as asked of the
+    // model (see _shared/dedupe.ts for the two real reports that made this a
+    // code path). Sections are passed in render order, so a repeated point
+    // stays where the reader meets it first, which resolved both real cases
+    // the right way: the mislabelled copy in Evidence of learning was the
+    // later one.
+    {
+      const order = isSelf
+        ? ["what_you_said", "noted_for_next"]
+        : ["what_went_well", "what_did_not_work", "session_patterns",
+          "learning_evidence", "about_you", "noted_for_next"];
+      const deduped = dedupeSections(
+        order.map((k) => Array.isArray(c[k]) ? c[k] as string[] : []),
+      );
+      order.forEach((k, i) => {
+        if (Array.isArray(c[k])) c[k] = deduped[i];
+      });
+    }
+
     // Never store a blank report.
-    const structured = !!(
+    const structured = isSelf
+      ? !!(
+        c.headline ||
+        (Array.isArray(c.what_you_said) && c.what_you_said.length) ||
+        (Array.isArray(c.noted_for_next) && c.noted_for_next.length)
+      )
+      : !!(
         c.headline ||
         (Array.isArray(c.aims_review) && c.aims_review.length) ||
         (Array.isArray(c.what_went_well) && c.what_went_well.length) ||
         (Array.isArray(c.what_did_not_work) && c.what_did_not_work.length) ||
+        (Array.isArray(c.about_you) && c.about_you.length) ||
         (Array.isArray(c.noted_for_next) && c.noted_for_next.length)
       );
     const content_markdown = !structured
       ? `# ${heading}\n\n${(raw ?? "").trim() ||
           "_The report came back empty. Please try generating it again._"}`
+      : isSelf
+      ? selfMarkdown(heading, content_json)
       : coachMarkdown(heading, content_json);
     if (!structured) {
       // Never log the reply body: it contains player names and note text (youth
@@ -321,15 +418,28 @@ Deno.serve(async (req) => {
     // F4: fold the structured summary back into the reflection so the period
     // report (which aggregates these fields) has real data. Only when the reply
     // was usable, so good content is never overwritten with empty.
+    //
+    // action_points is no longer written: the report stopped asking for it
+    // when the 9 Sep review fixed the section set (Action points and Noted
+    // for next were two names for one thing, and noted_for_next is the one
+    // that stays; it already feeds suggested_next_focus here). Nothing reads
+    // the column, and rows written before this keep their values.
     if (structured && reflections?.[0]?.id) {
-      await admin.from("reflections").update({
-        what_went_well: Array.isArray(c.what_went_well) ? c.what_went_well : [],
-        what_did_not_work: Array.isArray(c.what_did_not_work) ? c.what_did_not_work : [],
-        action_points: Array.isArray(c.action_points) ? c.action_points : [],
-        suggested_next_focus: Array.isArray(c.noted_for_next) ? c.noted_for_next : [],
-        learning_evidence: Array.isArray(c.learning_evidence) ? c.learning_evidence : [],
-        hoped_to_see_review: Array.isArray(c.aims_review) ? c.aims_review : [],
-      }).eq("id", reflections[0].id);
+      await admin.from("reflections").update(
+        isSelf
+          // A self reflection has no session-shaped fields; only what the
+          // coach said they would do next carries forward.
+          ? {
+            suggested_next_focus: Array.isArray(c.noted_for_next) ? c.noted_for_next : [],
+          }
+          : {
+            what_went_well: Array.isArray(c.what_went_well) ? c.what_went_well : [],
+            what_did_not_work: Array.isArray(c.what_did_not_work) ? c.what_did_not_work : [],
+            suggested_next_focus: Array.isArray(c.noted_for_next) ? c.noted_for_next : [],
+            learning_evidence: Array.isArray(c.learning_evidence) ? c.learning_evidence : [],
+            hoped_to_see_review: Array.isArray(c.aims_review) ? c.aims_review : [],
+          },
+      ).eq("id", reflections[0].id);
     }
 
     const row = {
@@ -416,6 +526,15 @@ function coachMarkdown(title: string, c: any): string {
       })),
     });
   }
+  // ONE fixed set of section names, in ONE fixed order, and a section is only
+  // ever absent because it is empty. The test reports drifted ("What did not
+  // work" in some, "What got in the way" in others; "Noted for next" and
+  // "Action points" both existing), which reads as inconsistent day to day and
+  // makes the period report's aggregation job harder. The names are decided
+  // here, once: prompts may change what goes IN a section, never what it is
+  // called. Action points did not survive the decision: it and Noted for next
+  // were two names for the coach's own "what I'll do about it", so the mirror
+  // wording stays and the other goes.
   const bl = (h: string, arr?: string[]) => {
     if (arr?.length) blocks.push({ t: "bullets", heading: h, items: arr });
   };
@@ -428,9 +547,38 @@ function coachMarkdown(title: string, c: any): string {
   // without the app being the one calling it a failure.
   bl("What got in the way", c.what_did_not_work);
   bl("In this session", c.session_patterns);
-  bl("Action points", c.action_points);
-  bl("Noted for next", c.noted_for_next);
   bl("Evidence of learning", c.learning_evidence);
+  // The coach-self section (9 Sep review, item 1). The pitch says "looking at
+  // yourself as a coach" and every test report read as being about the players
+  // and the practice, because the answers about the coach were folded into the
+  // session sections. This is where they live now.
+  //
+  // ALWAYS rendered, on the same honesty rule as the hoped-to-see checklist:
+  // when the coach said nothing about themselves, the section says so rather
+  // than disappearing. An empty section here is information (the FA's line
+  // between reflecting on your practices and reflecting on yourself, made
+  // visible), and it is never filled by the model inventing something.
+  blocks.push({
+    t: "bullets",
+    heading: "What you said about yourself",
+    items: Array.isArray(c.about_you) ? c.about_you : [],
+    empty: "You didn't say anything about yourself this time.",
+  });
+  bl("Noted for next", c.noted_for_next);
+  return renderReport(title, c.headline, blocks);
+}
+
+// The self-reflection report (9 Sep review, item 2). No aims checklist, no
+// squad, no session-shaped sections: the whole report is the coach, so it does
+// not need an "about you" section either. Two sections, both theirs: what they
+// said, organised, and what they said they would do.
+function selfMarkdown(title: string, c: any): string {
+  const blocks: MdBlock[] = [];
+  const bl = (h: string, arr?: string[]) => {
+    if (arr?.length) blocks.push({ t: "bullets", heading: h, items: arr });
+  };
+  bl("What you said", c.what_you_said);
+  bl("Noted for next", c.noted_for_next);
   return renderReport(title, c.headline, blocks);
 }
 

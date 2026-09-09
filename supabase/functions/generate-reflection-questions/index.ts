@@ -33,6 +33,20 @@ import { MIRROR_NOT_VERDICT } from "../_shared/principles.ts";
 const FORWARD_QUESTION =
   "If you ran this session again, how would you change or improve it, if at all?";
 
+// ON TRIAL (9 Sep 2026 review, item 8): one question that asks directly about
+// the coach's OWN behaviour, in the FA's language of interventions, so the
+// report's "What you said about yourself" section has something concrete to
+// mirror. Fixed in code for the same reasons as FORWARD_QUESTION: it cannot
+// drift into advice and it reads the same after every session. Chosen over
+// "was there a moment you'd handle differently as the coach?" because that is
+// FORWARD_QUESTION wearing different clothes, and because asking what they
+// actually SAID collects material rather than a judgement.
+//
+// Try it on the next few test sessions before deciding whether it earns a
+// permanent place; if it keeps being skipped, remove it here.
+const STEP_IN_QUESTION =
+  "When did you step in during the session, and what did you say?";
+
 interface GeneratedQuestion {
   question_text: string;
   question_type: "multiple_choice" | "voice" | "text" | "rating";
@@ -43,7 +57,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    // Two generated, two curated, one fixed: five in total, from three sources.
+    // Two generated, one curated, two fixed: up to five in total, from three
+    // sources (the step-in question is on trial and skipped for a self
+    // reflection).
     const { reflection_id, max_questions = 2 } = await req.json();
     if (!reflection_id) return jsonResponse({ error: "Missing reflection_id" }, 400);
 
@@ -161,6 +177,21 @@ Deno.serve(async (req) => {
       rows.push({
         reflection_id,
         question_text: prompt,
+        question_type: "text",
+        options: [],
+      });
+    }
+
+    // The step-in trial question, skipped when the whole reflection is already
+    // about the coach themselves: a self reflection (0030) has no session to
+    // have stepped into, and asking would read as the app not listening.
+    const { data: refEvent } = ref.event_id
+      ? await supa.from("events").select("event_type").eq("id", ref.event_id).maybeSingle()
+      : { data: null };
+    if (refEvent?.event_type !== "self_reflection") {
+      rows.push({
+        reflection_id,
+        question_text: STEP_IN_QUESTION,
         question_type: "text",
         options: [],
       });

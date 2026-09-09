@@ -36,6 +36,10 @@ function sessionLabel(e: { event_type: string; custom_type?: string | null }): s
   if (e.event_type === "tournament") return "Tournament";
   if (e.event_type === "match") return "Match";
   if (e.event_type === "training_session") return "Training";
+  // A self reflection the coach attached to this team (0030). It routes into
+  // other_sessions under this label, which is what keeps it a strand of its
+  // own; the prompt below says what the label means.
+  if (e.event_type === "self_reflection") return "Self reflection";
   return e.event_type.replace(/_/g, " ");
 }
 
@@ -227,6 +231,15 @@ Deno.serve(async (req) => {
         "between two contexts unless the coach's own notes say so. Where a " +
         "session type had few notes, say less about it rather than inferring " +
         "more. " +
+        // Self reflections (0030) are the strongest case of the rule above:
+        // they are not even about the team. A coach reflecting on losing their
+        // temper on Saturday has said something about themselves, not about
+        // the squad's development, and folding it into the team picture would
+        // turn their most personal entries into claims about the players.
+        "Anything under the label \"Self reflection\" is the coach reflecting " +
+        "on THEMSELVES, not on the team. Keep it as its own strand, clearly " +
+        "about the coach, and never merge it into the team's training, match " +
+        "or player picture. " +
         MIRROR_NOT_VERDICT +
         // "focus_ahead" asked the model what the coach should work on next. Over
         // a season that is a bigger judgement than the one taken out of the

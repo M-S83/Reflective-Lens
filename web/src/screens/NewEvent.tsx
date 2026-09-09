@@ -47,6 +47,13 @@ export default function NewEvent() {
   };
 
   const isMatch = type === "match" || type === "tournament";
+  // A self reflection is not tied to a session, so there is nothing to hope to
+  // SEE: hoped-to-see is a checklist of observable things reviewed against the
+  // notes, and a report about the coach has no such checklist. Focus and
+  // purpose stay, because "why am I sitting down to think" is still worth a
+  // line. The team stays optional: a reflection about how you are with one
+  // squad can belong to that team's period reports.
+  const isSelf = type === "self_reflection";
 
   return (
     <div className="app">
@@ -91,7 +98,12 @@ export default function NewEvent() {
                   the door. */}
               <div className="field">
                 <label htmlFor="team">
-                  Team <span className="muted small">(only if this is with one of your teams)</span>
+                  Team{" "}
+                  <span className="muted small">
+                    {isSelf
+                      ? "(only if this is about one of your teams)"
+                      : "(only if this is with one of your teams)"}
+                  </span>
                 </label>
                 <select id="team" value={teamId} onChange={(e) => setTeamId(e.target.value)}>
                   <option value="">No team, just me and the session</option>
@@ -130,10 +142,12 @@ export default function NewEvent() {
             <div className="card stack">
               <h2 className="serif">What's the intent?</h2>
               <div className="field"><label>Focus area</label>
-                <input value={focus} onChange={(e) => setFocus(e.target.value)} placeholder="e.g. playing out from the back" /></div>
+                <input value={focus} onChange={(e) => setFocus(e.target.value)}
+                  placeholder={isSelf ? "e.g. how I am on matchday" : "e.g. playing out from the back"} /></div>
               <div className="field"><label>Purpose</label>
-                <input value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="the aim of the session" /></div>
-              <div className="field">
+                <input value={purpose} onChange={(e) => setPurpose(e.target.value)}
+                  placeholder={isSelf ? "what you want to think through" : "the aim of the session"} /></div>
+              {!isSelf && <div className="field">
                 <label>Hoping to see</label>
                 <div className="row">
                   <input value={hopeDraft} onChange={(e) => setHopeDraft(e.target.value)}
@@ -151,12 +165,12 @@ export default function NewEvent() {
                     ))}
                   </div>
                 )}
-              </div>
+              </div>}
             </div>
 
             <ErrorText>{err}</ErrorText>
             <button className="btn block" onClick={create} disabled={busy}>
-              {busy ? <Spinner /> : "Start session"}
+              {busy ? <Spinner /> : isSelf ? "Start reflection" : "Start session"}
             </button>
         </>
       </div>
@@ -168,5 +182,6 @@ function defaultTitle(type: EventType, opp: string): string {
   if (type === "match") return opp ? `Match vs ${opp}` : "Match";
   if (type === "tournament") return "Tournament";
   if (type === "training_session") return "Training session";
+  if (type === "self_reflection") return "Self reflection";
   return "Session";
 }
